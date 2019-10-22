@@ -1,0 +1,2 @@
+# SES-House
+user-friendly and flexible and allows the user to specify goals and constraints regarding the operation of the microgrid. consider all the economic factors regarding the operation of a microgrid, such as retail electricity tariffs and feed-in tariffs. forecast microgrid generation and load. optimize the operation of PV panels, electric cars, battery and electric appliances connected in a microgrid according to user-defined goals and constraints.
