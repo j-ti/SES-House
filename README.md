@@ -5,7 +5,7 @@ In our projects, we will produce a solution that will
   * consider all the economic factors regarding the operation of a microgrid, such as retail electricity tariffs and feed-in tariffs.
   * forecast microgrid generation and load
   * optimize the operation of PV panels, electric cars, battery and electric appliances connected in a microgrid according to user-defined goals and constraints
-              
+
 ## Goals:
   * gain insights into the underlying dynamics of the energy management problem of your project domain
   * develop a notation
