@@ -38,7 +38,7 @@ m.setObjective(gp.quicksum(dieselGeneratorsVars), GRB.MINIMIZE)
 
 # Add constraint: x + 2 y + 3 z <= 4
 m.addConstrs(
-    [dieselGeneratorsVars[i, 0] >= 0 for i in range(len(times))],
+    (dieselGeneratorsVars[i, 0] >= 0 for i in range(len(times))),
     "diesel generator positive",
 )
 
