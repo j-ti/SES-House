@@ -36,12 +36,12 @@ try:
     m.optimize()
 
     for v in m.getVars():
-        print('%s %g' % (v.varName, v.x))
+        print("%s %g" % (v.varName, v.x))
 
-    print('Obj: %g' % m.objVal)
+    print("Obj: %g" % m.objVal)
 
 except gp.GurobiError as e:
-    print('Error code ' + str(e.errno) + ': ' + str(e))
+    print("Error code " + str(e.errno) + ": " + str(e))
 
 except AttributeError:
-    print('Encountered an attribute error')
+    print("Encountered an attribute error")
