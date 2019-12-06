@@ -8,7 +8,7 @@ import requests
 def getSamplePvApi(start, end, stepsize=datetime.timedelta(hours=1)):
     # TODO include stepsize into getDataPv
     renewNinja = RenewNinja()
-    return renewNinja.getDataPv(52.5170, 13.3889, start, end)
+    return renewNinja.getDataPv(52.5170, 13.3889, str(start.date()), str(end.date()))
 
 
 class RenewNinja:

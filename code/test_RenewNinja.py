@@ -6,11 +6,7 @@ from RenewNinja import getSamplePvApi
 
 class Test(unittest.TestCase):
     def testGetSamplePvApi(self):
-        beg = str(datetime.today() - timedelta(days=1) - timedelta(days=365)).split(" ")[0]
-        end = str(datetime.today() - timedelta(days=365)).split(" ")[0]
-
-        end = beg  # to only have 1 day
-        metadata, data = getSamplePvApi(beg, end)
+        metadata, data = getSamplePvApi(datetime(2014, 1, 1), datetime(2014, 1, 1))
         self.assertEqual(len(data), 24)
 
 
