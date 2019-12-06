@@ -8,6 +8,7 @@ verify_ssl = true
 [packages]
 black = "==19.10b0"
 flake8 = "~=3.7.9"
+jupyter = "*"
 
 [requires]
 python_version = "3.6"
