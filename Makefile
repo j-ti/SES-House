@@ -15,6 +15,7 @@ black:
 	black code
 
 test:
+	$(PYTHON) -m unittest discover -s code
 	gurobi.sh code/simple-model.py
 	$(PYTHON) -m flake8 code
 
