@@ -32,7 +32,11 @@ dieselGeneratorsVars = m.addVars(
     len(times), 1, vtype=GRB.CONTINUOUS, name="dieselGenerators"
 )
 
-m.setObjective(gp.quicksum(dieselGeneratorsVars), GRB.MINIMIZE)
+m.setObjective(gp.quicksum(dieselGeneratorsVars) + gp.quicksum(gridVars), GRB.MINIMIZE)
+
+m.addConstrs(
+    (gridVars[i, 0] >= 0 for i in range(len(times))), "grid positive",
+)
 
 m.addConstrs(
     (dieselGeneratorsVars[i, 0] >= 0 for i in range(len(times))),
