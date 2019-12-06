@@ -4,11 +4,11 @@ url = "https://pypi.org/simple"
 verify_ssl = true
 
 [dev-packages]
+jupyter = "*"
 
 [packages]
 black = "==19.10b0"
 flake8 = "~=3.7.9"
-jupyter = "*"
 pandas = "*"
 requests = "*"
 
