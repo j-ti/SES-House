@@ -31,18 +31,18 @@ gridVars = m.addVars(len(times), 1, vtype=GRB.CONTINUOUS, name="gridPowers")
 dieselGeneratorsVars = m.addVars(
     len(times), 1, vtype=GRB.CONTINUOUS, name="dieselGenerators"
 )
-z = m.addVar(vtype=GRB.BINARY, name="z")
 
-# Set objective
-m.setObjective(gp.quicksum(dieselGeneratorsVars), GRB.MINIMIZE)
+m.setObjective(gp.quicksum(dieselGeneratorsVars) + gp.quicksum(gridVars), GRB.MINIMIZE)
 
-# Add constraint: x + 2 y + 3 z <= 4
+m.addConstrs(
+    (gridVars[i, 0] >= 0 for i in range(len(times))), "grid positive",
+)
+
 m.addConstrs(
     (dieselGeneratorsVars[i, 0] >= 0 for i in range(len(times))),
     "diesel generator positive",
 )
 
-# Optimize model
 m.optimize()
 
 for v in m.getVars():
