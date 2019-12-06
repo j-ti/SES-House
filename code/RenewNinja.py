@@ -1,9 +1,8 @@
+import datetime
 import json
 
 import pandas as pd
 import requests
-
-import datetime
 
 
 def getSamplePvApi(start, end, stepsize=datetime.timedelta(hours=1)):
@@ -39,18 +38,21 @@ class RenewNinja:
         self.s = requests.session()
         self.s.headers = {"Authorization": "Token " + self.token}
 
+    def __del__(self):
+        dek
+
     def getDataPv(
-        self,
-        lat,
-        long,
-        date_from,
-        date_to,
-        dataset="merra2",
-        cap=1.0,
-        sys_loss=0.1,
-        track=0,
-        tilt=35,
-        azim=180,
+            self,
+            lat,
+            long,
+            date_from,
+            date_to,
+            dataset="merra2",
+            cap=1.0,
+            sys_loss=0.1,
+            track=0,
+            tilt=35,
+            azim=180,
     ):
         """Request PV power value
 
@@ -106,14 +108,14 @@ class RenewNinja:
         return metadata, data
 
     def getDataWind(
-        self,
-        lat,
-        long,
-        date_from,
-        date_to,
-        cap=1.0,
-        height=100,
-        turbine="Vestas V80 2000",
+            self,
+            lat,
+            long,
+            date_from,
+            date_to,
+            cap=1.0,
+            height=100,
+            turbine="Vestas V80 2000",
     ):
         """Request wind power value
 
