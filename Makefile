@@ -5,6 +5,7 @@ dummy:
 
 pipenv:
 	pipenv shell
+	. env
 
 install: ./requirements.txt
 	# @note: Have pipenv installed, e.g. sudo -H pip3 install pipenv
