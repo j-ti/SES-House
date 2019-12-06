@@ -26,7 +26,9 @@ for value in pvPowers.values():
 # Create a new model
 m = gp.Model("simple")
 
-# Create variables
+pvVars = m.addVars(len(times), 1, vtype=GRB.CONTINUOUS, name="pvPowers")
+fixedLoadVars = m.addVars(len(times), 1, vtype=GRB.CONTINUOUS, name="fixedLoads")
+windVars = m.addVars(len(times), 1, vtype=GRB.CONTINUOUS, name="windPowers")
 gridVars = m.addVars(len(times), 1, vtype=GRB.CONTINUOUS, name="gridPowers")
 dieselGeneratorsVars = m.addVars(
     len(times), 1, vtype=GRB.CONTINUOUS, name="dieselGenerators"
@@ -39,8 +41,33 @@ m.addConstrs(
 )
 
 m.addConstrs(
+    (pvVars[i, 0] >= 0 for i in range(len(times))), "pv positive",
+)
+
+m.addConstrs(
+    (windVars[i, 0] >= 0 for i in range(len(times))), "wind positive",
+)
+
+m.addConstrs(
+    (fixedLoadVars[i, 0] >= 0 for i in range(len(times))), "fixed loads positive",
+)
+
+m.addConstrs(
     (dieselGeneratorsVars[i, 0] >= 0 for i in range(len(times))),
     "diesel generator positive",
+)
+
+m.addConstrs(
+    (
+        gridVars[i, 0]
+        + pvVars[i, 0]
+        + windVars[i, 0]
+        + dieselGeneratorsVars[i, 0]
+        - fixedLoadVars[i, 0]
+        == 0
+        for i in range(len(times))
+    ),
+    "power balance",
 )
 
 m.optimize()
