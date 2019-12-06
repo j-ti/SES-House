@@ -23,24 +23,40 @@ assert len(pvPowers) == len(pvGenerators)
 for value in pvPowers.values():
     assert len(value) == len(times)
 
+
 # Create a new model
 m = gp.Model("simple")
 
-# Create variables
-gridVars = m.addVars(len(times), 1, vtype=GRB.CONTINUOUS, name="gridPowers")
+pvVars = m.addVars(
+    len(times), len(pvGenerators), lb=0.0, vtype=GRB.CONTINUOUS, name="pvPowers"
+)
+fixedLoadVars = m.addVars(
+    len(times), 1, lb=0.0, vtype=GRB.CONTINUOUS, name="fixedLoads"
+)
+windVars = m.addVars(
+    len(times), len(windGenerators), lb=0.0, vtype=GRB.CONTINUOUS, name="windPowers"
+)
+gridVars = m.addVars(len(times), 1, lb=0.0, vtype=GRB.CONTINUOUS, name="gridPowers")
 dieselGeneratorsVars = m.addVars(
-    len(times), 1, vtype=GRB.CONTINUOUS, name="dieselGenerators"
+    len(times),
+    len(dieselGenerators),
+    lb=0.0,
+    vtype=GRB.CONTINUOUS,
+    name="dieselGenerators",
 )
 
 m.setObjective(gp.quicksum(dieselGeneratorsVars) + gp.quicksum(gridVars), GRB.MINIMIZE)
 
 m.addConstrs(
-    (gridVars[i, 0] >= 0 for i in range(len(times))), "grid positive",
-)
-
-m.addConstrs(
-    (dieselGeneratorsVars[i, 0] >= 0 for i in range(len(times))),
-    "diesel generator positive",
+    (
+        gridVars.sum([i, "*"])
+        + pvVars.sum([i, "*"])
+        + windVars.sum([i, "*"])
+        + dieselGeneratorsVars.sum([i, "*"])
+        == fixedLoadVars.sum([i, "*"])
+        for i in range(len(times))
+    ),
+    "power balance",
 )
 
 m.optimize()
