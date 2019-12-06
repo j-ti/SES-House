@@ -23,6 +23,11 @@ assert len(pvPowers) == len(pvGenerators)
 for value in pvPowers.values():
     assert len(value) == len(times)
 
+
+def haveVarsPositive(model, vars, description):
+    model.addConstrs((vars[i, 0] >= 0 for i in range(len(times))), description)
+
+
 # Create a new model
 m = gp.Model("simple")
 
@@ -36,26 +41,11 @@ dieselGeneratorsVars = m.addVars(
 
 m.setObjective(gp.quicksum(dieselGeneratorsVars) + gp.quicksum(gridVars), GRB.MINIMIZE)
 
-m.addConstrs(
-    (gridVars[i, 0] >= 0 for i in range(len(times))), "grid positive",
-)
-
-m.addConstrs(
-    (pvVars[i, 0] >= 0 for i in range(len(times))), "pv positive",
-)
-
-m.addConstrs(
-    (windVars[i, 0] >= 0 for i in range(len(times))), "wind positive",
-)
-
-m.addConstrs(
-    (fixedLoadVars[i, 0] >= 0 for i in range(len(times))), "fixed loads positive",
-)
-
-m.addConstrs(
-    (dieselGeneratorsVars[i, 0] >= 0 for i in range(len(times))),
-    "diesel generator positive",
-)
+haveVarsPositive(m, gridVars, "grid positive")
+haveVarsPositive(m, pvVars, "pv positive")
+haveVarsPositive(m, windVars, "wind positive")
+haveVarsPositive(m, fixedLoadVars, "fixed loads positive")
+haveVarsPositive(m, dieselGeneratorsVars, "diesel generator positive")
 
 m.addConstrs(
     (
