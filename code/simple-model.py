@@ -25,18 +25,20 @@ for value in pvPowers.values():
 
 
 def haveVarsPositive(model, vars, description):
-    model.addConstrs((vars[i, 0] >= 0 for i in range(len(times))), description)
+    model.addConstrs((vars[var] >= 0 for var in vars), description)
 
 
 # Create a new model
 m = gp.Model("simple")
 
-pvVars = m.addVars(len(times), 1, vtype=GRB.CONTINUOUS, name="pvPowers")
+pvVars = m.addVars(len(times), len(pvGenerators), vtype=GRB.CONTINUOUS, name="pvPowers")
 fixedLoadVars = m.addVars(len(times), 1, vtype=GRB.CONTINUOUS, name="fixedLoads")
-windVars = m.addVars(len(times), 1, vtype=GRB.CONTINUOUS, name="windPowers")
+windVars = m.addVars(
+    len(times), len(windGenerators), vtype=GRB.CONTINUOUS, name="windPowers"
+)
 gridVars = m.addVars(len(times), 1, vtype=GRB.CONTINUOUS, name="gridPowers")
 dieselGeneratorsVars = m.addVars(
-    len(times), 1, vtype=GRB.CONTINUOUS, name="dieselGenerators"
+    len(times), len(dieselGenerators), vtype=GRB.CONTINUOUS, name="dieselGenerators"
 )
 
 m.setObjective(gp.quicksum(dieselGeneratorsVars) + gp.quicksum(gridVars), GRB.MINIMIZE)
@@ -49,11 +51,11 @@ haveVarsPositive(m, dieselGeneratorsVars, "diesel generator positive")
 
 m.addConstrs(
     (
-        gridVars[i, 0]
-        + pvVars[i, 0]
-        + windVars[i, 0]
-        + dieselGeneratorsVars[i, 0]
-        - fixedLoadVars[i, 0]
+        gridVars.sum([i, "*"])
+        + pvVars.sum([i, "*"])
+        + windVars.sum([i, "*"])
+        + dieselGeneratorsVars.sum([i, "*"])
+        - fixedLoadVars.sum([i, "*"])
         == 0
         for i in range(len(times))
     ),
