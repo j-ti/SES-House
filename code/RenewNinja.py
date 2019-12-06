@@ -39,17 +39,17 @@ class RenewNinja:
         self.s.headers = {"Authorization": "Token " + self.token}
 
     def getDataPv(
-            self,
-            lat,
-            long,
-            date_from,
-            date_to,
-            dataset="merra2",
-            cap=1.0,
-            sys_loss=0.1,
-            track=0,
-            tilt=35,
-            azim=180,
+        self,
+        lat,
+        long,
+        date_from,
+        date_to,
+        dataset="merra2",
+        cap=1.0,
+        sys_loss=0.1,
+        track=0,
+        tilt=35,
+        azim=180,
     ):
         """Request PV power value
 
@@ -105,14 +105,14 @@ class RenewNinja:
         return metadata, data
 
     def getDataWind(
-            self,
-            lat,
-            long,
-            date_from,
-            date_to,
-            cap=1.0,
-            height=100,
-            turbine="Vestas V80 2000",
+        self,
+        lat,
+        long,
+        date_from,
+        date_to,
+        cap=1.0,
+        height=100,
+        turbine="Vestas V80 2000",
     ):
         """Request wind power value
 
