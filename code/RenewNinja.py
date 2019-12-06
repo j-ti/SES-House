@@ -38,9 +38,6 @@ class RenewNinja:
         self.s = requests.session()
         self.s.headers = {"Authorization": "Token " + self.token}
 
-    def __del__(self):
-        dek
-
     def getDataPv(
             self,
             lat,
