@@ -55,8 +55,7 @@ m.addConstrs(
         + pvVars.sum([i, "*"])
         + windVars.sum([i, "*"])
         + dieselGeneratorsVars.sum([i, "*"])
-        - fixedLoadVars.sum([i, "*"])
-        == 0
+        == fixedLoadVars.sum([i, "*"])
         for i in range(len(times))
     ),
     "power balance",
