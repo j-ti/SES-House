@@ -14,6 +14,7 @@ black:
 	black code
 
 test:
+	gurobi.sh code/simple-model.py
 	$(PYTHON) -m flake8 code
 
 clean:
