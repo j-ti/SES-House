@@ -27,12 +27,23 @@ class RenewNinja:
 
     def __init__(self):
         self.token = "732eaff288b11d478c42381c75173e8e17355fdb"
-        self.api_base = 'https://www.renewables.ninja/api/'
+        self.api_base = "https://www.renewables.ninja/api/"
         self.s = requests.session()
-        self.s.headers = {'Authorization': 'Token ' + self.token}
+        self.s.headers = {"Authorization": "Token " + self.token}
 
-    def getDataPv(self, lat, long, date_from, date_to, dataset='merra2', cap=1.0, sys_loss=0.1, track=0, tilt=35,
-                  azim=180):
+    def getDataPv(
+        self,
+        lat,
+        long,
+        date_from,
+        date_to,
+        dataset="merra2",
+        cap=1.0,
+        sys_loss=0.1,
+        track=0,
+        tilt=35,
+        azim=180,
+    ):
         """Request PV power value
 
             Parameters
@@ -63,30 +74,39 @@ class RenewNinja:
                 1 : data (pandas Dataframe)
             """
 
-        url = self.api_base + 'data/pv'
+        url = self.api_base + "data/pv"
         args = {
-            'lat': lat,
-            'lon': long,
-            'date_from': date_from,
-            'date_to': date_to,
-            'dataset': dataset,
-            'capacity': cap,
-            'system_loss': sys_loss,
-            'tracking': track,
-            'tilt': tilt,
-            'azim': azim,
-            'format': 'json'
+            "lat": lat,
+            "lon": long,
+            "date_from": date_from,
+            "date_to": date_to,
+            "dataset": dataset,
+            "capacity": cap,
+            "system_loss": sys_loss,
+            "tracking": track,
+            "tilt": tilt,
+            "azim": azim,
+            "format": "json",
         }
         r = self.s.get(url, params=args)
 
         # Parse JSON to get a pandas.DataFrame of data and dict of metadata
         parsed_response = json.loads(r.text)
 
-        data = pd.read_json(json.dumps(parsed_response['data']), orient='index')
-        metadata = parsed_response['metadata']
+        data = pd.read_json(json.dumps(parsed_response["data"]), orient="index")
+        metadata = parsed_response["metadata"]
         return metadata, data
 
-    def getDataWind(self, lat, long, date_from, date_to, cap=1.0, height=100, turbine='Vestas V80 2000'):
+    def getDataWind(
+        self,
+        lat,
+        long,
+        date_from,
+        date_to,
+        cap=1.0,
+        height=100,
+        turbine="Vestas V80 2000",
+    ):
         """Request wind power value
 
             Parameters
@@ -114,22 +134,22 @@ class RenewNinja:
                 1 : data (pandas Dataframe)
             """
 
-        url = self.api_base + 'data/wind'
+        url = self.api_base + "data/wind"
         args = {
-            'lat': lat,
-            'lon': long,
-            'date_from': date_from,
-            'date_to': date_to,
-            'capacity': cap,
-            'height': height,
-            'turbine': turbine,
-            'format': 'json'
+            "lat": lat,
+            "lon": long,
+            "date_from": date_from,
+            "date_to": date_to,
+            "capacity": cap,
+            "height": height,
+            "turbine": turbine,
+            "format": "json",
         }
         r = self.s.get(url, params=args)
 
         # Parse JSON to get a pandas.DataFrame of data and dict of metadata
         parsed_response = json.loads(r.text)
 
-        data = pd.read_json(json.dumps(parsed_response['data']), orient='index')
-        metadata = parsed_response['metadata']
+        data = pd.read_json(json.dumps(parsed_response["data"]), orient="index")
+        metadata = parsed_response["metadata"]
         return metadata, data
