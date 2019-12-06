@@ -3,6 +3,14 @@ import json
 import pandas as pd
 import requests
 
+import datetime
+
+
+def getSamplePvApi(start, end, stepsize=datetime.timedelta(hours=1)):
+    # TODO include stepsize into getDataPv
+    renewNinja = RenewNinja()
+    return renewNinja.getDataPv(52.5170, 13.3889, start, end)
+
 
 class RenewNinja:
     """
