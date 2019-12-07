@@ -1,22 +1,20 @@
 # This must match the Python version in the Docker image.
-PYTHON=python3.6
+PYTHON=python
 
 dummy:
 
-pipenv:
-	pipenv shell
-	. env
+export:
+	conda env export > conda.yml
 
-install: ./requirements.txt
-	# @note: Have pipenv installed, e.g. sudo -H pip3 install pipenv
-	pipenv install
+install:
+	conda env create -f conda.yml
 
 black:
 	black code
 
 test:
 	$(PYTHON) -m unittest discover -s code
-	gurobi.sh code/simple-model.py
+	$(PYTHON) code/simple-model.py
 	$(PYTHON) -m flake8 code
 
 clean:
@@ -35,4 +33,4 @@ clean:
 distclean:
 	git clean -fxd
 
-.PHONY: dummy pipenv install black test clean distclean
+.PHONY: dummy install black test clean distclean

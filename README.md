@@ -17,10 +17,12 @@ TODO add travis build status
 
 ### Get started
 
-To get started do:
+To get started, install anaconda. Therefore follow the installation instruction
+on [this website](https://docs.anaconda.com/anaconda/install/linux/).
 ```bash
 make install
-make pipenv
+conda activate ses-house
+. env
 ```
 
 To be sure that the code is working do:
@@ -36,4 +38,10 @@ make black
 When something weird happens and for cleanup:
 ```bash
 make clean
+```
+
+When you add or remove packages from our `ses-house` conda environment, update
+the environment file `conda.yml` with this command:
+```bash
+make export
 ```
