@@ -29,8 +29,7 @@ stepsize = timedelta(hours=1)
 times = constructTimeStamps(start, end, stepsize)
 
 
-# Create a new model
-m = gp.Model("simple")
+m = gp.Model("simple-model")
 
 pvVars = m.addVars(
     len(times), len(pvGenerators), lb=0.0, vtype=GRB.CONTINUOUS, name="pvPowers"
