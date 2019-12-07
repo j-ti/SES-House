@@ -6,7 +6,7 @@ from util import constructTimeStamps
 
 
 class Test(unittest.TestCase):
-    def testGetSamplePv(self):
+    def testConstructTimeStamps(self):
         start = datetime(2014, 1, 2, 0, 0, 0)
         end = datetime(2014, 1, 2, 23, 59, 59)
         stepsize = timedelta(hours=1)
