@@ -1,5 +1,10 @@
 #!/usr/bin/env python3.7
 
+from datetime import datetime, timedelta
+from util import constructTimeStamps
+
+from RenewNinja import getSamplePv
+
 import gurobipy as gp
 from gurobipy import GRB
 
@@ -15,13 +20,13 @@ shiftableLoads = ["shift1", "shift2"]
 interrupableLoads = ["interrupt1"]
 loads = ["uncontrollable"] + shiftableLoads + interrupableLoads
 
-pvPowers = {"pv1": [1, 3, 0], "pv2": [0, 0, 2]}
 windPowers = {"wind1": [1, 3, 0], "wind2": [0, 0, 2]}
-times = [1575375592443, 1575375592449, 1575375593949]
 
-assert len(pvPowers) == len(pvGenerators)
-for value in pvPowers.values():
-    assert len(value) == len(times)
+
+start = datetime(2014, 1, 1, 0, 0, 0)
+end = datetime(2014, 1, 1, 23, 59, 59)
+stepsize = timedelta(hours=1)
+times = constructTimeStamps(start, end, stepsize)
 
 
 # Create a new model
@@ -57,6 +62,17 @@ m.addConstrs(
         for i in range(len(times))
     ),
     "power balance",
+)
+
+pvPowerValues = getSamplePv(start, end, stepsize)
+assert len(pvPowerValues) == len(times)
+m.addConstrs(
+    (pvVars[i, 0] == pvPowerValues[i] for i in range(len(times))),
+    "1st pv panel generation",
+)
+
+m.addConstrs(
+    (pvVars[i, 1] == 0 for i in range(len(times))), "2nd pv panel is turned off"
 )
 
 m.optimize()
