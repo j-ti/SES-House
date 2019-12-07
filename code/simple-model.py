@@ -3,7 +3,7 @@
 from datetime import datetime, timedelta
 from util import constructTimeStamps
 
-from RenewNinja import getSamplePv
+from RenewNinja import getSamplePv, getSampleWind
 
 import gurobipy as gp
 from gurobipy import GRB
@@ -19,8 +19,6 @@ batteries = electricVehicles + nonEVBatteries
 shiftableLoads = ["shift1", "shift2"]
 interrupableLoads = ["interrupt1"]
 loads = ["uncontrollable"] + shiftableLoads + interrupableLoads
-
-windPowers = {"wind1": [1, 3, 0], "wind2": [0, 0, 2]}
 
 
 start = datetime(2014, 1, 1, 0, 0, 0)
@@ -67,6 +65,13 @@ pvPowerValues = getSamplePv(start, end, stepsize)
 assert len(pvPowerValues) == len(times)
 m.addConstrs(
     (pvVars[i, 0] == pvPowerValues[i] for i in range(len(times))),
+    "1st pv panel generation",
+)
+
+windPowerValues = getSampleWind(start, end, stepsize)
+assert len(windPowerValues) == len(times)
+m.addConstrs(
+    (windVars[i, 0] == windPowerValues[i] for i in range(len(times))),
     "1st pv panel generation",
 )
 
