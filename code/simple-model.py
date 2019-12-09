@@ -59,7 +59,12 @@ batteryPowerVars = m.addVars(
     len(times), 1, lb=-P_bat_max, ub=P_bat_max, vtype=GRB.CONTINUOUS, name="batPowers"
 )
 batteryEnergyVars = m.addVars(
-    len(times), 1, lb=SOCmin*E_bat_max, ub=SOCmax*E_bat_max, vtype=GRB.CONTINUOUS, name="batEnergys"
+    len(times),
+    1,
+    lb=SOCmin * E_bat_max,
+    ub=SOCmax * E_bat_max,
+    vtype=GRB.CONTINUOUS,
+    name="batEnergys",
 )
 
 m.setObjective(gp.quicksum(dieselGeneratorsVars) + gp.quicksum(gridVars), GRB.MINIMIZE)
@@ -68,15 +73,14 @@ m.setObjective(gp.quicksum(dieselGeneratorsVars) + gp.quicksum(gridVars), GRB.MI
 m.addConstrs(
     (
         batteryEnergyVars[i + 1, 0]
-        == batteryEnergyVars[i, 0] - eta * batteryPowerVars[i, 0] * 1 # stepsize: 1 hour
+        == batteryEnergyVars[i, 0]
+        - eta * batteryPowerVars[i, 0] * 1  # stepsize: 1 hour
         for i in range(len(times) - 1)
     ),
     "battery charging",
 )
 
-m.addConstr(
-    (batteryEnergyVars[0, 0] == SOCinit * E_bat_max), "battery init",
-)
+m.addConstr((batteryEnergyVars[0, 0] == SOCinit * E_bat_max), "battery init")
 
 m.addConstrs(
     (
