@@ -6,18 +6,18 @@ import requests
 
 
 def getSampleWind(start, end, stepsize=datetime.timedelta(hours=1)):
-    return getSample(
+    return _getSample(
         "./sample/ninja_wind_52.5170_13.3889_corrected.csv", start, end, stepsize
     )
 
 
 def getSamplePv(start, end, stepsize=datetime.timedelta(hours=1)):
-    return getSample(
+    return _getSample(
         "./sample/ninja_pv_52.5170_13.3889_corrected.csv", start, end, stepsize
     )
 
 
-def getSample(filePath, start, end, stepsize=datetime.timedelta(hours=1)):
+def _getSample(filePath, start, end, stepsize=datetime.timedelta(hours=1)):
     with open(filePath, "r", encoding="utf-8") as sampleFile:
         [sampleFile.readline() for i in range(3)]
         data = pd.read_csv(sampleFile, parse_dates=["time", "local_time"])
