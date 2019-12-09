@@ -3,6 +3,7 @@
 from datetime import datetime, timedelta
 from util import constructTimeStamps
 
+from load_loads import getLoadsData
 from RenewNinja import getSamplePv, getSampleWind
 
 import gurobipy as gp
@@ -111,6 +112,15 @@ m.addConstrs(
 
 m.addConstrs(
     (pvVars[i, 1] == 0 for i in range(len(times))), "2nd pv panel is turned off"
+)
+
+loadValues = getLoadsData(
+    "./sample/pecan-home-grid_solar-manipulated.csv", start, end, stepsize
+)
+assert len(loadValues) == len(times)
+m.addConstrs(
+    (fixedLoadVars[i, 0] == loadValues[i] for i in range(len(times))),
+    "power of fixed loads",
 )
 
 m.optimize()
