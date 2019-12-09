@@ -1,10 +1,5 @@
 import pandas as pd
 import numpy as np
-import os, os.path
-import csv
-import re
-from dateutil.parser import parse
-import datetime
 
 # load data
 

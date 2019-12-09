@@ -9,7 +9,7 @@ import gurobipy as gp
 from gurobipy import GRB
 
 
-## Initialization
+# Initialization
 # Battery init (to be moved to a initialization file)
 SOCmin = 0.1
 SOCinit = 0.5
