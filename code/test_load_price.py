@@ -8,8 +8,8 @@ from util import constructTimeStamps
 
 class Test(unittest.TestCase):
     def testGetPriceData(self):
-        start = datetime(2019, 6, 2, 0, 0, 0)
-        end = datetime(2019, 6, 2, 23, 59, 59)
+        start = datetime(2014, 1, 1, 0, 0, 0)
+        end = datetime(2014, 1, 1, 23, 59, 59)
         stepsize = timedelta(hours=1)
         price = getPriceData(
             "../sample/pecan-iso_neiso-day_ahead_lmp_avg-20190602.csv", start, end, stepsize
