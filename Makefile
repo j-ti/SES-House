@@ -13,9 +13,7 @@ black:
 	black code
 
 test:
-	$(PYTHON) -m unittest discover -s code
-	$(PYTHON) code/simple-model.py
-	$(PYTHON) -m flake8 code
+	./test.sh
 
 clean:
 	for dir in code ; \
