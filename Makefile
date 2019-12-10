@@ -13,8 +13,10 @@ black:
 	black code
 
 test:
+	./test.sh
+
+travis:
 	$(PYTHON) -m unittest discover -s code
-	$(PYTHON) code/simple-model.py
 	$(PYTHON) -m flake8 code
 
 clean:
@@ -30,7 +32,4 @@ clean:
 	rm -rf logs
 	rm -f first_run
 
-distclean:
-	git clean -fxd
-
-.PHONY: dummy install black test clean distclean
+.PHONY: dummy install black test clean
