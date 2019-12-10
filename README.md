@@ -13,7 +13,7 @@ Do optimization for the following 3 scenarios:
 
 ## Programming
 
-TODO add travis build status
+[![Build Status](https://api.travis-ci.com/j-ti/SES-House.svg?token=9GudSoJGkvnBmiR1HWN7&branch=master)](https://travis-ci.com/j-ti/SES-House)
 
 ### Get started
 
