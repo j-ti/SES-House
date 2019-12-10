@@ -49,7 +49,6 @@ end = datetime(2014, 1, 1, 23, 59, 59)
 stepsize = timedelta(hours=1)
 
 times = constructTimeStamps(start, end, stepsize)
-batPowersTest = {"bat1": [1, -2, 1]}
 
 CostDiesel = 0.2
 CostGrid = getPriceData(
@@ -78,10 +77,20 @@ dieselGeneratorsVars = m.addVars(
     name="dieselGenerators",
 )
 batteryPowerVars = m.addVars(
-    len(times), 1, lb=-P_bat_max, ub=P_bat_max, vtype=GRB.CONTINUOUS, name="batPowers"
+    len(times),
+    len(nonEVBatteries),
+    lb=-P_bat_max,
+    ub=P_bat_max,
+    vtype=GRB.CONTINUOUS,
+    name="batPowers",
 )
 evPowerVars = m.addVars(
-    len(times), 1, lb=-P_ev_max, ub=P_ev_max, vtype=GRB.CONTINUOUS, name="evPowers"
+    len(times),
+    len(electricVehicles),
+    lb=-P_ev_max,
+    ub=P_ev_max,
+    vtype=GRB.CONTINUOUS,
+    name="evPowers",
 )
 
 batteryEnergyVars = m.addVars(
@@ -159,7 +168,7 @@ m.addConstrs(
         + pvVars.sum([i, "*"])
         + windVars.sum([i, "*"])
         + dieselGeneratorsVars.sum([i, "*"])
-        # +batteryEnergyVars.sum([i,"*"])
+        + batteryPowerVars.sum([i, "*"])
         # +evPowerVars.sum([i,"*"])
         == fixedLoadVars.sum([i, "*"])
         for i in range(len(times))
