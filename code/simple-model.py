@@ -14,7 +14,6 @@ from RenewNinja import getSamplePv, getSampleWind
 import gurobipy as gp
 from gurobipy import GRB
 
-import numpy
 
 class Configure:
     def __init__(self, config):
@@ -46,12 +45,11 @@ class Configure:
         self.pvFile = config["PV"]["file1"]
         self.windFile = config["WIND"]["file1"]
         self.loadsFile = config["LOADS"]["file1"]
-        self.CostGrid = config["COST"]["file_grid"]
+        self.costFileGrid = config["COST"]["file_grid"]
 
 
 def runSimpleModel(ini, config):
     # Initialization
-    # Battery init (to be moved to a initialization file)
     """
     pvGenerators = ["pv1", "pv2"]
     dieselGenerators = ["dg1"]
@@ -65,39 +63,13 @@ def runSimpleModel(ini, config):
     interrupableLoads = ["interrupt1"]
     loads = ["uncontrollable"] + shiftableLoads + interrupableLoads
     """
-    SOC_bat_min = float(config["BAT"]["SOC_bat_min"])
-    SOC_bat_init = float(config["BAT"]["SOC_bat_init"])
-    SOC_bat_max = float(config["BAT"]["SOC_bat_max"])
-    E_bat_max = float(config["BAT"]["E_bat_max"])
-    eta_bat = float(config["BAT"]["eta_bat"])
-    P_bat_max = float(config["BAT"]["P_bat_max"])
 
-    # EV init
-    SOC_ev_min = float(config["EV"]["SOC_ev_min"])
-    SOC_ev_init = float(config["EV"]["SOC_ev_init"])
-    SOC_ev_max = float(config["EV"]["SOC_ev_max"])
-    P_ev_max = float(config["EV"]["P_ev_max"])
-    E_ev_max = float(config["EV"]["E_ev_max"])
-    eta_ev = float(config["EV"]["eta_ev"])
-
-    # fromisoformat => strptime
-    t_a_ev = datetime.strptime(config["EV"]["t_a_ev"], "20%y-%m-%d %H:%M:%S")
-    t_b_ev = datetime.strptime(config["EV"]["t_b_ev"], "20%y-%m-%d %H:%M:%S")
-    t_goal_ev = datetime.strptime(config["EV"]["t_goal_ev"], "20%y-%m-%d %H:%M:%S")
-
-    start = datetime.strptime(config["TIME"]["start"], "20%y-%m-%d %H:%M:%S")
-    end = datetime.strptime(config["TIME"]["end"], "20%y-%m-%d %H:%M:%S")
     stepsize = timedelta(hours=1)
 
-    times = constructTimeStamps(start, end, stepsize)
+    times = constructTimeStamps(ini.start, ini.end, stepsize)
 
     CostDiesel = 0.2
-    CostGrid = getPriceData(
-        "./sample/pecan-iso_neiso-day_ahead_lmp_avg-20190602.csv",
-        start,
-        end,
-        stepsize=stepsize,
-    )
+    CostGrid = getPriceData(ini.costFileGrid, ini.start, ini.end, stepsize=stepsize,)
     m = gp.Model("simple-model")
 
     pvVars = m.addVars(
@@ -117,7 +89,7 @@ def runSimpleModel(ini, config):
         vtype=GRB.CONTINUOUS,
         name="windPowers",
     )
-    gridVars = m.addVars(len(times), 1, lb=0.0, vtype=GRB.CONTINUOUS, name="gridPowers")
+    gridVars = m.addVars(len(times), 1, vtype=GRB.CONTINUOUS, name="gridPowers")
     dieselGeneratorsVars = m.addVars(
         len(times), 1, lb=0.0, vtype=GRB.CONTINUOUS, name="dieselGenerators",
     )
@@ -130,7 +102,12 @@ def runSimpleModel(ini, config):
         name="batPowers",
     )
     evPowerVars = m.addVars(
-        len(times), 1, lb=-P_ev_max, ub=P_ev_max, vtype=GRB.CONTINUOUS, name="evPowers"
+        len(times),
+        1,
+        lb=-ini.P_ev_max,
+        ub=ini.P_ev_max,
+        vtype=GRB.CONTINUOUS,
+        name="evPowers",
     )
 
     batteryEnergyVars = m.addVars(
@@ -144,8 +121,8 @@ def runSimpleModel(ini, config):
     evEnergyVars = m.addVars(
         len(times),
         1,
-        lb=SOC_ev_min * E_ev_max,
-        ub=SOC_ev_max * E_ev_max,
+        lb=ini.SOC_ev_min * ini.E_ev_max,
+        ub=ini.SOC_ev_max * ini.E_ev_max,
         vtype=GRB.CONTINUOUS,
         name="evEnergys",
     )
@@ -172,7 +149,7 @@ def runSimpleModel(ini, config):
         (
             evEnergyVars[i + 1, 0]
             == evEnergyVars[i, 0]
-            - eta_ev
+            - ini.eta_ev
             * evPowerVars[i, 0]
             * stepsize.total_seconds()
             / 3600  # stepsize: 1 hour
@@ -184,27 +161,37 @@ def runSimpleModel(ini, config):
     m.addConstr(
         (batteryEnergyVars[0, 0] == ini.SOC_bat_init * ini.E_bat_max), "battery init"
     )
-    """
+
+    # m.addConstrs(
+    #     (
+    #         evPowerVars[i, 0] == 0
+    #         for i in range(int((ini.t_a_ev - ini.start).total_seconds() / 3600))
+    #     ),
+    #     "ev no charging before t_a",
+    # )
+    # m.addConstrs(
+    #     (
+    #         evPowerVars[i, 0] == 0
+    #         for i in range(
+    #             int((ini.t_b_ev - ini.start).total_seconds() / 3600),
+    #             int((ini.end - ini.t_b_ev).total_seconds() / 3600),
+    #         )
+    #     ),
+    #     "ev no charging before t_a",
+    # )
+
+    # m.addConstr((evEnergyVars[(ini.t_a_ev-ini.start).total_seconds()/3600, 0] == ini.SOC_ev_init * ini.E_ev_max), "ev init")
+
     m.addConstrs(
         (
-            evPowerVars[i, 0] == 0
-            for i in range(int((t_a_ev - start).total_seconds() / 3600))
-        ),
-        "ev no charging before t_a",
-    )
-    m.addConstrs(
-        (
-            evPowerVars[i, 0] == 0
+            evEnergyVars[i, 0] >= 0.7 * ini.E_ev_max
             for i in range(
-                int((t_b_ev - start).total_seconds() / 3600),
-                int((end - t_b_ev).total_seconds() / 3600),
+                int((ini.t_goal_ev - ini.start).total_seconds() / 3600),
+                int((ini.t_b_ev - ini.start).total_seconds() / 3600) + 1,
             )
         ),
-        "ev no charging before t_a",
+        "ev init",
     )
-    """
-
-    # m.addConstr((evEnergyVars[(t_a_ev-start).total_seconds()/3600, 0] == SOC_ev_init * E_ev_max), "ev init")
 
     m.addConstrs(
         (
@@ -213,7 +200,7 @@ def runSimpleModel(ini, config):
             + windVars.sum([i, "*"])
             + dieselGeneratorsVars.sum([i, "*"])
             + batteryPowerVars.sum([i, "*"])
-            #+ evPowerVars.sum([i,"*"])
+            + evPowerVars.sum([i, "*"])
             == fixedLoadVars.sum([i, "*"])
             for i in range(len(times))
         ),
@@ -221,14 +208,14 @@ def runSimpleModel(ini, config):
     )
 
     # Generators with fixed values
-    pvPowerValues = getSamplePv(start, end, stepsize)
+    pvPowerValues = getSamplePv(ini.start, ini.end, stepsize)
     assert len(pvPowerValues) == len(times)
     m.addConstrs(
         (pvVars[i, 0] == pvPowerValues[i] for i in range(len(times))),
         "1st pv panel generation",
     )
 
-    windPowerValues = getSampleWind(start, end, stepsize)
+    windPowerValues = getSampleWind(ini.start, ini.end, stepsize)
     assert len(windPowerValues) == len(times)
     m.addConstrs(
         (windVars[i, 0] == windPowerValues[i] for i in range(len(times))),
@@ -239,9 +226,12 @@ def runSimpleModel(ini, config):
         (pvVars[i, 1] == 0 for i in range(len(times))), "2nd pv panel is turned off"
     )
 
-    loadValues = getLoadsData(
-        "./sample/pecan-home-grid_solar-manipulated.csv", start, end, stepsize
+    m.addConstrs(
+        (windVars[i, 1] == 0 for i in range(len(times))),
+        "2nd wind panel is turned off",
     )
+
+    loadValues = getLoadsData(ini.loadsFile, ini.start, ini.end, stepsize)
     assert len(loadValues) == len(times)
     m.addConstrs(
         (fixedLoadVars[i, 0] == loadValues[i] for i in range(len(times))),
@@ -252,7 +242,7 @@ def runSimpleModel(ini, config):
 
     for v in m.getVars():
         print("%s %g" % (v.varName, v.x))
-    9
+
     print("Obj: %g" % m.objVal)
 
 
