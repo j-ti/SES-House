@@ -54,7 +54,7 @@ times = constructTimeStamps(start, end, stepsize)
 batPowersTest = {"bat1": [1, -2, 1]}
 
 CostDiesel=0.2
-CostGrid=getPriceData("../sample/pecan-iso_neiso-day_ahead_lmp_avg-20190602.csv", start, end, stepsize=stepsize)
+CostGrid=getPriceData("./sample/pecan-iso_neiso-day_ahead_lmp_avg-20190602.csv", start, end, stepsize=stepsize)
 m = gp.Model("simple-model")
 
 pvVars = m.addVars(
@@ -122,14 +122,14 @@ m.addConstrs(
 )
 
 m.addConstr((batteryEnergyVars[0, 0] == SOC_bat_init * E_bat_max), "battery init")
-m.addConstrs(
-    (evPowerVars[i, 0] == 0 for i in range(int((t_a_ev-start).total_seconds()/3600))),
-    "ev no charging before t_a",
-)
-m.addConstrs(
-    (evPowerVars[i, 0] == 0 for i in range(int((t_b_ev-start).total_seconds()/3600),int((end-t_b_ev).total_seconds()/3600))),
-    "ev no charging before t_a",
-)
+# m.addConstrs(
+#     (evPowerVars[i, 0] == 0 for i in range(int((t_a_ev-start).total_seconds()/3600))),
+#     "ev no charging before t_a",
+# )
+# m.addConstrs(
+#     (evPowerVars[i, 0] == 0 for i in range(int((t_b_ev-start).total_seconds()/3600),int((end-t_b_ev).total_seconds()/3600))),
+#     "ev no charging before t_a",
+# )
 
 # m.addConstr((evEnergyVars[(t_a_ev-start).total_seconds()/3600, 0] == SOC_ev_init * E_ev_max), "ev init")
 
@@ -139,7 +139,7 @@ m.addConstrs(
         + pvVars.sum([i, "*"])
         + windVars.sum([i, "*"])
         + dieselGeneratorsVars.sum([i, "*"])
-        # +batteryEnergyVars.sum([i,"*"])
+        +batteryPowerVars.sum([i,"*"])
         # +evPowerVars.sum([i,"*"])
         == fixedLoadVars.sum([i, "*"])
         for i in range(len(times))
@@ -167,7 +167,7 @@ m.addConstrs(
 )
 
 loadValues = getLoadsData(
-    "../sample/pecan-home-grid_solar-manipulated.csv", start, end, stepsize
+    "./sample/pecan-home-grid_solar-manipulated.csv", start, end, stepsize
 )
 assert len(loadValues) == len(times)
 m.addConstrs(

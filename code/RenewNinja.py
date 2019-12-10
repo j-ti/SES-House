@@ -7,13 +7,13 @@ import requests
 
 def getSampleWind(start, end, stepsize=datetime.timedelta(hours=1)):
     return _getSample(
-        "../sample/ninja_wind_52.5170_13.3889_corrected.csv", start, end, stepsize
+        "./sample/ninja_wind_52.5170_13.3889_corrected.csv", start, end, stepsize
     )
 
 
 def getSamplePv(start, end, stepsize=datetime.timedelta(hours=1)):
     return _getSample(
-        "../sample/ninja_pv_52.5170_13.3889_corrected.csv", start, end, stepsize
+        "./sample/ninja_pv_52.5170_13.3889_corrected.csv", start, end, stepsize
     )
 
 
