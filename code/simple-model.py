@@ -32,16 +32,20 @@ class Configure:
         self.P_ev_max = float(config["EV"]["P_ev_max"])
         self.E_ev_max = float(config["EV"]["E_ev_max"])
         self.eta_ev = float(config["EV"]["eta_ev"])
-
-        # fromisoformat => strptime
         self.t_a_ev = datetime.strptime(config["EV"]["t_a_ev"], "20%y-%m-%d %H:%M:%S")
         self.t_b_ev = datetime.strptime(config["EV"]["t_b_ev"], "20%y-%m-%d %H:%M:%S")
         self.t_goal_ev = datetime.strptime(
             config["EV"]["t_goal_ev"], "20%y-%m-%d %H:%M:%S"
         )
 
+        # Time frame of optimization
         self.start = datetime.strptime(config["TIME"]["start"], "20%y-%m-%d %H:%M:%S")
         self.end = datetime.strptime(config["TIME"]["end"], "20%y-%m-%d %H:%M:%S")
+
+        self.pvFile = config["PV"]["file1"]
+        self.windFile = config["WIND"]["file1"]
+        self.loadsFile = config["LOADS"]["file1"]
+        self.CostGrid = config["COST"]["file_grid"]
 
 
 def runSimpleModel(ini, config):
