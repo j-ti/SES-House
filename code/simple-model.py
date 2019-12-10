@@ -11,7 +11,6 @@ from RenewNinja import getSamplePv, getSampleWind
 import gurobipy as gp
 from gurobipy import GRB
 
-import numpy
 
 # Initialization
 # Battery init (to be moved to a initialization file)
