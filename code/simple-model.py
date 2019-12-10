@@ -54,7 +54,7 @@ times = constructTimeStamps(start, end, stepsize)
 batPowersTest = {"bat1": [1, -2, 1]}
 
 CostDiesel=0.2
-CostGrid=getPriceData("./sample/pecan-iso_neiso-day_ahead_lmp_avg-20190602.csv", start, end, stepsize=stepsize)
+CostGrid=getPriceData("../sample/pecan-iso_neiso-day_ahead_lmp_avg-20190602.csv", start, end, stepsize=stepsize)
 m = gp.Model("simple-model")
 
 pvVars = m.addVars(
@@ -167,7 +167,7 @@ m.addConstrs(
 )
 
 loadValues = getLoadsData(
-    "./sample/pecan-home-grid_solar-manipulated.csv", start, end, stepsize
+    "../sample/pecan-home-grid_solar-manipulated.csv", start, end, stepsize
 )
 assert len(loadValues) == len(times)
 m.addConstrs(
