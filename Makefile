@@ -15,6 +15,10 @@ black:
 test:
 	./test.sh
 
+travis:
+	$(PYTHON) -m unittest discover -s code
+	$(PYTHON) -m flake8 code
+
 clean:
 	for dir in code ; \
 	do \
