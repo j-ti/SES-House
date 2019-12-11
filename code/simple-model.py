@@ -69,7 +69,6 @@ def runSimpleModel(ini, config):
     times = constructTimeStamps(ini.start, ini.end, stepsize)
 
     CostDiesel = 0.2
-    CostGrid = getPriceData(ini.costFileGrid, ini.start, ini.end, stepsize=stepsize,)
     m = gp.Model("simple-model")
 
     pvVars = m.addVars(
@@ -89,7 +88,13 @@ def runSimpleModel(ini, config):
         vtype=GRB.CONTINUOUS,
         name="windPowers",
     )
-    gridVars = m.addVars(len(times), 1, vtype=GRB.CONTINUOUS, name="gridPowers")
+    gridVars = m.addVars(
+        len(times),
+        1,
+        obj=getPriceData(ini.costFileGrid, ini.start, ini.end, stepsize=stepsize),
+        vtype=GRB.CONTINUOUS,
+        name="gridPowers",
+    )
     dieselGeneratorsVars = m.addVars(
         len(times), 1, lb=0.0, vtype=GRB.CONTINUOUS, name="dieselGenerators"
     )
