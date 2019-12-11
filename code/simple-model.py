@@ -1,7 +1,7 @@
 #!/usr/bin/env python3.7
 
 import configparser
-from datetime import datetime, timedelta
+from datetime import datetime
 import sys
 
 from util import constructTimeStamps
@@ -41,6 +41,7 @@ class Configure:
         # Time frame of optimization
         self.start = datetime.strptime(config["TIME"]["start"], "20%y-%m-%d %H:%M:%S")
         self.end = datetime.strptime(config["TIME"]["end"], "20%y-%m-%d %H:%M:%S")
+        self.stepsize = datetime.strptime(config["TIME"]["stepsize"], "%H:%M:%S") - datetime.strptime("00:00:00", "%H:%M:%S")
 
         # Generators
         self.P_dg_max = float(config["DIESEL"]["P_dg_max"])
@@ -52,9 +53,7 @@ class Configure:
 
 
 def runSimpleModel(ini):
-    stepsize = timedelta(hours=1)
-
-    times = constructTimeStamps(ini.start, ini.end, stepsize)
+    times = constructTimeStamps(ini.start, ini.end, ini.stepsize)
 
     m = gp.Model("simple-model")
 
@@ -78,7 +77,7 @@ def runSimpleModel(ini):
     gridVars = m.addVars(
         len(times),
         1,
-        obj=getPriceData(ini.costFileGrid, ini.start, ini.end, stepsize=stepsize),
+        obj=getPriceData(ini.costFileGrid, ini.start, ini.end, stepsize=ini.stepsize),
         vtype=GRB.CONTINUOUS,
         name="gridPowers",
     )
@@ -136,7 +135,7 @@ def runSimpleModel(ini):
             == batteryEnergyVars[i, 0]
             - ini.eta_bat
             * batteryPowerVars[i, 0]
-            * stepsize.total_seconds()
+            * ini.stepsize.total_seconds()
             / 3600  # stepsize: 1 hour
             for i in range(len(times) - 1)
         ),
@@ -148,7 +147,7 @@ def runSimpleModel(ini):
             == evEnergyVars[i, 0]
             - ini.eta_ev
             * evPowerVars[i, 0]
-            * stepsize.total_seconds()
+            * ini.stepsize.total_seconds()
             / 3600  # stepsize: 1 hour
             for i in range(len(times) - 1)
         ),
@@ -205,7 +204,7 @@ def runSimpleModel(ini):
     )
 
     # Generators with fixed values
-    pvPowerValues = getSamplePv(ini.pvFiles["file1"], ini.start, ini.end, stepsize)
+    pvPowerValues = getSamplePv(ini.pvFiles["file1"], ini.start, ini.end, ini.stepsize)
     assert len(pvPowerValues) == len(times)
     m.addConstrs(
         (pvVars[i, 0] == pvPowerValues[i] for i in range(len(times))),
@@ -213,7 +212,7 @@ def runSimpleModel(ini):
     )
 
     windPowerValues = getSampleWind(
-        ini.windFiles["file1"], ini.start, ini.end, stepsize
+        ini.windFiles["file1"], ini.start, ini.end, ini.stepsize
     )
     assert len(windPowerValues) == len(times)
     m.addConstrs(
@@ -229,7 +228,7 @@ def runSimpleModel(ini):
         (windVars[i, 1] == 0 for i in range(len(times))), "2nd wind panel is turned off"
     )
 
-    loadValues = getLoadsData(ini.loadsFile, ini.start, ini.end, stepsize)
+    loadValues = getLoadsData(ini.loadsFile, ini.start, ini.end, ini.stepsize)
     assert len(loadValues) == len(times)
     m.addConstrs(
         (fixedLoadVars[i, 0] == loadValues[i] for i in range(len(times))),
