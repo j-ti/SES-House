@@ -15,6 +15,10 @@ black:
 test:
 	./test.sh
 
+travis:
+	$(PYTHON) -m unittest discover -s code
+	$(PYTHON) -m flake8 code
+
 clean:
 	for dir in code ; \
 	do \
@@ -28,7 +32,4 @@ clean:
 	rm -rf logs
 	rm -f first_run
 
-distclean:
-	git clean -fxd
-
-.PHONY: dummy install black test clean distclean
+.PHONY: dummy install black test clean
