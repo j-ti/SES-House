@@ -45,13 +45,13 @@ class Configure:
         # Generators
         self.P_dg_max = float(config["DIESEL"]["P_dg_max"])
         self.CostDiesel = float(config["DIESEL"]["CostDiesel"])
-        self.pvFile = config["PV"]["file1"]
-        self.windFile = config["WIND"]["file1"]
+        self.pvFiles = config["PV"]
+        self.windFiles = config["WIND"]
         self.loadsFile = config["LOADS"]["file1"]
         self.costFileGrid = config["COST"]["file_grid"]
 
 
-def runSimpleModel(ini, config):
+def runSimpleModel(ini):
     # Initialization
     """
     pvGenerators = ["pv1", "pv2"]
@@ -75,7 +75,7 @@ def runSimpleModel(ini, config):
 
     pvVars = m.addVars(
         len(times),
-        len(config["PV"].items()),
+        len(ini.pvFiles.items()),
         lb=0.0,
         vtype=GRB.CONTINUOUS,
         name="pvPowers",
@@ -85,7 +85,7 @@ def runSimpleModel(ini, config):
     )
     windVars = m.addVars(
         len(times),
-        len(config["WIND"].items()),
+        len(ini.windFiles.items()),
         lb=0.0,
         vtype=GRB.CONTINUOUS,
         name="windPowers",
@@ -98,7 +98,12 @@ def runSimpleModel(ini, config):
         name="gridPowers",
     )
     dieselGeneratorsVars = m.addVars(
-        len(times), 1, lb=0.0, ub=ini.P_dg_max, vtype=GRB.CONTINUOUS, name="dieselGenerators"
+        len(times),
+        1,
+        lb=0.0,
+        ub=ini.P_dg_max,
+        vtype=GRB.CONTINUOUS,
+        name="dieselGenerators",
     )
     batteryPowerVars = m.addVars(
         len(times),
@@ -215,14 +220,16 @@ def runSimpleModel(ini, config):
     )
 
     # Generators with fixed values
-    pvPowerValues = getSamplePv(ini.start, ini.end, stepsize)
+    pvPowerValues = getSamplePv(ini.pvFiles["file1"], ini.start, ini.end, stepsize)
     assert len(pvPowerValues) == len(times)
     m.addConstrs(
         (pvVars[i, 0] == pvPowerValues[i] for i in range(len(times))),
         "1st pv panel generation",
     )
 
-    windPowerValues = getSampleWind(ini.start, ini.end, stepsize)
+    windPowerValues = getSampleWind(
+        ini.windFiles["file1"], ini.start, ini.end, stepsize
+    )
     assert len(windPowerValues) == len(times)
     m.addConstrs(
         (windVars[i, 0] == windPowerValues[i] for i in range(len(times))),
@@ -256,7 +263,7 @@ def main(argv):
     config = configparser.ConfigParser()
     config.read(argv[1])
     ini = Configure(config)
-    runSimpleModel(ini, config)
+    runSimpleModel(ini)
 
 
 if __name__ == "__main__":
