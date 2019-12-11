@@ -91,7 +91,7 @@ def runSimpleModel(ini, config):
     )
     gridVars = m.addVars(len(times), 1, vtype=GRB.CONTINUOUS, name="gridPowers")
     dieselGeneratorsVars = m.addVars(
-        len(times), 1, lb=0.0, vtype=GRB.CONTINUOUS, name="dieselGenerators",
+        len(times), 1, lb=0.0, vtype=GRB.CONTINUOUS, name="dieselGenerators"
     )
     batteryPowerVars = m.addVars(
         len(times),
@@ -227,8 +227,7 @@ def runSimpleModel(ini, config):
     )
 
     m.addConstrs(
-        (windVars[i, 1] == 0 for i in range(len(times))),
-        "2nd wind panel is turned off",
+        (windVars[i, 1] == 0 for i in range(len(times))), "2nd wind panel is turned off"
     )
 
     loadValues = getLoadsData(ini.loadsFile, ini.start, ini.end, stepsize)
