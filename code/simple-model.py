@@ -42,6 +42,9 @@ class Configure:
         self.start = datetime.strptime(config["TIME"]["start"], "20%y-%m-%d %H:%M:%S")
         self.end = datetime.strptime(config["TIME"]["end"], "20%y-%m-%d %H:%M:%S")
 
+        # Generators
+        self.P_dg_max = float(config["DIESEL"]["P_dg_max"])
+        self.CostDiesel = float(config["DIESEL"]["CostDiesel"])
         self.pvFile = config["PV"]["file1"]
         self.windFile = config["WIND"]["file1"]
         self.loadsFile = config["LOADS"]["file1"]
@@ -68,7 +71,6 @@ def runSimpleModel(ini, config):
 
     times = constructTimeStamps(ini.start, ini.end, stepsize)
 
-    CostDiesel = 0.2
     m = gp.Model("simple-model")
 
     pvVars = m.addVars(
@@ -96,7 +98,7 @@ def runSimpleModel(ini, config):
         name="gridPowers",
     )
     dieselGeneratorsVars = m.addVars(
-        len(times), 1, lb=0.0, vtype=GRB.CONTINUOUS, name="dieselGenerators"
+        len(times), 1, lb=0.0, ub=ini.P_dg_max, vtype=GRB.CONTINUOUS, name="dieselGenerators"
     )
     batteryPowerVars = m.addVars(
         len(times),
@@ -133,7 +135,7 @@ def runSimpleModel(ini, config):
     )
 
     m.setObjective(
-        CostDiesel * gp.quicksum(dieselGeneratorsVars) + gp.quicksum(gridVars),
+        ini.CostDiesel * gp.quicksum(dieselGeneratorsVars) + gp.quicksum(gridVars),
         GRB.MINIMIZE,
     )
 
