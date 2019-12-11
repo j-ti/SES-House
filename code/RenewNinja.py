@@ -21,10 +21,16 @@ def _getSample(filePath, start, end, stepsize=datetime.timedelta(hours=1)):
         return data["electricity"]
 
 
-def getSamplePvApi(start, end, stepsize=datetime.timedelta(hours=1)):
+def getSamplePvApi(lat, long, start, end, stepsize=datetime.timedelta(hours=1)):
     # TODO include stepsize into getDataPv
     renewNinja = RenewNinja()
-    return renewNinja.getDataPv(52.5170, 13.3889, str(start.date()), str(end.date()))
+    return renewNinja.getDataPv(lat, long, str(start.date()), str(end.date()))
+
+
+def getSampleWindApi(lat, long, start, end, stepsize=datetime.timedelta(hours=1)):
+    # TODO include stepsize into getDataPv
+    renewNinja = RenewNinja()
+    return renewNinja.getDataWind(lat, long, str(start.date()), str(end.date()))
 
 
 class RenewNinja:
