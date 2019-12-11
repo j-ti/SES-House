@@ -5,16 +5,12 @@ import pandas as pd
 import requests
 
 
-def getSampleWind(start, end, stepsize=datetime.timedelta(hours=1)):
-    return _getSample(
-        "./sample/ninja_wind_52.5170_13.3889_corrected.csv", start, end, stepsize
-    )
+def getSampleWind(file, start, end, stepsize=datetime.timedelta(hours=1)):
+    return _getSample(file, start, end, stepsize)
 
 
-def getSamplePv(start, end, stepsize=datetime.timedelta(hours=1)):
-    return _getSample(
-        "./sample/ninja_pv_52.5170_13.3889_corrected.csv", start, end, stepsize
-    )
+def getSamplePv(file, start, end, stepsize=datetime.timedelta(hours=1)):
+    return _getSample(file, start, end, stepsize)
 
 
 def _getSample(filePath, start, end, stepsize=datetime.timedelta(hours=1)):

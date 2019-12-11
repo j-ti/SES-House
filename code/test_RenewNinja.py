@@ -7,7 +7,9 @@ from RenewNinja import getSamplePvApi, getSamplePv, getSampleWind
 class Test(unittest.TestCase):
     def testGetSampleWind(self):
         data = getSampleWind(
-            datetime(2014, 1, 1, 0, 0, 0), datetime(2014, 1, 1, 23, 59, 59)
+            "./sample/ninja_wind_52.5170_13.3889_corrected.csv",
+            datetime(2014, 1, 1, 0, 0, 0),
+            datetime(2014, 1, 1, 23, 59, 59),
         )
         self.assertEqual(len(data), 24)
         for electricity in data:
@@ -15,7 +17,9 @@ class Test(unittest.TestCase):
 
     def testGetSamplePv(self):
         data = getSamplePv(
-            datetime(2014, 1, 1, 0, 0, 0), datetime(2014, 1, 1, 23, 59, 59)
+            "./sample/ninja_pv_52.5170_13.3889_corrected.csv",
+            datetime(2014, 1, 1, 0, 0, 0),
+            datetime(2014, 1, 1, 23, 59, 59),
         )
         self.assertEqual(len(data), 24)
         for electricity in data:
