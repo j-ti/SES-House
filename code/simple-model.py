@@ -52,21 +52,6 @@ class Configure:
 
 
 def runSimpleModel(ini):
-    # Initialization
-    """
-    pvGenerators = ["pv1", "pv2"]
-    dieselGenerators = ["dg1"]
-    windGenerators = ["wind1"]
-    generators = ["grid"] + pvGenerators + dieselGenerators + windGenerators
-
-    electricVehicles = ["ev1"]
-    nonEVBatteries = ["bat1"]
-    batteries = electricVehicles + nonEVBatteries
-    shiftableLoads = ["shift1", "shift2"]
-    interrupableLoads = ["interrupt1"]
-    loads = ["uncontrollable"] + shiftableLoads + interrupableLoads
-    """
-
     stepsize = timedelta(hours=1)
 
     times = constructTimeStamps(ini.start, ini.end, stepsize)
