@@ -247,8 +247,7 @@ def runSimpleModel(ini):
 def main(argv):
     config = configparser.ConfigParser()
     config.read(argv[1])
-    ini = Configure(config)
-    runSimpleModel(ini)
+    runSimpleModel(Configure(config))
 
 
 if __name__ == "__main__":
