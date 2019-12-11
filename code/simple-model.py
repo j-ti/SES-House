@@ -9,7 +9,7 @@ from util import constructTimeStamps
 from load_loads import getLoadsData
 from load_price import getPriceData
 
-from RenewNinja import getSamplePv, getSampleWind
+from RenewNinja import getSamplePv, getSampleWind, getSamplePvApi, getSampleWindApi
 
 import gurobipy as gp
 from gurobipy import GRB
@@ -17,6 +17,11 @@ from gurobipy import GRB
 
 class Configure:
     def __init__(self, config):
+        # Global
+        self.loc_flag = "yes" == config["GLOBAL"]["loc"]
+        self.loc_lat = float(config["GLOBAL"]["lat"])
+        self.loc_lon = float(config["GLOBAL"]["lon"])
+
         # Battery init (to be moved to a initialization file)
         self.SOC_bat_min = float(config["BAT"]["SOC_bat_min"])
         self.SOC_bat_init = float(config["BAT"]["SOC_bat_init"])
@@ -45,8 +50,8 @@ class Configure:
         # Generators
         self.P_dg_max = float(config["DIESEL"]["P_dg_max"])
         self.CostDiesel = float(config["DIESEL"]["CostDiesel"])
-        self.pvFiles = config["PV"]
-        self.windFiles = config["WIND"]
+        self.pvFiles = config.items("PV")
+        self.windFiles = config.items("WIND")
         self.loadsFile = config["LOADS"]["file1"]
         self.costFileGrid = config["COST"]["file_grid"]
 
@@ -57,23 +62,14 @@ def runSimpleModel(ini):
     times = constructTimeStamps(ini.start, ini.end, stepsize)
 
     m = gp.Model("simple-model")
-
     pvVars = m.addVars(
-        len(times),
-        len(ini.pvFiles.items()),
-        lb=0.0,
-        vtype=GRB.CONTINUOUS,
-        name="pvPowers",
+        len(times), len(ini.pvFiles), lb=0.0, vtype=GRB.CONTINUOUS, name="pvPowers",
     )
     fixedLoadVars = m.addVars(
         len(times), 1, lb=0.0, vtype=GRB.CONTINUOUS, name="fixedLoads"
     )
     windVars = m.addVars(
-        len(times),
-        len(ini.windFiles.items()),
-        lb=0.0,
-        vtype=GRB.CONTINUOUS,
-        name="windPowers",
+        len(times), len(ini.windFiles), lb=0.0, vtype=GRB.CONTINUOUS, name="windPowers",
     )
     gridVars = m.addVars(
         len(times),
@@ -205,16 +201,32 @@ def runSimpleModel(ini):
     )
 
     # Generators with fixed values
-    pvPowerValues = getSamplePv(ini.pvFiles["file1"], ini.start, ini.end, stepsize)
+    if ini.loc_flag:
+        print("PV data: use location")
+        metadata, pvPowerValues = getSamplePvApi(
+            ini.loc_lat, ini.loc_lon, ini.start, ini.end
+        )
+        pvPowerValues = pvPowerValues.values
+    else:
+        print("PV data: use sample files")
+        pvPowerValues = getSamplePv(ini.pvFiles[0][1], ini.start, ini.end, stepsize)
     assert len(pvPowerValues) == len(times)
     m.addConstrs(
         (pvVars[i, 0] == pvPowerValues[i] for i in range(len(times))),
         "1st pv panel generation",
     )
 
-    windPowerValues = getSampleWind(
-        ini.windFiles["file1"], ini.start, ini.end, stepsize
-    )
+    if ini.loc_flag:
+        print("Wind data: use location")
+        metadata, windPowerValues = getSampleWindApi(
+            ini.loc_lat, ini.loc_lon, ini.start, ini.end
+        )
+        windPowerValues = windPowerValues.values
+    else:
+        print("Wind data: use sample files")
+        windPowerValues = getSampleWind(
+            ini.windFiles[0][1], ini.start, ini.end, stepsize
+        )
     assert len(windPowerValues) == len(times)
     m.addConstrs(
         (windVars[i, 0] == windPowerValues[i] for i in range(len(times))),

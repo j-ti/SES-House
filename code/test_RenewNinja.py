@@ -26,7 +26,9 @@ class Test(unittest.TestCase):
             self.assertGreaterEqual(electricity, 0)
 
     def testGetSamplePvApi(self):
-        metadata, data = getSamplePvApi(datetime(2014, 1, 1), datetime(2014, 1, 1))
+        metadata, data = getSamplePvApi(
+            52.5170, 13.3889, datetime(2014, 1, 1), datetime(2014, 1, 1)
+        )
         self.assertEqual(len(data), 24)
 
 
