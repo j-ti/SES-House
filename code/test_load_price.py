@@ -13,9 +13,7 @@ class Test(unittest.TestCase):
         stepsize = timedelta(hours=1)
         price = getPriceData(
             "./sample/pecan-iso_neiso-day_ahead_lmp_avg-20190602.csv",
-            start,
-            end,
-            stepsize,
+            constructTimeStamps(start, end, stepsize),
         )
         self.assertEqual(len(constructTimeStamps(start, end, stepsize)), len(price))
         [self.assertGreaterEqual(price_n, 0) for price_n in price]
