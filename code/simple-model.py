@@ -49,6 +49,7 @@ class Configure:
         self.stepsize = datetime.strptime(
             config["TIME"]["stepsize"], "%H:%M:%S"
         ) - datetime.strptime("00:00:00", "%H:%M:%S")
+        self.times = constructTimeStamps(self.start, self.end, self.stepsize)
 
         # Generators
         self.P_dg_max = float(config["DIESEL"]["P_dg_max"])
@@ -60,114 +61,31 @@ class Configure:
 
 
 def runSimpleModel(ini):
-    times = constructTimeStamps(ini.start, ini.end, ini.stepsize)
+    model = gp.Model("simple-model")
 
-    m = gp.Model("simple-model")
-    pvVars = m.addVars(
-        len(times), len(ini.pvFiles), lb=0.0, vtype=GRB.CONTINUOUS, name="pvPowers"
-    )
-    fixedLoadVars = m.addVars(
-        len(times), 1, lb=0.0, vtype=GRB.CONTINUOUS, name="fixedLoads"
-    )
-    windVars = m.addVars(
-        len(times), len(ini.windFiles), lb=0.0, vtype=GRB.CONTINUOUS, name="windPowers"
-    )
-    gridVars = m.addVars(
-        len(times),
+    pvVars = setUpPV(model, ini)
+    windVars = setUpWind(model, ini)
+    batteryPowerVars = setUpBattery(model, ini)
+    evPowerVars = setUpEv(model, ini)
+    fixedLoadVars = setUpFixedLoads(model, ini)
+
+    gridVars = model.addVars(
+        len(ini.times),
         1,
         obj=getPriceData(ini.costFileGrid, ini.start, ini.end, stepsize=ini.stepsize),
         vtype=GRB.CONTINUOUS,
         name="gridPowers",
     )
-    dieselGeneratorsVars = m.addVars(
-        len(times),
+    dieselGeneratorsVars = model.addVars(
+        len(ini.times),
         1,
         lb=0.0,
         ub=ini.P_dg_max,
         vtype=GRB.CONTINUOUS,
         name="dieselGenerators",
     )
-    batteryPowerVars = m.addVars(
-        len(times),
-        1,
-        lb=-ini.P_bat_max,
-        ub=ini.P_bat_max,
-        vtype=GRB.CONTINUOUS,
-        name="batPowers",
-    )
-    evPowerVars = m.addVars(
-        len(times),
-        1,
-        lb=-ini.P_ev_max,
-        ub=ini.P_ev_max,
-        vtype=GRB.CONTINUOUS,
-        name="evPowers",
-    )
 
-    batteryEnergyVars = m.addVars(
-        len(times),
-        1,
-        lb=ini.SOC_bat_min * ini.E_bat_max,
-        ub=ini.SOC_bat_max * ini.E_bat_max,
-        vtype=GRB.CONTINUOUS,
-        name="batEnergys",
-    )
-    evEnergyVars = m.addVars(
-        len(times),
-        1,
-        lb=ini.SOC_ev_min * ini.E_ev_max,
-        ub=ini.SOC_ev_max * ini.E_ev_max,
-        vtype=GRB.CONTINUOUS,
-        name="evEnergys",
-    )
-
-    m.setObjective(
-        ini.CostDiesel * gp.quicksum(dieselGeneratorsVars) + gp.quicksum(gridVars),
-        GRB.MINIMIZE,
-    )
-
-    # A battery charges when the 'batteryPowerVars' value is negative and discharging otherwise
-    m.addConstrs(
-        (
-            batteryEnergyVars[i + 1, 0]
-            == batteryEnergyVars[i, 0]
-            - ini.eta_bat
-            * batteryPowerVars[i, 0]
-            * ini.stepsize.total_seconds()
-            / 3600  # stepsize: 1 hour
-            for i in range(len(times) - 1)
-        ),
-        "battery charging",
-    )
-    m.addConstrs(
-        (
-            evEnergyVars[i + 1, 0]
-            == evEnergyVars[i, 0]
-            - ini.eta_ev
-            * evPowerVars[i, 0]
-            * ini.stepsize.total_seconds()
-            / 3600  # stepsize: 1 hour
-            for i in range(len(times) - 1)
-        ),
-        "ev charging",
-    )
-
-    m.addConstr(
-        (batteryEnergyVars[0, 0] == ini.SOC_bat_init * ini.E_bat_max), "battery init"
-    )
-
-    m.addConstrs(
-        (
-            evEnergyVars[i, 0] >= 0.7 * ini.E_ev_max
-            for i in range(
-                int((ini.t_goal_ev - ini.start).total_seconds() / 3600),
-                int((ini.t_b_ev - ini.start).total_seconds() / 3600) + 1,
-            )
-        ),
-        "ev init",
-    )
-
-    m.addConstrs(
+    model.addConstrs(
         (
             gridVars.sum([i, "*"])
             + pvVars.sum([i, "*"])
@@ -176,12 +94,34 @@ def runSimpleModel(ini):
             + batteryPowerVars.sum([i, "*"])
             + evPowerVars.sum([i, "*"])
             == fixedLoadVars.sum([i, "*"])
-            for i in range(len(times))
+            for i in range(len(ini.times))
         ),
         "power balance",
     )
 
-    # Generators with fixed values
+    model.addConstrs(
+        (pvVars[i, 1] == 0 for i in range(len(ini.times))), "2nd pv panel is turned off"
+    )
+
+    model.addConstrs(
+        (windVars[i, 1] == 0 for i in range(len(ini.times))), "2nd wind panel is turned off"
+    )
+
+    model.setObjective(
+        ini.CostDiesel * gp.quicksum(dieselGeneratorsVars) + gp.quicksum(gridVars),
+        GRB.MINIMIZE,
+    )
+
+    model.optimize()
+
+    printResults(model)
+
+
+def setUpPV(model, ini):
+    pvVars = model.addVars(
+        len(ini.times), len(ini.pvFiles), lb=0.0, vtype=GRB.CONTINUOUS, name="pvPowers"
+    )
+
     if ini.loc_flag:
         print("PV data: use location")
         metadata, pvPowerValues = getSamplePvApi(
@@ -191,10 +131,33 @@ def runSimpleModel(ini):
     else:
         print("PV data: use sample files")
         pvPowerValues = getSamplePv(ini.pvFiles[0][1], ini.start, ini.end, ini.stepsize)
-    assert len(pvPowerValues) == len(times)
-    m.addConstrs(
-        (pvVars[i, 0] == pvPowerValues[i] for i in range(len(times))),
+    assert len(pvPowerValues) == len(ini.times)
+    model.addConstrs(
+        (pvVars[i, 0] == pvPowerValues[i] for i in range(len(ini.times))),
         "1st pv panel generation",
+    )
+
+    return pvVars
+
+
+def setUpFixedLoads(model, ini):
+    fixedLoadVars = model.addVars(
+        len(ini.times), 1, lb=0.0, vtype=GRB.CONTINUOUS, name="fixedLoads"
+    )
+
+    loadValues = getLoadsData(ini.loadsFile, ini.start, ini.end, ini.stepsize)
+    assert len(loadValues) == len(ini.times)
+    model.addConstrs(
+        (fixedLoadVars[i, 0] == loadValues[i] for i in range(len(ini.times))),
+        "power of fixed loads",
+    )
+
+    return fixedLoadVars
+
+
+def setUpWind(model, ini):
+    windVars = model.addVars(
+        len(ini.times), len(ini.windFiles), lb=0.0, vtype=GRB.CONTINUOUS, name="windPowers"
     )
 
     if ini.loc_flag:
@@ -208,33 +171,103 @@ def runSimpleModel(ini):
         windPowerValues = getSampleWind(
             ini.windFiles[0][1], ini.start, ini.end, ini.stepsize
         )
-    assert len(windPowerValues) == len(times)
-    m.addConstrs(
-        (windVars[i, 0] == windPowerValues[i] for i in range(len(times))),
+    assert len(windPowerValues) == len(ini.times)
+    model.addConstrs(
+        (windVars[i, 0] == windPowerValues[i] for i in range(len(ini.times))),
         "1st wind panel generation",
     )
 
-    m.addConstrs(
-        (pvVars[i, 1] == 0 for i in range(len(times))), "2nd pv panel is turned off"
+    return windVars
+
+
+def setUpBattery(model, ini):
+    batteryPowerVars = model.addVars(
+        len(ini.times),
+        1,
+        lb=-ini.P_bat_max,
+        ub=ini.P_bat_max,
+        vtype=GRB.CONTINUOUS,
+        name="batPowers",
+    )
+    batteryEnergyVars = model.addVars(
+        len(ini.times),
+        1,
+        lb=ini.SOC_bat_min * ini.E_bat_max,
+        ub=ini.SOC_bat_max * ini.E_bat_max,
+        vtype=GRB.CONTINUOUS,
+        name="batEnergys",
     )
 
-    m.addConstrs(
-        (windVars[i, 1] == 0 for i in range(len(times))), "2nd wind panel is turned off"
+    model.addConstrs(
+        (
+            batteryEnergyVars[i + 1, 0]
+            == batteryEnergyVars[i, 0]
+            - ini.eta_bat
+            * batteryPowerVars[i, 0]
+            * ini.stepsize.total_seconds()
+            / 3600  # stepsize: 1 hour
+            for i in range(len(ini.times) - 1)
+        ),
+        "battery charging",
     )
 
-    loadValues = getLoadsData(ini.loadsFile, ini.start, ini.end, ini.stepsize)
-    assert len(loadValues) == len(times)
-    m.addConstrs(
-        (fixedLoadVars[i, 0] == loadValues[i] for i in range(len(times))),
-        "power of fixed loads",
+    model.addConstr(
+        (batteryEnergyVars[0, 0] == ini.SOC_bat_init * ini.E_bat_max), "battery init"
     )
 
-    m.optimize()
+    return batteryPowerVars
 
-    for v in m.getVars():
+
+def setUpEv(model, ini):
+    evPowerVars = model.addVars(
+        len(ini.times),
+        1,
+        lb=-ini.P_ev_max,
+        ub=ini.P_ev_max,
+        vtype=GRB.CONTINUOUS,
+        name="evPowers",
+    )
+    evEnergyVars = model.addVars(
+        len(ini.times),
+        1,
+        lb=ini.SOC_ev_min * ini.E_ev_max,
+        ub=ini.SOC_ev_max * ini.E_ev_max,
+        vtype=GRB.CONTINUOUS,
+        name="evEnergys",
+    )
+
+    model.addConstrs(
+        (
+            evEnergyVars[i + 1, 0]
+            == evEnergyVars[i, 0]
+            - ini.eta_ev
+            * evPowerVars[i, 0]
+            * ini.stepsize.total_seconds()
+            / 3600  # stepsize: 1 hour
+            for i in range(len(ini.times) - 1)
+        ),
+        "ev charging",
+    )
+
+    model.addConstrs(
+        (
+            evEnergyVars[i, 0] >= 0.7 * ini.E_ev_max
+            for i in range(
+                int((ini.t_goal_ev - ini.start).total_seconds() / 3600),
+                int((ini.t_b_ev - ini.start).total_seconds() / 3600) + 1,
+            )
+        ),
+        "ev init",
+    )
+
+    return evPowerVars
+
+
+def printResults(model):
+    for v in model.getVars():
         print("%s %g" % (v.varName, v.x))
 
-    print("Obj: %g" % m.objVal)
+    print("Obj: %g" % model.objVal)
 
 
 def main(argv):
