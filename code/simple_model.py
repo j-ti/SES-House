@@ -6,10 +6,14 @@ import sys
 
 from util import constructTimeStamps, getStepsize
 
-from load_loads import getLoadsData
-from load_price import getPriceData
-
-from renew_ninja import getSamplePv, getSampleWind, getSamplePvApi, getSampleWindApi
+from data import (
+    getSamplePv,
+    getSampleWind,
+    getSamplePvApi,
+    getSampleWindApi,
+    getPriceData,
+    getLoadsData,
+)
 
 import gurobipy as gp
 from gurobipy import GRB
