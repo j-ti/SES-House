@@ -9,36 +9,32 @@ class NetworkException(Exception):
     pass
 
 
-def getSampleWind(file, timestamps):
-    return _getSample(file, timestamps)
-
-
-def getSamplePv(file, timestamps):
-    return _getSample(file, timestamps)
-
-
-def _getSample(filePath, timestamps):
-    with open(filePath, "r", encoding="utf-8") as sampleFile:
-        [sampleFile.readline() for i in range(3)]
-        data = pd.read_csv(sampleFile, parse_dates=["time", "local_time"])
-        data = data.loc[
-            (data["time"] >= timestamps[0]) & (data["time"] <= timestamps[-1])
-        ]
+def getNinja(filePath, timestamps):
+    with open(filePath, "r", encoding="utf-8") as dataFile:
+        [dataFile.readline() for i in range(3)]
+        data = pd.read_csv(
+            dataFile, parse_dates=["time", "local_time"], index_col="local_time"
+        )
+        data = data.loc[timestamps[0] : timestamps[-1]]
+        origStepsize = getStepsize(data.index)
+        wantedStepsize = getStepsize(timestamps)
+        if origStepsize > wantedStepsize:
+            data = data.resample(wantedStepsize).ffill()
+        elif origStepsize < wantedStepsize:
+            data = data.resample(wantedStepsize).mean()
         return data["electricity"]
 
 
-def getSamplePvApi(lat, long, timestamps):
-    # TODO include stepsize into getDataPv
+def getNinjaPvApi(lat, long, timestamps):
     renewNinja = RenewNinja()
-    return renewNinja.getDataPv(
+    return renewNinja.getPvData(
         lat, long, str(timestamps[0].date()), str(timestamps[-1].date())
     )
 
 
-def getSampleWindApi(lat, long, timestamps):
-    # TODO include stepsize into getDataPv
+def getNinjaWindApi(lat, long, timestamps):
     renewNinja = RenewNinja()
-    return renewNinja.getDataWind(
+    return renewNinja.getWindData(
         lat, long, str(timestamps[0].date()), str(timestamps[-1].date())
     )
 
@@ -60,7 +56,7 @@ class RenewNinja:
 
         Methods
         -------
-        getDataPv(self, lat, long, date_from, date_to, dataset = 'merra2', cap = 1.0, sys_loss = 0.1, track = 0, tilt = 35, azim = 180)
+        getPvData(self, lat, long, date_from, date_to, dataset = 'merra2', cap = 1.0, sys_loss = 0.1, track = 0, tilt = 35, azim = 180)
             get the data of the pv from renewables ninja
         """
 
@@ -73,7 +69,7 @@ class RenewNinja:
     def __del__(self):
         self.s.close()
 
-    def getDataPv(
+    def getPvData(
         self,
         lat,
         long,
@@ -142,7 +138,7 @@ class RenewNinja:
         metadata = parsed_response["metadata"]
         return metadata, data
 
-    def getDataWind(
+    def getWindData(
         self,
         lat,
         long,
@@ -204,23 +200,25 @@ class RenewNinja:
 
 
 def getLoadsData(filePath, timestamps):
-    with open(filePath, "r", encoding="utf-8") as sampleFile:
-        data = pd.read_csv(sampleFile, parse_dates=["DateTime"])
-        data = data.loc[
-            (data["DateTime"] >= timestamps[0]) & (data["DateTime"] <= timestamps[-1])
-        ]
-        data = data.set_index(data["DateTime"])
-        data = data.resample(getStepsize(timestamps)).sum()
+    with open(filePath, "r", encoding="utf-8") as dataFile:
+        data = pd.read_csv(dataFile, parse_dates=["DateTime"], index_col="DateTime")
+        data = data.loc[timestamps[0] : timestamps[-1]]
+        origStepsize = getStepsize(data.index)
+        wantedStepsize = getStepsize(timestamps)
+        if origStepsize > wantedStepsize:
+            data = data.resample(wantedStepsize).ffill()
+        elif origStepsize < wantedStepsize:
+            data = data.resample(wantedStepsize).mean()
         assert data.shape[1] <= 2
-        if len(data) == 2:
+        if data.shape[1] == 2:
             return data.iloc[:, 0] + data.iloc[:, 1]
         else:
             return data.iloc[:, 0]
 
 
 def getPriceData(filePath, timestamps):
-    with open(filePath, "r", encoding="utf-8") as sampleFile:
-        data = pd.read_csv(sampleFile, parse_dates=[0], index_col=0)
+    with open(filePath, "r", encoding="utf-8") as dataFile:
+        data = pd.read_csv(dataFile, parse_dates=["DateTime"], index_col="DateTime")
         data = data.loc[timestamps[0] : timestamps[-1]]
         origStepsize = getStepsize(data.index)
         wantedStepsize = getStepsize(timestamps)
