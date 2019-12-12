@@ -160,9 +160,7 @@ def setUpWind(model, ini):
         windPowerValues = windPowerValues.values
     else:
         print("Wind data: use sample files")
-        windPowerValues = getSampleWind(
-            ini.windFile, ini.start, ini.end, ini.stepsize
-        )
+        windPowerValues = getSampleWind(ini.windFile, ini.start, ini.end, ini.stepsize)
     assert len(windPowerValues) == len(ini.times)
     model.addConstrs(
         (windVars[i, 0] == windPowerValues[i] for i in range(len(ini.times))),
