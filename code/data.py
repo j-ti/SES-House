@@ -20,10 +20,14 @@ def getSamplePv(file, timestamps):
 def _getSample(filePath, timestamps):
     with open(filePath, "r", encoding="utf-8") as sampleFile:
         [sampleFile.readline() for i in range(3)]
-        data = pd.read_csv(sampleFile, parse_dates=["time", "local_time"])
-        data = data.loc[
-            (data["time"] >= timestamps[0]) & (data["time"] <= timestamps[-1])
-        ]
+        data = pd.read_csv(sampleFile, parse_dates=["time", "local_time"], index_col="local_time")
+        data = data.loc[timestamps[0] : timestamps[-1]]
+        origStepsize = getStepsize(data.index)
+        wantedStepsize = getStepsize(timestamps)
+        if origStepsize > wantedStepsize:
+            data = data.resample(wantedStepsize).ffill()
+        elif origStepsize < wantedStepsize:
+            data = data.resample(wantedStepsize).sum()
         return data["electricity"]
 
 
@@ -203,12 +207,14 @@ class RenewNinja:
 
 def getLoadsData(filePath, timestamps):
     with open(filePath, "r", encoding="utf-8") as sampleFile:
-        data = pd.read_csv(sampleFile, parse_dates=["DateTime"])
-        data = data.loc[
-            (data["DateTime"] >= timestamps[0]) & (data["DateTime"] <= timestamps[-1])
-        ]
-        data = data.set_index(data["DateTime"])
-        data = data.resample(getStepsize(timestamps)).sum()
+        data = pd.read_csv(sampleFile, parse_dates=["DateTime"], index_col="DateTime")
+        data = data.loc[timestamps[0] : timestamps[-1]]
+        origStepsize = getStepsize(data.index)
+        wantedStepsize = getStepsize(timestamps)
+        if origStepsize > wantedStepsize:
+            data = data.resample(wantedStepsize).ffill()
+        elif origStepsize < wantedStepsize:
+            data = data.resample(wantedStepsize).sum()
         assert data.shape[1] <= 2
         if len(data) == 2:
             return data.iloc[:, 0] + data.iloc[:, 1]

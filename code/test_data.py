@@ -60,29 +60,59 @@ class PriceTest(unittest.TestCase):
 
 
 class NinjaTest(unittest.TestCase):
+    def setUp(self):
+        self.start = datetime(2014, 1, 1, 0, 0, 0)
+        self.end = datetime(2014, 1, 1, 22, 0, 0)
+        self.windFile = "./sample/ninja_wind_52.5170_13.3889_corrected.csv"
+        self.pvFile = "./sample/ninja_pv_52.5170_13.3889_corrected.csv"
+
     def testGetSampleWind(self):
         data = getSampleWind(
-            "./sample/ninja_wind_52.5170_13.3889_corrected.csv",
+            self.windFile,
             constructTimeStamps(
-                datetime(2014, 1, 1, 0, 0, 0),
-                datetime(2014, 1, 1, 23, 00, 00),
+                self.start,
+                self.end,
                 timedelta(hours=1),
             ),
         )
-        self.assertEqual(len(data), 24)
+        self.assertEqual(len(data), 23)
         for electricity in data:
             self.assertGreaterEqual(electricity, 0)
 
+    def testGetSampleWindOversample(self):
+        stepsize = timedelta(minutes=1)
+        data = getSampleWind(
+            self.pvFile,
+            constructTimeStamps(
+                self.start,
+                self.end,
+                stepsize,
+            ),
+        )
+        self.assertEqual(len(data), 22 * 60 + 1)
+
+    def testGetSampleWindDownsample(self):
+        stepsize = timedelta(hours=2)
+        data = getSampleWind(
+            self.windFile,
+            constructTimeStamps(
+                self.start,
+                self.end,
+                stepsize,
+            ),
+        )
+        self.assertEqual(len(data), 12)
+
     def testGetSamplePv(self):
         data = getSamplePv(
-            "./sample/ninja_pv_52.5170_13.3889_corrected.csv",
+            self.pvFile,
             constructTimeStamps(
-                datetime(2014, 1, 1, 0, 0, 0),
-                datetime(2014, 1, 1, 23, 00, 00),
+                self.start,
+                self.end,
                 timedelta(hours=1),
             ),
         )
-        self.assertEqual(len(data), 24)
+        self.assertEqual(len(data), 23)
         for electricity in data:
             self.assertGreaterEqual(electricity, 0)
 
