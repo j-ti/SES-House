@@ -1,7 +1,7 @@
 import unittest
 from datetime import datetime
 
-from RenewNinja import getSamplePvApi, getSamplePv, getSampleWind
+from renew_ninja import getSamplePvApi, getSamplePv, getSampleWind
 
 
 class Test(unittest.TestCase):
