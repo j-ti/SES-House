@@ -1,36 +1,46 @@
-import datetime
 import json
-
 import pandas as pd
 import requests
 
-
-def getSampleWind(file, start, end, stepsize=datetime.timedelta(hours=1)):
-    return _getSample(file, start, end, stepsize)
+from util import getStepsize
 
 
-def getSamplePv(file, start, end, stepsize=datetime.timedelta(hours=1)):
-    return _getSample(file, start, end, stepsize)
+class NetworkException(Exception):
+    pass
 
 
-def _getSample(filePath, start, end, stepsize=datetime.timedelta(hours=1)):
+def getSampleWind(file, timestamps):
+    return _getSample(file, timestamps)
+
+
+def getSamplePv(file, timestamps):
+    return _getSample(file, timestamps)
+
+
+def _getSample(filePath, timestamps):
     with open(filePath, "r", encoding="utf-8") as sampleFile:
         [sampleFile.readline() for i in range(3)]
         data = pd.read_csv(sampleFile, parse_dates=["time", "local_time"])
-        data = data.loc[(data["time"] >= start) & (data["time"] <= end)]
+        data = data.loc[
+            (data["time"] >= timestamps[0]) & (data["time"] <= timestamps[-1])
+        ]
         return data["electricity"]
 
 
-def getSamplePvApi(lat, long, start, end, stepsize=datetime.timedelta(hours=1)):
+def getSamplePvApi(lat, long, timestamps):
     # TODO include stepsize into getDataPv
     renewNinja = RenewNinja()
-    return renewNinja.getDataPv(lat, long, str(start.date()), str(end.date()))
+    return renewNinja.getDataPv(
+        lat, long, str(timestamps[0].date()), str(timestamps[-1].date())
+    )
 
 
-def getSampleWindApi(lat, long, start, end, stepsize=datetime.timedelta(hours=1)):
+def getSampleWindApi(lat, long, timestamps):
     # TODO include stepsize into getDataPv
     renewNinja = RenewNinja()
-    return renewNinja.getDataWind(lat, long, str(start.date()), str(end.date()))
+    return renewNinja.getDataWind(
+        lat, long, str(timestamps[0].date()), str(timestamps[-1].date())
+    )
 
 
 class RenewNinja:
@@ -121,6 +131,9 @@ class RenewNinja:
             "format": "json",
         }
         r = self.s.get(url, params=args)
+        if r.status_code != 200:
+            print(r.text)
+            raise NetworkException()
 
         # Parse JSON to get a pandas.DataFrame of data and dict of metadata
         parsed_response = json.loads(r.text)
@@ -178,6 +191,9 @@ class RenewNinja:
             "format": "json",
         }
         r = self.s.get(url, params=args)
+        if r.status_code != 200:
+            print(r.text)
+            raise NetworkException()
 
         # Parse JSON to get a pandas.DataFrame of data and dict of metadata
         parsed_response = json.loads(r.text)
@@ -185,3 +201,32 @@ class RenewNinja:
         data = pd.read_json(json.dumps(parsed_response["data"]), orient="index")
         metadata = parsed_response["metadata"]
         return metadata, data
+
+
+def getLoadsData(filePath, timestamps):
+    with open(filePath, "r", encoding="utf-8") as sampleFile:
+        data = pd.read_csv(sampleFile, parse_dates=["DateTime"])
+        data = data.loc[
+            (data["DateTime"] >= timestamps[0]) & (data["DateTime"] <= timestamps[-1])
+        ]
+        data = data.set_index(data["DateTime"])
+        data = data.resample(getStepsize(timestamps)).sum()
+        assert data.shape[1] <= 2
+        if len(data) == 2:
+            return data.iloc[:, 0] + data.iloc[:, 1]
+        else:
+            return data.iloc[:, 0]
+
+
+def getPriceData(filePath, timestamps):
+    with open(filePath, "r", encoding="utf-8") as sampleFile:
+        data = pd.read_csv(sampleFile, parse_dates=[0], index_col=0)
+        data = data.loc[timestamps[0] : timestamps[-1]]
+        origStepsize = getStepsize(data.index)
+        wantedStepsize = getStepsize(timestamps)
+        if origStepsize > wantedStepsize:
+            data = data.resample(wantedStepsize).ffill()
+        elif origStepsize < wantedStepsize:
+            data = data.resample(wantedStepsize).mean()
+        assert data.shape[1] <= 2
+        return data.iloc[:, 0]
