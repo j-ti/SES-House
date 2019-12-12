@@ -220,7 +220,7 @@ def getLoadsData(filePath, timestamps):
 
 def getPriceData(filePath, timestamps):
     with open(filePath, "r", encoding="utf-8") as sampleFile:
-        data = pd.read_csv(sampleFile, parse_dates=[0], index_col=0)
+        data = pd.read_csv(sampleFile, parse_dates=["DateTime"], index_col="DateTime")
         data = data.loc[timestamps[0] : timestamps[-1]]
         origStepsize = getStepsize(data.index)
         wantedStepsize = getStepsize(timestamps)
