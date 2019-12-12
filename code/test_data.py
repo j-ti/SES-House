@@ -14,15 +14,17 @@ from util import constructTimeStamps
 
 
 class LoadsTest(unittest.TestCase):
+    def setUp(self):
+        self.start = datetime(2014, 1, 1, 0, 0, 0)
+        self.end = datetime(2014, 1, 1, 22, 0, 0)
+
     def testGetLoadsData(self):
-        start = datetime(2014, 1, 1, 0, 0, 0)
-        end = datetime(2014, 1, 1, 23, 0, 0)
         stepsize = timedelta(hours=1)
         loads = getLoadsData(
             "./sample/pecan-home-grid_solar-manipulated.csv",
-            constructTimeStamps(start, end, stepsize),
+            constructTimeStamps(self.start, self.end, stepsize),
         )
-        self.assertEqual(len(constructTimeStamps(start, end, stepsize)), len(loads))
+        self.assertEqual(len(constructTimeStamps(self.start, self.end, stepsize)), len(loads))
         [self.assertGreaterEqual(load, 0) for load in loads]
 
 
