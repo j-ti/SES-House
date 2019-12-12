@@ -56,7 +56,7 @@ class Configure:
         self.CostDiesel = float(config["DIESEL"]["CostDiesel"])
         self.pvFile = config["PV"]["file"]
         self.windFile = config["WIND"]["file"]
-        self.loadsFile = config["LOADS"]["file1"]
+        self.loadsFile = config["LOADS"]["file"]
         self.costFileGrid = config["COST"]["file_grid"]
 
 
