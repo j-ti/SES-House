@@ -156,26 +156,6 @@ def runSimpleModel(ini):
         (batteryEnergyVars[0, 0] == ini.SOC_bat_init * ini.E_bat_max), "battery init"
     )
 
-    # m.addConstrs(
-    #     (
-    #         evPowerVars[i, 0] == 0
-    #         for i in range(int((ini.t_a_ev - ini.start).total_seconds() / 3600))
-    #     ),
-    #     "ev no charging before t_a",
-    # )
-    # m.addConstrs(
-    #     (
-    #         evPowerVars[i, 0] == 0
-    #         for i in range(
-    #             int((ini.t_b_ev - ini.start).total_seconds() / 3600),
-    #             int((ini.end - ini.t_b_ev).total_seconds() / 3600),
-    #         )
-    #     ),
-    #     "ev no charging before t_a",
-    # )
-
-    # m.addConstr((evEnergyVars[(ini.t_a_ev-ini.start).total_seconds()/3600, 0] == ini.SOC_ev_init * ini.E_ev_max), "ev init")
-
     m.addConstrs(
         (
             evEnergyVars[i, 0] >= 0.7 * ini.E_ev_max
