@@ -4,6 +4,10 @@ import pandas as pd
 import requests
 
 
+class NetworkException(Exception):
+    pass
+
+
 def getSampleWind(file, timestamps):
     return _getSample(file, timestamps)
 
@@ -126,6 +130,9 @@ class RenewNinja:
             "format": "json",
         }
         r = self.s.get(url, params=args)
+        if r.status_code != 200:
+            print(r.text)
+            raise NetworkException()
 
         # Parse JSON to get a pandas.DataFrame of data and dict of metadata
         parsed_response = json.loads(r.text)
@@ -183,6 +190,9 @@ class RenewNinja:
             "format": "json",
         }
         r = self.s.get(url, params=args)
+        if r.status_code != 200:
+            print(r.text)
+            raise NetworkException()
 
         # Parse JSON to get a pandas.DataFrame of data and dict of metadata
         parsed_response = json.loads(r.text)
