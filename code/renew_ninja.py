@@ -1,36 +1,41 @@
-import datetime
 import json
 
 import pandas as pd
 import requests
 
 
-def getSampleWind(file, start, end, stepsize=datetime.timedelta(hours=1)):
-    return _getSample(file, start, end, stepsize)
+def getSampleWind(file, timestamps):
+    return _getSample(file, timestamps)
 
 
-def getSamplePv(file, start, end, stepsize=datetime.timedelta(hours=1)):
-    return _getSample(file, start, end, stepsize)
+def getSamplePv(file, timestamps):
+    return _getSample(file, timestamps)
 
 
-def _getSample(filePath, start, end, stepsize=datetime.timedelta(hours=1)):
+def _getSample(filePath, timestamps):
     with open(filePath, "r", encoding="utf-8") as sampleFile:
         [sampleFile.readline() for i in range(3)]
         data = pd.read_csv(sampleFile, parse_dates=["time", "local_time"])
-        data = data.loc[(data["time"] >= start) & (data["time"] <= end)]
+        data = data.loc[
+            (data["time"] >= timestamps[0]) & (data["time"] <= timestamps[-1])
+        ]
         return data["electricity"]
 
 
-def getSamplePvApi(lat, long, start, end, stepsize=datetime.timedelta(hours=1)):
+def getSamplePvApi(lat, long, timestamps):
     # TODO include stepsize into getDataPv
     renewNinja = RenewNinja()
-    return renewNinja.getDataPv(lat, long, str(start.date()), str(end.date()))
+    return renewNinja.getDataPv(
+        lat, long, str(timestamps[0].date()), str(timestamps[-1].date())
+    )
 
 
-def getSampleWindApi(lat, long, start, end, stepsize=datetime.timedelta(hours=1)):
+def getSampleWindApi(lat, long, timestamps):
     # TODO include stepsize into getDataPv
     renewNinja = RenewNinja()
-    return renewNinja.getDataWind(lat, long, str(start.date()), str(end.date()))
+    return renewNinja.getDataWind(
+        lat, long, str(timestamps[0].date()), str(timestamps[-1].date())
+    )
 
 
 class RenewNinja:
