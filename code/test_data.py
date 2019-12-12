@@ -98,11 +98,7 @@ class NinjaTest(unittest.TestCase):
             metadata, data = getNinjaPvApi(
                 52.5170,
                 13.3889,
-                constructTimeStamps(
-                    datetime(2014, 1, 1, 0, 0, 0),
-                    datetime(2014, 1, 1, 23, 00, 00),
-                    timedelta(hours=1),
-                ),
+                constructTimeStamps(self.start, self.end, timedelta(hours=1)),
             )
             self.assertEqual(len(data), 24)
         except NetworkException:
