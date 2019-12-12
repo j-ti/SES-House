@@ -12,7 +12,7 @@ class Test(unittest.TestCase):
             "./sample/ninja_wind_52.5170_13.3889_corrected.csv",
             constructTimeStamps(
                 datetime(2014, 1, 1, 0, 0, 0),
-                datetime(2014, 1, 1, 23, 59, 59),
+                datetime(2014, 1, 1, 23, 00, 00),
                 timedelta(hours=1),
             ),
         )
@@ -25,7 +25,7 @@ class Test(unittest.TestCase):
             "./sample/ninja_pv_52.5170_13.3889_corrected.csv",
             constructTimeStamps(
                 datetime(2014, 1, 1, 0, 0, 0),
-                datetime(2014, 1, 1, 23, 59, 59),
+                datetime(2014, 1, 1, 23, 00, 00),
                 timedelta(hours=1),
             ),
         )
@@ -40,7 +40,7 @@ class Test(unittest.TestCase):
                 13.3889,
                 constructTimeStamps(
                     datetime(2014, 1, 1, 0, 0, 0),
-                    datetime(2014, 1, 1, 23, 59, 59),
+                    datetime(2014, 1, 1, 23, 00, 00),
                     timedelta(hours=1),
                 ),
             )

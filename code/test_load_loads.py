@@ -9,7 +9,7 @@ from util import constructTimeStamps
 class Test(unittest.TestCase):
     def testGetLoadsData(self):
         start = datetime(2014, 1, 1, 0, 0, 0)
-        end = datetime(2014, 1, 1, 23, 59, 59)
+        end = datetime(2014, 1, 1, 23, 0, 0)
         stepsize = timedelta(hours=1)
         loads = getLoadsData(
             "./sample/pecan-home-grid_solar-manipulated.csv",
