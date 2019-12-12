@@ -9,7 +9,7 @@ from util import constructTimeStamps
 from load_loads import getLoadsData
 from load_price import getPriceData
 
-from RenewNinja import getSamplePv, getSampleWind, getSamplePvApi, getSampleWindApi
+from renew_ninja import getSamplePv, getSampleWind, getSamplePvApi, getSampleWindApi
 
 import gurobipy as gp
 from gurobipy import GRB
