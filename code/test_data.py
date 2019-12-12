@@ -10,17 +10,35 @@ class LoadsTest(unittest.TestCase):
     def setUp(self):
         self.start = datetime(2014, 1, 1, 0, 0, 0)
         self.end = datetime(2014, 1, 1, 22, 0, 0)
+        self.dataFile = "./sample/pecan-home-grid_solar-manipulated.csv"
 
     def testGetLoadsData(self):
         stepsize = timedelta(hours=1)
         loads = getLoadsData(
-            "./sample/pecan-home-grid_solar-manipulated.csv",
-            constructTimeStamps(self.start, self.end, stepsize),
+            self.dataFile, constructTimeStamps(self.start, self.end, stepsize)
         )
         self.assertEqual(
             len(constructTimeStamps(self.start, self.end, stepsize)), len(loads)
         )
         [self.assertGreaterEqual(load, 0) for load in loads]
+
+    def testGetLoadsDataDownsample(self):
+        stepsize = timedelta(hours=2)
+        loads = getLoadsData(
+            self.dataFile, constructTimeStamps(self.start, self.end, stepsize)
+        )
+        self.assertEqual(len(loads), 12)
+        self.assertAlmostEqual(loads[0], 0.430375)
+
+    def testGetLoadsDataOversample(self):
+        stepsize = timedelta(minutes=1)
+        loads = getLoadsData(
+            self.dataFile, constructTimeStamps(self.start, self.end, stepsize)
+        )
+        self.assertEqual(len(loads), 22 * 60 + 1)
+        self.assertEqual(loads[0], 0.500)
+        for index in range(14):
+            self.assertEqual(loads[index], loads[index + 1])
 
 
 class PriceTest(unittest.TestCase):
