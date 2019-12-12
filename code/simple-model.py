@@ -54,8 +54,8 @@ class Configure:
         # Generators
         self.P_dg_max = float(config["DIESEL"]["P_dg_max"])
         self.CostDiesel = float(config["DIESEL"]["CostDiesel"])
-        self.pvFiles = config.items("PV")
-        self.windFiles = config.items("WIND")
+        self.pvFile = config["PV"]["file"]
+        self.windFile = config["WIND"]["file"]
         self.loadsFile = config["LOADS"]["file1"]
         self.costFileGrid = config["COST"]["file_grid"]
 
@@ -99,14 +99,6 @@ def runSimpleModel(ini):
         "power balance",
     )
 
-    model.addConstrs(
-        (pvVars[i, 1] == 0 for i in range(len(ini.times))), "2nd pv panel is turned off"
-    )
-
-    model.addConstrs(
-        (windVars[i, 1] == 0 for i in range(len(ini.times))), "2nd wind panel is turned off"
-    )
-
     model.setObjective(
         ini.CostDiesel * gp.quicksum(dieselGeneratorsVars) + gp.quicksum(gridVars),
         GRB.MINIMIZE,
@@ -119,7 +111,7 @@ def runSimpleModel(ini):
 
 def setUpPV(model, ini):
     pvVars = model.addVars(
-        len(ini.times), len(ini.pvFiles), lb=0.0, vtype=GRB.CONTINUOUS, name="pvPowers"
+        len(ini.times), 1, lb=0.0, vtype=GRB.CONTINUOUS, name="pvPowers"
     )
 
     if ini.loc_flag:
@@ -130,7 +122,7 @@ def setUpPV(model, ini):
         pvPowerValues = pvPowerValues.values
     else:
         print("PV data: use sample files")
-        pvPowerValues = getSamplePv(ini.pvFiles[0][1], ini.start, ini.end, ini.stepsize)
+        pvPowerValues = getSamplePv(ini.pvFile, ini.start, ini.end, ini.stepsize)
     assert len(pvPowerValues) == len(ini.times)
     model.addConstrs(
         (pvVars[i, 0] == pvPowerValues[i] for i in range(len(ini.times))),
@@ -157,7 +149,7 @@ def setUpFixedLoads(model, ini):
 
 def setUpWind(model, ini):
     windVars = model.addVars(
-        len(ini.times), len(ini.windFiles), lb=0.0, vtype=GRB.CONTINUOUS, name="windPowers"
+        len(ini.times), 1, lb=0.0, vtype=GRB.CONTINUOUS, name="windPowers"
     )
 
     if ini.loc_flag:
@@ -169,7 +161,7 @@ def setUpWind(model, ini):
     else:
         print("Wind data: use sample files")
         windPowerValues = getSampleWind(
-            ini.windFiles[0][1], ini.start, ini.end, ini.stepsize
+            ini.windFile, ini.start, ini.end, ini.stepsize
         )
     assert len(windPowerValues) == len(ini.times)
     model.addConstrs(
