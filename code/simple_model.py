@@ -76,6 +76,7 @@ def runSimpleModel(ini):
     gridVars = model.addVars(
         len(ini.timestamps),
         1,
+        lb=-GRB.INFINITY,
         obj=getPriceData(ini.costFileGrid, ini.timestamps),
         vtype=GRB.CONTINUOUS,
         name="gridPowers",
