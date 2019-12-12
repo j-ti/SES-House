@@ -210,7 +210,7 @@ def getLoadsData(filePath, timestamps):
         elif origStepsize < wantedStepsize:
             data = data.resample(wantedStepsize).sum()
         assert data.shape[1] <= 2
-        if len(data) == 2:
+        if data.shape[1] == 2:
             return data.iloc[:, 0] + data.iloc[:, 1]
         else:
             return data.iloc[:, 0]
