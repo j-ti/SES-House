@@ -21,7 +21,7 @@ def getNinja(filePath, timestamps):
         if origStepsize > wantedStepsize:
             data = data.resample(wantedStepsize).ffill()
         elif origStepsize < wantedStepsize:
-            data = data.resample(wantedStepsize).sum()
+            data = data.resample(wantedStepsize).mean()
         return data["electricity"]
 
 
@@ -208,7 +208,7 @@ def getLoadsData(filePath, timestamps):
         if origStepsize > wantedStepsize:
             data = data.resample(wantedStepsize).ffill()
         elif origStepsize < wantedStepsize:
-            data = data.resample(wantedStepsize).sum()
+            data = data.resample(wantedStepsize).mean()
         assert data.shape[1] <= 2
         if data.shape[1] == 2:
             return data.iloc[:, 0] + data.iloc[:, 1]
