@@ -28,7 +28,6 @@ def _getSample(filePath, timestamps):
 
 
 def getSamplePvApi(lat, long, timestamps):
-    # TODO include stepsize into getDataPv
     renewNinja = RenewNinja()
     return renewNinja.getDataPv(
         lat, long, str(timestamps[0].date()), str(timestamps[-1].date())
@@ -36,7 +35,6 @@ def getSamplePvApi(lat, long, timestamps):
 
 
 def getSampleWindApi(lat, long, timestamps):
-    # TODO include stepsize into getDataPv
     renewNinja = RenewNinja()
     return renewNinja.getDataWind(
         lat, long, str(timestamps[0].date()), str(timestamps[-1].date())
