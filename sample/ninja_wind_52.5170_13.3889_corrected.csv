@@ -2,6 +2,7 @@
 # Units: time in UTC, local_time in Europe/Berlin, electricity in kW, wind_speed in m/s
 "# {""units"": {""time"": ""UTC"""," ""local_time"": ""Europe/Berlin"""," ""electricity"": ""kW"""," ""wind_speed"": ""m/s""}"
 time,local_time,electricity,wind_speed
+31/12/2013 23:00,1/1/2014 0:00,0.174,5.53
 1/1/2014 0:00,1/1/2014 1:00,0.174,5.53
 1/1/2014 1:00,1/1/2014 2:00,0.18,5.605
 1/1/2014 2:00,1/1/2014 3:00,0.18,5.606

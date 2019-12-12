@@ -2,6 +2,7 @@
 # Units: time in UTC, local_time in Europe/Berlin, electricity in kW, irradiance_direct in kW/m??, irradiance_diffuse in kW/m??, temperature in ??C
 "# {""units"": {""time"": ""UTC"""," ""local_time"": ""Europe/Berlin"""," ""electricity"": ""kW"""," ""irradiance_direct"": ""kW/m\u00b2"""," ""irradiance_diffuse"": ""kW/m\u00b2"""," ""temperature"": ""\u00baC""}"
 time,local_time,electricity,irradiance_direct,irradiance_diffuse,temperature
+31/12/2013 23:00,1/1/2014 0:00,0,0,0,-1.666
 1/1/2014 0:00,1/1/2014 1:00,0,0,0,-1.706
 1/1/2014 1:00,1/1/2014 2:00,0,0,0,-1.664
 1/1/2014 2:00,1/1/2014 3:00,0,0,0,-1.671
