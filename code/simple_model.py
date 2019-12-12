@@ -6,14 +6,7 @@ import sys
 
 from util import constructTimeStamps, getStepsize
 
-from data import (
-    getSamplePv,
-    getSampleWind,
-    getSamplePvApi,
-    getSampleWindApi,
-    getPriceData,
-    getLoadsData,
-)
+from data import getNinja, getNinjaPvApi, getNinjaWindApi, getPriceData, getLoadsData
 
 import gurobipy as gp
 from gurobipy import GRB
@@ -120,13 +113,13 @@ def setUpPV(model, ini):
 
     if ini.loc_flag:
         print("PV data: use location")
-        metadata, pvPowerValues = getSamplePvApi(
+        metadata, pvPowerValues = getNinjaPvApi(
             ini.loc_lat, ini.loc_lon, ini.timestamps
         )
         pvPowerValues = pvPowerValues.values
     else:
         print("PV data: use sample files")
-        pvPowerValues = getSamplePv(ini.pvFile, ini.timestamps)
+        pvPowerValues = getNinja(ini.pvFile, ini.timestamps)
     assert len(pvPowerValues) == len(ini.timestamps)
     model.addConstrs(
         (pvVars[i, 0] == pvPowerValues[i] for i in range(len(ini.timestamps))),
@@ -158,13 +151,13 @@ def setUpWind(model, ini):
 
     if ini.loc_flag:
         print("Wind data: use location")
-        metadata, windPowerValues = getSampleWindApi(
+        metadata, windPowerValues = getNinjaWindApi(
             ini.loc_lat, ini.loc_lon, ini.timestamps
         )
         windPowerValues = windPowerValues.values
     else:
         print("Wind data: use sample files")
-        windPowerValues = getSampleWind(ini.windFile, ini.timestamps)
+        windPowerValues = getNinja(ini.windFile, ini.timestamps)
     assert len(windPowerValues) == len(ini.timestamps)
     model.addConstrs(
         (windVars[i, 0] == windPowerValues[i] for i in range(len(ini.timestamps))),
