@@ -58,9 +58,14 @@ class Configure:
         self.windFile = config["WIND"]["file"]
         self.loadsFile = config["LOADS"]["file"]
         self.costFileGrid = config["COST"]["file_grid"]
+        self.co2Grid = config["CO2"]["grid_CO2"]
+        self.co2Diesel = config["CO2"]["diesel_CO2"]
+
+
 
 
 def runSimpleModel(ini):
+
     model = gp.Model("simple-model")
 
     pvVars = setUpPV(model, ini)
@@ -72,10 +77,12 @@ def runSimpleModel(ini):
     gridVars = model.addVars(
         len(ini.times),
         1,
-        obj=getPriceData(ini.costFileGrid, ini.start, ini.end, stepsize=ini.stepsize),
+        # obj=getPriceData(ini.costFileGrid, ini.start, ini.end, stepsize=ini.stepsize),
+        obj=ini.CostDiesel,
         vtype=GRB.CONTINUOUS,
         name="gridPowers",
     )
+
     dieselGeneratorsVars = model.addVars(
         len(ini.times),
         1,
@@ -99,9 +106,20 @@ def runSimpleModel(ini):
         "power balance",
     )
 
-    model.setObjective(
-        ini.CostDiesel * gp.quicksum(dieselGeneratorsVars) + gp.quicksum(gridVars),
-        GRB.MINIMIZE,
+    model.setAttr("ModelSense", 1)
+    model.setObjectiveN(
+        ini.CostDiesel * gp.quicksum(dieselGeneratorsVars) + gp.quicksum(gridVars[grid]*ini.CostDiesel for grid in gridVars),
+        0,  # index
+        1,  # priority
+    )
+
+    model.setObjectiveN(
+        gp.quicksum(
+            dieselGeneratorsVars[powerDiesel]*ini.co2Diesel for powerDiesel in dieselGeneratorsVars
+        )
+        + gp.quicksum(gridVars[powerGrid]*ini.co2Grid for powerGrid in gridVars),
+        1,  # index
+        0,  # priority
     )
 
     model.optimize()
@@ -244,7 +262,7 @@ def setUpEv(model, ini):
             evEnergyVars[i, 0] >= 0.7 * ini.E_ev_max
             for i in range(
                 int((ini.t_goal_ev - ini.start).total_seconds() / 3600),
-                int((ini.t_b_ev - ini.start).total_seconds() / 3600) + 1,
+                int((ini.t_b_ev - ini.start).total_seconds() / 3600)-1,
             )
         ),
         "ev init",
@@ -256,8 +274,9 @@ def setUpEv(model, ini):
 def printResults(model):
     for v in model.getVars():
         print("%s %g" % (v.varName, v.x))
-
-    print("Obj: %g" % model.objVal)
+    for o in range(model.NumObj):
+        model.params.ObjNumber = o
+        print("Obj: %g" % model.ObjNVal)
 
 
 def main(argv):
