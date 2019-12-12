@@ -14,7 +14,7 @@ class Test(unittest.TestCase):
                 datetime(2014, 1, 1, 0, 0, 0),
                 datetime(2014, 1, 1, 23, 59, 59),
                 timedelta(hours=1),
-            )
+            ),
         )
         self.assertEqual(len(data), 24)
         for electricity in data:
