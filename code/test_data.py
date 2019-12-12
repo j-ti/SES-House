@@ -2,14 +2,7 @@ import unittest
 
 from datetime import datetime, timedelta
 
-from data import (
-    getPriceData,
-    getLoadsData,
-    getSamplePvApi,
-    getSamplePv,
-    getSampleWind,
-    NetworkException,
-)
+from data import getPriceData, getLoadsData, getNinjaPvApi, getNinja, NetworkException
 from util import constructTimeStamps
 
 
@@ -24,7 +17,9 @@ class LoadsTest(unittest.TestCase):
             "./sample/pecan-home-grid_solar-manipulated.csv",
             constructTimeStamps(self.start, self.end, stepsize),
         )
-        self.assertEqual(len(constructTimeStamps(self.start, self.end, stepsize)), len(loads))
+        self.assertEqual(
+            len(constructTimeStamps(self.start, self.end, stepsize)), len(loads)
+        )
         [self.assertGreaterEqual(load, 0) for load in loads]
 
 
@@ -68,59 +63,39 @@ class NinjaTest(unittest.TestCase):
         self.windFile = "./sample/ninja_wind_52.5170_13.3889_corrected.csv"
         self.pvFile = "./sample/ninja_pv_52.5170_13.3889_corrected.csv"
 
-    def testGetSampleWind(self):
-        data = getSampleWind(
-            self.windFile,
-            constructTimeStamps(
-                self.start,
-                self.end,
-                timedelta(hours=1),
-            ),
+    def testGetNinjaWindFile(self):
+        data = getNinja(
+            self.windFile, constructTimeStamps(self.start, self.end, timedelta(hours=1))
         )
         self.assertEqual(len(data), 23)
         for electricity in data:
             self.assertGreaterEqual(electricity, 0)
 
-    def testGetSampleWindOversample(self):
+    def testGetNinjaWindFileOversample(self):
         stepsize = timedelta(minutes=1)
-        data = getSampleWind(
-            self.pvFile,
-            constructTimeStamps(
-                self.start,
-                self.end,
-                stepsize,
-            ),
+        data = getNinja(
+            self.pvFile, constructTimeStamps(self.start, self.end, stepsize)
         )
         self.assertEqual(len(data), 22 * 60 + 1)
 
-    def testGetSampleWindDownsample(self):
+    def testGetNinjaWindFileDownsample(self):
         stepsize = timedelta(hours=2)
-        data = getSampleWind(
-            self.windFile,
-            constructTimeStamps(
-                self.start,
-                self.end,
-                stepsize,
-            ),
+        data = getNinja(
+            self.windFile, constructTimeStamps(self.start, self.end, stepsize)
         )
         self.assertEqual(len(data), 12)
 
-    def testGetSamplePv(self):
-        data = getSamplePv(
-            self.pvFile,
-            constructTimeStamps(
-                self.start,
-                self.end,
-                timedelta(hours=1),
-            ),
+    def testGetNinjaPvFile(self):
+        data = getNinja(
+            self.pvFile, constructTimeStamps(self.start, self.end, timedelta(hours=1))
         )
         self.assertEqual(len(data), 23)
         for electricity in data:
             self.assertGreaterEqual(electricity, 0)
 
-    def testGetSamplePvApi(self):
+    def testGetNinjaPvApi(self):
         try:
-            metadata, data = getSamplePvApi(
+            metadata, data = getNinjaPvApi(
                 52.5170,
                 13.3889,
                 constructTimeStamps(
