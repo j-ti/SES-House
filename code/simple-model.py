@@ -46,7 +46,9 @@ class Configure:
         # Time frame of optimization
         self.start = datetime.strptime(config["TIME"]["start"], "20%y-%m-%d %H:%M:%S")
         self.end = datetime.strptime(config["TIME"]["end"], "20%y-%m-%d %H:%M:%S")
-        self.stepsize = datetime.strptime(config["TIME"]["stepsize"], "%H:%M:%S") - datetime.strptime("00:00:00", "%H:%M:%S")
+        self.stepsize = datetime.strptime(
+            config["TIME"]["stepsize"], "%H:%M:%S"
+        ) - datetime.strptime("00:00:00", "%H:%M:%S")
 
         # Generators
         self.P_dg_max = float(config["DIESEL"]["P_dg_max"])
@@ -62,13 +64,13 @@ def runSimpleModel(ini):
 
     m = gp.Model("simple-model")
     pvVars = m.addVars(
-        len(times), len(ini.pvFiles), lb=0.0, vtype=GRB.CONTINUOUS, name="pvPowers",
+        len(times), len(ini.pvFiles), lb=0.0, vtype=GRB.CONTINUOUS, name="pvPowers"
     )
     fixedLoadVars = m.addVars(
         len(times), 1, lb=0.0, vtype=GRB.CONTINUOUS, name="fixedLoads"
     )
     windVars = m.addVars(
-        len(times), len(ini.windFiles), lb=0.0, vtype=GRB.CONTINUOUS, name="windPowers",
+        len(times), len(ini.windFiles), lb=0.0, vtype=GRB.CONTINUOUS, name="windPowers"
     )
     gridVars = m.addVars(
         len(times),
