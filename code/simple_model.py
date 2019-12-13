@@ -105,6 +105,8 @@ def runSimpleModel(ini):
 
     model.optimize()
 
+    model.write("./results/model.sol")
+
     printResults(model)
 
 
