@@ -84,13 +84,13 @@ def runSimpleModel(ini):
 
     model.addConstrs(
         (
-            gridVars.sum([i, "*"])
-            + pvVars.sum([i, "*"])
-            + windVars.sum([i, "*"])
-            + dieselGeneratorsVars.sum([i, "*"])
-            + batteryPowerVars.sum([i, "*"])
-            + evPowerVars.sum([i, "*"])
-            == fixedLoadVars.sum([i, "*"])
+            gridVars.sum(i, "*")
+            + pvVars.sum(i, "*")
+            + windVars.sum(i, "*")
+            + dieselGeneratorsVars.sum(i, "*")
+            + batteryPowerVars.sum(i, "*")
+            + evPowerVars.sum(i, "*")
+            == fixedLoadVars.sum(i, "*")
             for i in range(len(ini.timestamps))
         ),
         "power balance",
