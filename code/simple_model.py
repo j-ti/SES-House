@@ -70,7 +70,6 @@ def runSimpleModel(ini):
         len(ini.timestamps),
         1,
         lb=-GRB.INFINITY,
-        obj=getPriceData(ini.costFileGrid, ini.timestamps),
         vtype=GRB.CONTINUOUS,
         name="gridPowers",
     )
@@ -85,20 +84,22 @@ def runSimpleModel(ini):
 
     model.addConstrs(
         (
-            gridVars.sum([i, "*"])
-            + pvVars.sum([i, "*"])
-            + windVars.sum([i, "*"])
-            + dieselGeneratorsVars.sum([i, "*"])
-            + batteryPowerVars.sum([i, "*"])
-            + evPowerVars.sum([i, "*"])
-            == fixedLoadVars.sum([i, "*"])
+            gridVars.sum(i, "*")
+            + pvVars.sum(i, "*")
+            + windVars.sum(i, "*")
+            + dieselGeneratorsVars.sum(i, "*")
+            + batteryPowerVars.sum(i, "*")
+            + evPowerVars.sum(i, "*")
+            == fixedLoadVars.sum(i, "*")
             for i in range(len(ini.timestamps))
         ),
         "power balance",
     )
 
+    prices = getPriceData(ini.costFileGrid, ini.timestamps)
     model.setObjective(
-        ini.CostDiesel * gp.quicksum(dieselGeneratorsVars) + gp.quicksum(gridVars),
+        ini.CostDiesel * gp.quicksum(dieselGeneratorsVars)
+        + sum([gridVars[index, 0] * prices[index] for index in range(len(prices))]),
         GRB.MINIMIZE,
     )
 

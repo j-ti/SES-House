@@ -211,9 +211,12 @@ def getLoadsData(filePath, timestamps):
             data = data.resample(wantedStepsize).mean()
         assert data.shape[1] <= 2
         if data.shape[1] == 2:
-            return data.iloc[:, 0] + data.iloc[:, 1]
+            loads = data.iloc[:, 0] + data.iloc[:, 1]
         else:
-            return data.iloc[:, 0]
+            loads = data.iloc[:, 0]
+        for value in loads:
+            assert value >= 0
+        return loads
 
 
 def getPriceData(filePath, timestamps):
