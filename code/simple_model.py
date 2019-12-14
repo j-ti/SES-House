@@ -111,7 +111,11 @@ def runSimpleModel(ini):
 
     model.optimize()
 
-    file = "./results/" + str(datetime.now()).replace(' ', '_').replace(':', '-')+"_res.sol"
+    file = (
+        "./results/"
+        + str(datetime.now()).replace(" ", "_").replace(":", "-")
+        + "_res.sol"
+    )
     model.write(file)
 
     printResults(model)
@@ -302,7 +306,7 @@ def printResults(model):
 
 def main(argv):
 
-    if "results" not in os.listdir('.'):
+    if "results" not in os.listdir("."):
         os.mkdir("results")
     config = configparser.ConfigParser()
     config.read(argv[1])
