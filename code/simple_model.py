@@ -126,7 +126,7 @@ def setObjective(model, ini, dieselGeneratorsVars, gridVars):
 
     model.setObjectiveN(
         ini.CostDiesel * gp.quicksum(dieselGeneratorsVars)
-        + sum([gridVars[index, 0] * prices[index] for index in range(len(prices))]),
+        + sum([gridVars[index, 0] * price for index, price in enumerate(prices)]),
         int(ini.goal is not Goal.MINIMIZE_COST),
         weight=int(ini.goal is Goal.MINIMIZE_COST),
         name=str(Goal.MINIMIZE_COST),
