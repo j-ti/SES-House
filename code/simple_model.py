@@ -4,7 +4,7 @@ import configparser
 from datetime import datetime
 import sys
 
-
+from data import getNinja, getNinjaPvApi, getNinjaWindApi, getPriceData, getLoadsData
 
 import gurobipy as gp
 from gurobipy import GRB
@@ -74,7 +74,7 @@ def runSimpleModel(ini):
     gridVars = model.addVars(
         len(ini.timestamps),
         1,
-        obj=getPriceData(ini.costFileGrid, ini.timestamps),
+        lb=-GRB.INFINITY,
         vtype=GRB.CONTINUOUS,
         name="gridPowers",
     )
@@ -90,34 +90,29 @@ def runSimpleModel(ini):
 
     model.addConstrs(
         (
-            gridVars.sum([i, "*"])
-            + pvVars.sum([i, "*"])
-            + windVars.sum([i, "*"])
-            + dieselGeneratorsVars.sum([i, "*"])
-            + batteryPowerVars.sum([i, "*"])
-            + evPowerVars.sum([i, "*"])
-            == fixedLoadVars.sum([i, "*"])
+            gridVars.sum(i, "*")
+            + pvVars.sum(i, "*")
+            + windVars.sum(i, "*")
+            + dieselGeneratorsVars.sum(i, "*")
+            + batteryPowerVars.sum(i, "*")
+            + evPowerVars.sum(i, "*")
+            == fixedLoadVars.sum(i, "*")
             for i in range(len(ini.timestamps))
         ),
         "power balance",
     )
 
-    model.setAttr("ModelSense", 1)
-    model.setObjectiveN(
-        ini.CostDiesel * gp.quicksum(dieselGeneratorsVars)
-        + gp.quicksum(gridVars[grid] * ini.CostDiesel for grid in gridVars),
-        0,  # index
-        weight=ini.weightCost,  # priority
-    )
 
-    model.setObjectiveN(
-        gp.quicksum(dieselGeneratorsVars) * ini.co2Diesel
-        + gp.quicksum(gridVars) * ini.co2Grid,
-        1,  # index
-        weight=ini.weightEmission,  # priority
+    prices = getPriceData(ini.costFileGrid, ini.timestamps)
+    model.setObjective(
+        ini.CostDiesel * gp.quicksum(dieselGeneratorsVars)
+        + sum([gridVars[index, 0] * prices[index] for index in range(len(prices))]),
+        GRB.MINIMIZE,
     )
 
     model.optimize()
+
+    model.write("./results/model.sol")
 
     printResults(model)
 
@@ -128,13 +123,13 @@ def setUpPV(model, ini):
 
     if ini.loc_flag:
         print("PV data: use location")
-        metadata, pvPowerValues = getSamplePvApi(
+        metadata, pvPowerValues = getNinjaPvApi(
             ini.loc_lat, ini.loc_lon, ini.timestamps
         )
         pvPowerValues = pvPowerValues.values
     else:
         print("PV data: use sample files")
-        pvPowerValues = getSamplePv(ini.pvFile, ini.timestamps)
+        pvPowerValues = getNinja(ini.pvFile, ini.timestamps)
     assert len(pvPowerValues) == len(ini.timestamps)
     model.addConstrs(
         (pvVars[i, 0] == pvPowerValues[i] for i in range(len(ini.timestamps))),
@@ -166,14 +161,14 @@ def setUpWind(model, ini):
 
     if ini.loc_flag:
         print("Wind data: use location")
-        metadata, windPowerValues = getSampleWindApi(
+        metadata, windPowerValues = getNinjaWindApi(
             ini.loc_lat, ini.loc_lon, ini.timestamps
         )
         windPowerValues = windPowerValues.values
     else:
         print("Wind data: use sample files")
-    assert len(windPowerValues) == len(ini.times)
-        windPowerValues = getSampleWind(ini.windFile, ini.timestamps)
+        windPowerValues = getNinja(ini.windFile, ini.timestamps)
+
     assert len(windPowerValues) == len(ini.timestamps)
     model.addConstrs(
         (windVars[i, 0] == windPowerValues[i] for i in range(len(ini.timestamps))),
