@@ -2,6 +2,8 @@ import json
 import pandas as pd
 import requests
 
+from datetime import timedelta
+
 from util import getStepsize
 
 
@@ -224,6 +226,7 @@ def getPriceData(filePath, timestamps):
         data = pd.read_csv(dataFile, parse_dates=["DateTime"], index_col="DateTime")
         data = data.loc[timestamps[0] : timestamps[-1]]
         origStepsize = getStepsize(data.index)
+        assert origStepsize == timedelta(hours=1)
         wantedStepsize = getStepsize(timestamps)
         if origStepsize > wantedStepsize:
             data = data.resample(wantedStepsize).ffill()
