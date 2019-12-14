@@ -1,4 +1,5 @@
 import json
+import numpy as np
 import pandas as pd
 import requests
 
@@ -229,8 +230,19 @@ def getPriceData(filePath, timestamps):
         assert origStepsize == timedelta(hours=1)
         wantedStepsize = getStepsize(timestamps)
         if origStepsize > wantedStepsize:
-            data = data.resample(wantedStepsize).ffill()
+            assert (origStepsize / wantedStepsize).is_integer()
+            data = data.resample(wantedStepsize).asfreq()
+            _applyOppositeOfResampleSum(data, timestamps, origStepsize / wantedStepsize)
         elif origStepsize < wantedStepsize:
-            data = data.resample(wantedStepsize).mean()
+            data = data.resample(wantedStepsize).sum()
         assert data.shape[1] <= 2
         return data.iloc[:, 0]
+
+
+def _applyOppositeOfResampleSum(data, timestamps, relation):
+    for index in range(len(timestamps)):
+        if np.isnan(data.iloc[index, 0]):
+            data.iloc[index, 0] = newValue  # noqa F821
+        else:
+            newValue = data.iloc[index, 0] / relation
+            data.iloc[index, 0] = newValue
