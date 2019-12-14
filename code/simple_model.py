@@ -106,7 +106,8 @@ def runSimpleModel(ini):
 
     model.optimize()
 
-    model.write("./results/" + str(datetime.now()).replace(' ', '_') + "_result.sol")
+    file = "./results/" + str(datetime.now()).replace(' ', '_').replace(':', '-')+"_res.sol"
+    model.write(file)
 
     printResults(model)
 
@@ -256,16 +257,24 @@ def setUpEv(model, ini):
 
 
 def printResults(model):
+    varN = []
+    varX = []
+    print(type(model.getVars()))
     for v in model.getVars():
         print("%s %g" % (v.varName, v.x))
+        print(type(v.varName))
+        print(type(v.x))
+        varN.append(v.varName)
+        varX.append(v.x)
 
     print("Obj: %g" % model.objVal)
+    print(type(model.objVal))
 
 
 def main(argv):
 
-    if "result" not in os.listdir('.'):
-        os.mkdir("result")
+    if "results" not in os.listdir('.'):
+        os.mkdir("results")
     config = configparser.ConfigParser()
     config.read(argv[1])
     runSimpleModel(Configure(config))
