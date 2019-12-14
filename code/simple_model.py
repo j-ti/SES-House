@@ -301,7 +301,7 @@ def printResults(model):
     print("Num of objectives: %g" % model.NumObj)
     for index in range(model.NumObj):
         model.params.ObjNumber = index
-        print('Value of objective %s is %s ' %(model.ObjNName, model.ObjNVal))
+        print("Value of objective %s is %s " % (model.ObjNName, model.ObjNVal))
 
 
 def main(argv):
