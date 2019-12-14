@@ -45,5 +45,3 @@ the environment file `conda.yml` with this command:
 ```bash
 make export
 ```
-
-If you want to know how to run our simple model, check the [test script](test.sh).
