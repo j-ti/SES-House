@@ -15,3 +15,6 @@ def getStepsize(timestamps):
         assert timestamps[i] - timestamps[i - 1] == stepsize
 
     return stepsize
+
+def getTimeIndexRange(timestamps, timeA, timeB):
+    return list(range(timestamps.index(timeA), timestamps.index(timeB)))
