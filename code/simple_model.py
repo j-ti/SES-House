@@ -5,7 +5,7 @@ from datetime import datetime
 import sys
 
 from data import getNinja, getNinjaPvApi, getNinjaWindApi, getPriceData, getLoadsData
-from util import constructTimeStamps,getStepsize
+
 import gurobipy as gp
 from gurobipy import GRB
 
@@ -118,7 +118,7 @@ def runSimpleModel(ini):
 
 
 def setUpPV(model, ini):
-    pvVars = model.addVars(len(ini.timestamps), 1, lb=0.0, vtype=GRB.CONTINUOUS, name="PVPowers"
+    pvVars = model.addVars(
     )
 
     if ini.loc_flag:
