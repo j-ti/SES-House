@@ -16,5 +16,6 @@ def getStepsize(timestamps):
 
     return stepsize
 
+
 def getTimeIndexRange(timestamps, timeA, timeB):
     return list(range(timestamps.index(timeA), timestamps.index(timeB)))

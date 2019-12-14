@@ -239,7 +239,11 @@ def setUpBattery(model, ini):
 
     # TODO: to be changed, if multiple days are considered
     model.addConstr(
-        (batteryEnergyVars[len(ini.timestamps)-1, 0] == ini.SOC_bat_init * ini.E_bat_max), "battery end-of-day value"
+        (
+            batteryEnergyVars[len(ini.timestamps) - 1, 0]
+            == ini.SOC_bat_init * ini.E_bat_max
+        ),
+        "battery end-of-day value",
     )
 
     return batteryPowerVars
@@ -270,8 +274,8 @@ def setUpEv(model, ini):
             * evPowerVars[i, 0]
             * getStepsize(ini.timestamps).total_seconds()
             / 3600  # stepsize: 1 hour
-            for i in getTimeIndexRange(ini.timestamps[0],ini.t_a_ev) +
-                     getTimeIndexRange(ini.t_b_ev, ini.timestamps[-1])
+            for i in getTimeIndexRange(ini.timestamps, ini.timestamps[0], ini.t_a_ev)
+            + getTimeIndexRange(ini.timestamps, ini.t_b_ev, ini.timestamps[-1])
         ),
         "ev charging",
     )
