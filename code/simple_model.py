@@ -10,6 +10,7 @@ from data import getNinja, getNinjaPvApi, getNinjaWindApi, getPriceData, getLoad
 
 import gurobipy as gp
 from gurobipy import GRB
+import os
 
 
 class Configure:
@@ -105,7 +106,7 @@ def runSimpleModel(ini):
 
     model.optimize()
 
-    model.write("./results/model.sol")
+    model.write("./results/" + str(datetime.now()).replace(' ', '_') + "_result.sol")
 
     printResults(model)
 
@@ -262,6 +263,9 @@ def printResults(model):
 
 
 def main(argv):
+
+    if "result" not in os.listdir('.'):
+        os.mkdir("result")
     config = configparser.ConfigParser()
     config.read(argv[1])
     runSimpleModel(Configure(config))
