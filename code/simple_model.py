@@ -291,8 +291,6 @@ def printResults(model):
     print(type(model.getVars()))
     for v in model.getVars():
         print("%s %g" % (v.varName, v.x))
-        print(type(v.varName))
-        print(type(v.x))
         varN.append(v.varName)
         varX.append(v.x)
 
