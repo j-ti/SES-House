@@ -2,6 +2,7 @@
 
 import configparser
 from datetime import datetime
+from enum import Enum
 import sys
 
 from util import constructTimeStamps, getStepsize
@@ -11,6 +12,11 @@ from data import getNinja, getNinjaPvApi, getNinjaWindApi, getPriceData, getLoad
 import gurobipy as gp
 from gurobipy import GRB
 import os
+
+
+class Goal(Enum):
+    MINIMIZE_COST = "MINIMIZE_COST"
+    GREEN_HOUSE = "GREEN_HOUSE"
 
 
 class Configure:
@@ -57,6 +63,10 @@ class Configure:
         self.loadsFile = config["LOADS"]["file"]
         self.costFileGrid = config["COST"]["file_grid"]
 
+        self.goal = Goal(config["GLOBAL"]["goal"])
+        self.co2Grid = config["CO2"]["grid"]
+        self.co2Diesel = config["CO2"]["diesel"]
+
 
 def runSimpleModel(ini):
     model = gp.Model("simple-model")
@@ -97,12 +107,7 @@ def runSimpleModel(ini):
         "power balance",
     )
 
-    prices = getPriceData(ini.costFileGrid, ini.timestamps)
-    model.setObjective(
-        ini.CostDiesel * gp.quicksum(dieselGeneratorsVars)
-        + sum([gridVars[index, 0] * prices[index] for index in range(len(prices))]),
-        GRB.MINIMIZE,
-    )
+    setObjective(model, ini, dieselGeneratorsVars, gridVars)
 
     model.optimize()
 
@@ -110,6 +115,26 @@ def runSimpleModel(ini):
     model.write(file)
 
     printResults(model)
+
+
+def setObjective(model, ini, dieselGeneratorsVars, gridVars):
+    prices = getPriceData(ini.costFileGrid, ini.timestamps)
+
+    model.setObjectiveN(
+        ini.CostDiesel * gp.quicksum(dieselGeneratorsVars)
+        + sum([gridVars[index, 0] * prices[index] for index in range(len(prices))]),
+        int(ini.goal is not Goal.MINIMIZE_COST),
+        weight=int(ini.goal is Goal.MINIMIZE_COST),
+        name=str(Goal.MINIMIZE_COST),
+    )
+
+    model.setObjectiveN(
+        ini.co2Diesel * gp.quicksum(dieselGeneratorsVars)
+        + ini.co2Grid * gp.quicksum(gridVars),
+        int(ini.goal is not Goal.GREEN_HOUSE),
+        weight=int(ini.goal is Goal.GREEN_HOUSE),
+        name=str(Goal.GREEN_HOUSE),
+    )
 
 
 def setUpPV(model, ini):
@@ -267,8 +292,12 @@ def printResults(model):
         varN.append(v.varName)
         varX.append(v.x)
 
-    print("Obj: %g" % model.objVal)
-    print(type(model.objVal))
+    print("Primary Objective value: %g" % model.objVal)
+
+    print("Num of objectives: %g" % model.NumObj)
+    for index in range(model.NumObj):
+        model.params.ObjNumber = index
+        print('Value of objective %s is %s ' %(model.ObjNName, model.ObjNVal))
 
 
 def main(argv):
