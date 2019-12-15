@@ -56,7 +56,8 @@ class PriceTest(unittest.TestCase):
             len(constructTimeStamps(self.start, self.end, stepsize)), len(prices)
         )
         [self.assertGreaterEqual(price_n, 0) for price_n in prices]
-        self.assertEqual(prices[0], 137.5)
+        self.assertEqual(prices[0], 275)
+        self.assertEqual(prices[-2], 384 + 629)
         self.assertEqual(prices[-1], 109)
 
     def testGetPriceDataOversample(self):
@@ -69,9 +70,9 @@ class PriceTest(unittest.TestCase):
             len(constructTimeStamps(self.start, self.end, stepsize)), len(prices)
         )
         [self.assertGreaterEqual(price_n, 0) for price_n in prices]
-        self.assertEqual(prices[0], 4)
-        self.assertEqual(prices[59], 4)
-        self.assertEqual(prices[-1], 109)
+        self.assertAlmostEqual(prices[0], 4 / 60)
+        self.assertAlmostEqual(prices[59], 4 / 60)
+        self.assertAlmostEqual(prices[-1], 109 / 60)
 
 
 class NinjaTest(unittest.TestCase):
