@@ -132,7 +132,6 @@ def runSimpleModel(ini):
         dieselObjExp.add(ini.dieselConstantCof)
         dieselObjExp.add(ini.startUpCost * dieselStatusVars[index, 2] / ini.startUpHour)
 
-
     model.setObjective(
         dieselObjExp
         + sum([gridVars[index, 0] * prices[index] for index in range(len(prices))]),
@@ -155,7 +154,6 @@ def setUpDiesel(model, ini):
         vtype=GRB.CONTINUOUS,
         name="dieselGenerators",
     )
-
 
     dieselStatusVars = model.addVars(
         len(ini.timestamps),
@@ -185,7 +183,7 @@ def setUpDiesel(model, ini):
             "diesel generator power change considering Startup/Shutdown",
         )
 
-    #TODO: to be changed, if timestep not equals 1hour
+    # TODO: to be changed, if timestep not equals 1hour
     model.addConstrs(
         (
             (dieselStatusVars[index + 1, 1] == 1)
