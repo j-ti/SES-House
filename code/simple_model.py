@@ -157,7 +157,7 @@ def setUpDiesel(model, ini):
 
     dieselStatusVars = model.addVars(
         len(ini.timestamps),
-        4,
+        4,#the first column: diesel not in work/second: diesel start up, third: diesel shut down/fourth: diesel is working 
         vtype=GRB.BINARY,
         name="dieselStatus",  # startup/shutdown/keep constant
     )
