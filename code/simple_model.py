@@ -4,10 +4,15 @@ import configparser
 from datetime import datetime
 import sys
 
+from util import constructTimeStamps, getStepsize
+
 from data import getNinja, getNinjaPvApi, getNinjaWindApi, getPriceData, getLoadsData
 
 import gurobipy as gp
+from gurobipy import QuadExpr
 from gurobipy import GRB
+from gurobipy import LinExpr
+from gurobipy import and_, or_
 
 
 class Configure:
@@ -48,7 +53,24 @@ class Configure:
 
         # Generators
         self.P_dg_max = float(config["DIESEL"]["P_dg_max"])
-        self.CostDiesel = float(config["DIESEL"]["CostDiesel"])
+        self.dieselQuadraticCof = float(config["DIESEL"]["a_dg"])
+        self.dieselLinearCof = float(config["DIESEL"]["b_dg"])
+        self.dieselConstantCof = float(config["DIESEL"]["c_dg"])
+        self.dieselFuelPrice = float(config["DIESEL"]["c_gen"])
+        self.startUpCost = float(config["DIESEL"]["StartUpCost"])
+        self.dieselLeastRunHour = int(config["DIESEL"]["LeastRunningTime"])
+        self.startUpHour = int(config["DIESEL"]["StartUpTime"])
+        self.shutDownHour = int(config["DIESEL"]["ShutDownTime"])
+        self.deltaShutDown = (
+            self.P_dg_max
+            / self.shutDownHour
+            * (getStepsize(self.timestamps).total_seconds() / 3600)
+        )
+        self.deltaStartUp = (
+            self.P_dg_max
+            / self.startUpHour
+            * (getStepsize(self.timestamps).total_seconds() / 3600)
+        )
         self.pvFile = config["PV"]["file"]
         self.windFile = config["WIND"]["file"]
         self.loadsFile = config["LOADS"]["file"]
@@ -56,9 +78,9 @@ class Configure:
         self.co2Grid = config["CO2"]["grid_CO2"]
         self.co2Diesel = config["CO2"]["diesel_CO2"]
 
-        #Weight
-        self.weightCost=float(config["Weight"]["weightCost"])
-        self.weightEmission=float(config["Weight"]["weightEmission"])
+        # Weight
+        self.weightCost = float(config["Weight"]["weightCost"])
+        self.weightEmission = float(config["Weight"]["weightEmission"])
 
 
 def runSimpleModel(ini):
@@ -70,22 +92,13 @@ def runSimpleModel(ini):
     batteryPowerVars = setUpBattery(model, ini)
     evPowerVars = setUpEv(model, ini)
     fixedLoadVars = setUpFixedLoads(model, ini)
-
+    [dieselGeneratorsVars, dieselStatusVars] = setUpDiesel(model, ini)
     gridVars = model.addVars(
         len(ini.timestamps),
         1,
         lb=-GRB.INFINITY,
         vtype=GRB.CONTINUOUS,
         name="gridPowers",
-    )
-
-    dieselGeneratorsVars = model.addVars(
-        len(ini.timestamps),
-        1,
-        lb=0.0,
-        ub=ini.P_dg_max,
-        vtype=GRB.CONTINUOUS,
-        name="dieselGenerators",
     )
 
     model.addConstrs(
@@ -102,10 +115,25 @@ def runSimpleModel(ini):
         "power balance",
     )
 
-
+    # Grid cost
     prices = getPriceData(ini.costFileGrid, ini.timestamps)
+    # Diesel cost
+    dieselObjExp = QuadExpr()
+    for index in range(len(ini.timestamps)):
+        dieselObjExp.add(
+            dieselGeneratorsVars[index, 0]
+            * dieselGeneratorsVars[index, 0]
+            * ini.dieselQuadraticCof
+            * ini.dieselFuelPrice
+        )
+        dieselObjExp.add(
+            dieselGeneratorsVars[index, 0] * ini.dieselLinearCof * ini.dieselFuelPrice
+        )
+        dieselObjExp.add(ini.dieselConstantCof)
+        dieselObjExp.add(ini.startUpCost * dieselStatusVars[index, 2] / ini.startUpHour)
+
     model.setObjective(
-        ini.CostDiesel * gp.quicksum(dieselGeneratorsVars)
+        dieselObjExp
         + sum([gridVars[index, 0] * prices[index] for index in range(len(prices))]),
         GRB.MINIMIZE,
     )
@@ -117,8 +145,85 @@ def runSimpleModel(ini):
     printResults(model)
 
 
+def setUpDiesel(model, ini):
+    dieselGeneratorsVars = model.addVars(
+        len(ini.timestamps),
+        1,
+        lb=0.0,
+        ub=ini.P_dg_max,
+        vtype=GRB.CONTINUOUS,
+        name="dieselGenerators",
+    )
+
+    dieselStatusVars = model.addVars(
+        len(ini.timestamps),
+        4,
+        vtype=GRB.BINARY,
+        name="dieselStatus",  # startup/shutdown/keep constant
+    )
+
+    model.addConstrs(
+        (dieselStatusVars.sum(i, "*") == 1 for i in range(len(ini.timestamps)))
+    )
+
+    for i in range(len(ini.timestamps) - 1):
+        deltaDieselPower = LinExpr(
+            [
+                (0, dieselStatusVars[i + 1, 0]),
+                (ini.deltaStartUp, dieselStatusVars[i + 1, 1]),
+                (ini.deltaShutDown, dieselStatusVars[i + 1, 2]),
+                (0, dieselStatusVars[i + 1, 3]),
+            ]
+        )
+        model.addConstr(
+            (
+                dieselGeneratorsVars[i + 1, 0]
+                == dieselGeneratorsVars[i, 0] + deltaDieselPower
+            ),
+            "diesel generator power change considering Startup/Shutdown",
+        )
+
+    model.addConstrs(
+        (
+            (dieselStatusVars[index + 1, 1] == 1)
+            >> (dieselStatusVars[index + 2, 1] == 1 - dieselStatusVars[index, 1])
+            for index in range(len(ini.timestamps) - 2)  # 0 1 1/0 0 0/1 1 0
+        ),
+        "StartUp Constraint",
+    )
+
+    model.addConstrs(
+        (
+            (dieselStatusVars[index + 1, 2] == 1)
+            >> (dieselStatusVars[index + 2, 2] == 1 - dieselStatusVars[index, 2])
+            for index in range(len(ini.timestamps) - 2)  # 0 1 1/0 0 0/1 1 0
+        ),
+        "ShutDown Constraint",
+    )
+
+    model.addConstrs(
+        (
+            (dieselStatusVars[index + 1, 3] == 1)
+            >> (dieselStatusVars[index + d, 3] == 1 - dieselStatusVars[index, 3])
+            for index in range(len(ini.timestamps) - (ini.dieselLeastRunHour + 1))
+            for d in range(2, ini.dieselLeastRunHour + 1)
+        ),
+        "Least Running Time",
+    )
+    model.addConstr(
+        ((dieselStatusVars[0, 0] == 1)), "Diesel Generator status initialization",
+    )
+    model.addConstr(
+        ((dieselGeneratorsVars[0, 0] == 0)), "Diesel Generator power initialization ",
+    )
+    print(range(2, 5))
+
+    return [dieselGeneratorsVars, dieselStatusVars]
+
+
 def setUpPV(model, ini):
     pvVars = model.addVars(
+        len(ini.timestamps), 1, lb=0.0, vtype=GRB.CONTINUOUS, name="PVPowers"
     )
 
     if ini.loc_flag:
@@ -264,9 +369,7 @@ def setUpEv(model, ini):
 def printResults(model):
     for v in model.getVars():
         print("%s %g" % (v.varName, v.x))
-    for o in range(model.NumObj):
-        model.params.ObjNumber = o
-        print("Obj: %g" % model.ObjNVal)
+    print("Obj: %g" % model.ObjVal)
 
 
 def main(argv):
