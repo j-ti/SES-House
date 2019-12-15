@@ -157,7 +157,7 @@ def setUpDiesel(model, ini):
 
     dieselStatusVars = model.addVars(
         len(ini.timestamps),
-        4,#the first column: diesel not in work/second: diesel start up, third: diesel shut down/fourth: diesel is working 
+        4,#the first column: diesel not in work/second: diesel start up, third: diesel shut down/fourth: diesel is working
         vtype=GRB.BINARY,
         name="dieselStatus",  # startup/shutdown/keep constant
     )
@@ -217,7 +217,6 @@ def setUpDiesel(model, ini):
     model.addConstr(
         ((dieselGeneratorsVars[0, 0] == 0)), "Diesel Generator power initialization ",
     )
-    print(range(2, 5))
 
     return [dieselGeneratorsVars, dieselStatusVars]
 
