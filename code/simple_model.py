@@ -161,12 +161,6 @@ def setUpDiesel(model, ini):
         vtype=GRB.BINARY,
         name="dieselStatus",  # startup/shutdown/keep constant
     )
-    statusStepVars =model.addVars(
-        len(ini.timestamps),
-        4,
-        vtype=GRB.BINARY,
-        name="statusStep",  # startup/shutdown/keep constant
-    )
 
     model.addConstrs(
         (dieselStatusVars.sum(i, "*") == 1 for i in range(len(ini.timestamps)))
@@ -189,81 +183,40 @@ def setUpDiesel(model, ini):
             "diesel generator power change considering Startup/Shutdown",
         )
 
-
+    # TODO: to be changed, if timestep not equals 1hour
     model.addConstrs(
         (
-            (statusStepVars[index, 1] == 1) >> (dieselStatusVars[index + d, 1] == 1)
-            for index in range(
-            1,
-            len(ini.timestamps)
-            - int(
-                ini.startUpHour
-                / (getStepsize(ini.timestamps).total_seconds() / 3600)
-            ),
-        )
-            for d in range(
-            int(
-                ini.startUpHour
-                / (getStepsize(ini.timestamps).total_seconds() / 3600)
-            )
-        )
+            (dieselStatusVars[index + 1, 1] == 1)
+            >> (dieselStatusVars[index + 2, 1] == 1 - dieselStatusVars[index, 1])
+            for index in range(len(ini.timestamps) - 2)  # 0 1 1/0 0 0/1 1 0
         ),
         "StartUp Constraint",
     )
 
     model.addConstrs(
         (
-            (statusStepVars[index, 2] == 1) >> (dieselStatusVars[index + d, 2] == 1)
-            for index in range(
-                1,
-                len(ini.timestamps)
-                - int(
-                    ini.shutDownHour
-                    / (getStepsize(ini.timestamps).total_seconds() / 3600)
-                ),
-            )
-            for d in range(
-                int(
-                    ini.shutDownHour
-                    / (getStepsize(ini.timestamps).total_seconds() / 3600)
-                )
-            )
+            (dieselStatusVars[index + 1, 2] == 1)
+            >> (dieselStatusVars[index + 2, 2] == 1 - dieselStatusVars[index, 2])
+            for index in range(len(ini.timestamps) - 2)  # 0 1 1/0 0 0/1 1 0
         ),
         "ShutDown Constraint",
     )
 
     model.addConstrs(
         (
-            (statusStepVars[index, 3] == 1) >> (dieselStatusVars[index + d, 3] == 1)
-            for index in range(
-                1,
-                len(ini.timestamps)
-                - int(
-                    ini.dieselLeastRunHour
-                    / (getStepsize(ini.timestamps).total_seconds() / 3600)
-                ),
-            )
-            for d in range(
-                int(
-                    ini.dieselLeastRunHour
-                    / (getStepsize(ini.timestamps).total_seconds() / 3600)
-                )
-            )
+            (dieselStatusVars[index + 1, 3] == 1)
+            >> (dieselStatusVars[index + d, 3] == 1 - dieselStatusVars[index, 3])
+            for index in range(len(ini.timestamps) - (ini.dieselLeastRunHour + 1))
+            for d in range(2, ini.dieselLeastRunHour + 1)
         ),
         "Least Running Time",
     )
-
     model.addConstr(
         ((dieselStatusVars[0, 0] == 1)), "Diesel Generator status initialization",
     )
     model.addConstr(
         ((dieselGeneratorsVars[0, 0] == 0)), "Diesel Generator power initialization ",
     )
-
-    model.addConstrs(
-        ((statusStepVars[0,column] == 0) for column in range(4)), "status Step initialization",
-    )
-
 
     return [dieselGeneratorsVars, dieselStatusVars]
 
