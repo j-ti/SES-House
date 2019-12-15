@@ -8,6 +8,9 @@ from datetime import timedelta
 from util import getStepsize
 
 
+FROM_MEGAWATTHOURS_TO_KILOWATTHOURS = 1000
+
+
 class NetworkException(Exception):
     pass
 
@@ -236,7 +239,7 @@ def getPriceData(filePath, timestamps):
         elif origStepsize < wantedStepsize:
             data = data.resample(wantedStepsize).sum()
         assert data.shape[1] <= 2
-        return data.iloc[:, 0]
+        return data.iloc[:, 0] * FROM_MEGAWATTHOURS_TO_KILOWATTHOURS
 
 
 def _applyOppositeOfResampleSum(data, timestamps, relation):

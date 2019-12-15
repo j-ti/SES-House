@@ -12,7 +12,6 @@ import gurobipy as gp
 from gurobipy import QuadExpr
 from gurobipy import GRB
 from gurobipy import LinExpr
-from gurobipy import and_, or_
 
 
 class Configure:
@@ -157,7 +156,7 @@ def setUpDiesel(model, ini):
 
     dieselStatusVars = model.addVars(
         len(ini.timestamps),
-        4,#the first column: diesel not in work/second: diesel start up, third: diesel shut down/fourth: diesel is working
+        4,  # the first column: diesel not in work/second: diesel start up, third: diesel shut down/fourth: diesel is working
         vtype=GRB.BINARY,
         name="dieselStatus",  # startup/shutdown/keep constant
     )
@@ -254,10 +253,10 @@ def setUpDiesel(model, ini):
     )
 
     model.addConstr(
-        ((dieselStatusVars[0, 0] == 1)), "Diesel Generator status initialization",
+        ((dieselStatusVars[0, 0] == 1)), "Diesel Generator status initialization"
     )
     model.addConstr(
-        ((dieselGeneratorsVars[0, 0] == 0)), "Diesel Generator power initialization ",
+        ((dieselGeneratorsVars[0, 0] == 0)), "Diesel Generator power initialization "
     )
 
     model.addConstrs(
