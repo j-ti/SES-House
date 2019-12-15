@@ -4,7 +4,7 @@ import configparser
 from datetime import datetime
 import sys
 
-from util import constructTimeStamps, getStepsize
+from util import constructTimeStamps, getStepsize, getTimeIndexRange
 
 from data import getNinja, getNinjaPvApi, getNinjaWindApi, getPriceData, getLoadsData
 
@@ -132,6 +132,7 @@ def runSimpleModel(ini):
         dieselObjExp.add(ini.dieselConstantCof)
         dieselObjExp.add(ini.startUpCost * dieselStatusVars[index, 2] / ini.startUpHour)
 
+
     model.setObjective(
         dieselObjExp
         + sum([gridVars[index, 0] * prices[index] for index in range(len(prices))]),
@@ -154,6 +155,7 @@ def setUpDiesel(model, ini):
         vtype=GRB.CONTINUOUS,
         name="dieselGenerators",
     )
+
 
     dieselStatusVars = model.addVars(
         len(ini.timestamps),
@@ -183,6 +185,7 @@ def setUpDiesel(model, ini):
             "diesel generator power change considering Startup/Shutdown",
         )
 
+    #TODO: to be changed, if timestep not equals 1hour
     model.addConstrs(
         (
             (dieselStatusVars[index + 1, 1] == 1)
@@ -318,6 +321,15 @@ def setUpBattery(model, ini):
         (batteryEnergyVars[0, 0] == ini.SOC_bat_init * ini.E_bat_max), "battery init"
     )
 
+    # TODO: to be changed, if multiple days are considered
+    model.addConstr(
+        (
+            batteryEnergyVars[len(ini.timestamps) - 1, 0]
+            == ini.SOC_bat_init * ini.E_bat_max
+        ),
+        "battery end-of-day value",
+    )
+
     return batteryPowerVars
 
 
@@ -338,7 +350,6 @@ def setUpEv(model, ini):
         vtype=GRB.CONTINUOUS,
         name="evEnergys",
     )
-
     model.addConstrs(
         (
             evEnergyVars[i + 1, 0]
@@ -347,7 +358,8 @@ def setUpEv(model, ini):
             * evPowerVars[i, 0]
             * getStepsize(ini.timestamps).total_seconds()
             / 3600  # stepsize: 1 hour
-            for i in range(len(ini.timestamps) - 1)
+            for i in getTimeIndexRange(ini.timestamps, ini.timestamps[0], ini.t_a_ev)
+            + getTimeIndexRange(ini.timestamps, ini.t_b_ev, ini.timestamps[-1])
         ),
         "ev charging",
     )
@@ -362,6 +374,12 @@ def setUpEv(model, ini):
         ),
         "ev init",
     )
+    # model.addConstr(
+    #     (
+    #         evEnergyVars[ini.timestamps.index(ini.t_b_ev)-1, 0] == 0.1 * ini.E_ev_max
+    #     ),
+    #     "ev after work",
+    # )
 
     return evPowerVars
 
