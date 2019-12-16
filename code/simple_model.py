@@ -2,6 +2,7 @@
 
 import configparser
 from datetime import datetime
+from enum import Enum
 import sys
 
 from util import constructTimeStamps, getStepsize, getTimeIndexRange
@@ -14,9 +15,15 @@ from gurobipy import GRB
 from gurobipy import LinExpr
 
 
+class Goal(Enum):
+    MINIMIZE_COST = "MINIMIZE_COST"
+    GREEN_HOUSE = "GREEN_HOUSE"
+
+
 class Configure:
     def __init__(self, config):
         # Global
+        self.goal = Goal(config["GLOBAL"]["goal"])
         self.loc_flag = "yes" == config["GLOBAL"]["loc"]
         self.loc_lat = float(config["GLOBAL"]["lat"])
         self.loc_lon = float(config["GLOBAL"]["lon"])
@@ -77,10 +84,6 @@ class Configure:
         self.co2Grid = config["CO2"]["grid_CO2"]
         self.co2Diesel = config["CO2"]["diesel_CO2"]
 
-        # Weight
-        self.weightCost = float(config["Weight"]["weightCost"])
-        self.weightEmission = float(config["Weight"]["weightEmission"])
-
 
 def runSimpleModel(ini):
 
@@ -114,34 +117,53 @@ def runSimpleModel(ini):
         "power balance",
     )
 
-    # Grid cost
-    prices = getPriceData(ini.costFileGrid, ini.timestamps)
-    # Diesel cost
-    dieselObjExp = QuadExpr()
-    for index in range(len(ini.timestamps)):
-        dieselObjExp.add(
-            dieselGeneratorsVars[index, 0]
-            * dieselGeneratorsVars[index, 0]
-            * ini.dieselQuadraticCof
-            * ini.dieselFuelPrice
-        )
-        dieselObjExp.add(
-            dieselGeneratorsVars[index, 0] * ini.dieselLinearCof * ini.dieselFuelPrice
-        )
-        dieselObjExp.add(ini.dieselConstantCof)
-        dieselObjExp.add(ini.startUpCost * dieselStatusVars[index, 2] / ini.startUpHour)
-
-    model.setObjective(
-        dieselObjExp
-        + sum([gridVars[index, 0] * prices[index] for index in range(len(prices))]),
-        GRB.MINIMIZE,
-    )
+    setObjective(model, ini, dieselGeneratorsVars, dieselStatusVars, gridVars)
 
     model.optimize()
 
-    model.write("./results/model.sol")
+    file = (
+        "./results/"
+        + str(datetime.now()).replace(" ", "_").replace(":", "-")
+        + "_res.sol"
+    )
+    model.write(file)
 
-    printResults(model)
+    printResults(model, ini)
+
+
+def setObjective(model, ini, dieselGeneratorsVars, dieselStatusVars, gridVars):
+    if ini.goal is Goal.MINIMIZE_COST:
+        prices = getPriceData(ini.costFileGrid, ini.timestamps)
+
+        dieselObjExp = QuadExpr()
+        for index in range(len(ini.timestamps)):
+            dieselObjExp.add(
+                dieselGeneratorsVars[index, 0]
+                * dieselGeneratorsVars[index, 0]
+                * ini.dieselQuadraticCof
+                * ini.dieselFuelPrice
+            )
+            dieselObjExp.add(
+                dieselGeneratorsVars[index, 0]
+                * ini.dieselLinearCof
+                * ini.dieselFuelPrice
+            )
+            dieselObjExp.add(ini.dieselConstantCof)
+            dieselObjExp.add(
+                ini.startUpCost * dieselStatusVars[index, 2] / ini.startUpHour
+            )
+
+        model.setObjective(
+            dieselObjExp
+            + sum([gridVars[index, 0] * price for index, price in enumerate(prices)]),
+            0,
+        )
+    else:
+        model.setObjective(
+            ini.co2Diesel * gp.quicksum(dieselGeneratorsVars)
+            + ini.co2Grid * gp.quicksum(gridVars),
+            0,
+        )
 
 
 def setUpDiesel(model, ini):
@@ -380,10 +402,11 @@ def setUpEv(model, ini):
     return evPowerVars
 
 
-def printResults(model):
+def printResults(model, ini):
     for v in model.getVars():
         print("%s %g" % (v.varName, v.x))
-    print("Obj: %g" % model.ObjVal)
+
+    print("Value of objective %s is %s" % (ini.goal, model.ObjVal))
 
 
 def main(argv):
