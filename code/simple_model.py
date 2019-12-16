@@ -12,7 +12,6 @@ from data import getNinja, getNinjaPvApi, getNinjaWindApi, getPriceData, getLoad
 import gurobipy as gp
 from gurobipy import QuadExpr
 from gurobipy import GRB
-from gurobipy import LinExpr
 
 
 class Goal(Enum):
