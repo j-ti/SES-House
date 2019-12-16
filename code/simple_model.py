@@ -385,6 +385,13 @@ def setUpEv(model, ini):
 
     model.addConstrs(
         (
+            evPowerVars[i, 0] == 0
+            for i in getTimeIndexRange(ini.timestamps, ini.t_a_ev, ini.t_b_ev)
+        ),
+        "ev charging",
+    )
+    model.addConstrs(
+        (
             evEnergyVars[i + 1, 0]
             == evEnergyVars[i, 0]
             - ini.eta_ev
