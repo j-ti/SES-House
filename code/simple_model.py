@@ -18,6 +18,7 @@ from gurobipy import GRB
 
 outputFolder = ""
 
+
 class Goal(Enum):
     MINIMIZE_COST = "MINIMIZE_COST"
     GREEN_HOUSE = "GREEN_HOUSE"
@@ -485,6 +486,7 @@ def printResults(model, ini):
 
     print("Value of objective %s is %s" % (ini.goal, model.ObjVal))
 
+
 def plotResults(model, ini):
     varN = []
     varX = []
@@ -497,9 +499,9 @@ def plotResults(model, ini):
 def main(argv):
     global outputFolder
     outputFolder = (
-            "output/"
-            + str(datetime.now()).split('.')[0].replace(' ', '_').replace(':','-')
-            + "/"
+        "output/"
+        + str(datetime.now()).split(".")[0].replace(" ", "_").replace(":", "-")
+        + "/"
     )
     if not os.path.isdir(outputFolder):
         os.makedirs(outputFolder)
