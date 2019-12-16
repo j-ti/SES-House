@@ -392,12 +392,6 @@ def setUpEv(model, ini):
         ),
         "ev init",
     )
-    # model.addConstr(
-    #     (
-    #         evEnergyVars[ini.timestamps.index(ini.t_b_ev)-1, 0] == 0.1 * ini.E_ev_max
-    #     ),
-    #     "ev after work",
-    # )
 
     return evPowerVars
 
