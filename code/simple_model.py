@@ -86,8 +86,8 @@ class Configure:
         self.windFile = config["WIND"]["file"]
         self.loadsFile = config["LOADS"]["file"]
         self.costFileGrid = config["COST"]["file_grid"]
-        self.co2Grid = config["CO2"]["grid_CO2"]
-        self.co2Diesel = config["CO2"]["diesel_CO2"]
+        self.co2Grid = float(config["CO2"]["grid_CO2"])
+        self.co2Diesel = float(config["CO2"]["diesel_CO2"])
 
 
 def runSimpleModel(ini):
