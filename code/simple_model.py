@@ -222,6 +222,18 @@ def setUpDiesel(model, ini):
     for i in range(len(ini.timestamps) - 1):
         model.addConstr(
             (
+                (dieselStatusVars[i, 3] == 1) >> (dieselGeneratorsVars[i, 0] >= 0)
+            ),
+            "Energy consumption when diesel generator is turned on",
+        )
+        model.addConstr(
+            (
+                (dieselStatusVars[i, 0] == 1) >> (dieselGeneratorsVars[i, 0] == 0)
+            ),
+            "No energy consumption when diesel generator is turned off",
+        )
+        model.addConstr(
+            (
                 (dieselStatusVars[i, 1] == 1)
                 >> (
                     dieselGeneratorsVars[i + 1, 0]
