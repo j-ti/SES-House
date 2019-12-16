@@ -8,6 +8,7 @@ import sys
 from util import constructTimeStamps, getStepsize, getTimeIndexRange
 
 from data import getNinja, getNinjaPvApi, getNinjaWindApi, getPriceData, getLoadsData
+from plotting import plotting
 
 import gurobipy as gp
 from gurobipy import QuadExpr
@@ -129,6 +130,7 @@ def runSimpleModel(ini):
     model.write(file)
 
     printResults(model, ini)
+    plotResults(model, ini)
 
 
 def setObjective(model, ini, dieselGeneratorsVars, dieselStatusVars, gridVars):
@@ -495,6 +497,14 @@ def printResults(model, ini):
         print("%s %g" % (v.varName, v.x))
 
     print("Value of objective %s is %s" % (ini.goal, model.ObjVal))
+
+def plotResults(model, ini):
+    varN = []
+    varX = []
+    for v in model.getVars():
+        varN.append(v.varName)
+        varX.append(v.x)
+    plotting(varN, varX, ini.SOC_bat_min * ini.E_bat_max)
 
 
 def main(argv):
