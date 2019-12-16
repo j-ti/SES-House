@@ -159,6 +159,7 @@ def setObjective(model, ini, dieselGeneratorsVars, dieselStatusVars, gridVars):
             0,
         )
     else:
+        # TODO adapt to new diesel model
         model.setObjective(
             ini.co2Diesel * gp.quicksum(dieselGeneratorsVars)
             + ini.co2Grid * gp.quicksum(gridVars),
