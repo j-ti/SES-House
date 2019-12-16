@@ -22,6 +22,7 @@ outputFolder = ""
 class Goal(Enum):
     MINIMIZE_COST = "MINIMIZE_COST"
     GREEN_HOUSE = "GREEN_HOUSE"
+    GREEN_HOUSE_QUADRATIC = "GREEN_HOUSE_QUADRATIC"
     GRID_INDEPENDENCE = "GRID_INDEPENDENCE"
 
 
@@ -165,6 +166,24 @@ def setObjective(model, ini, dieselGeneratorsVars, dieselStatusVars, gridVars):
         model.setObjective(
             ini.co2Diesel * gp.quicksum(dieselGeneratorsVars)
             + ini.co2Grid * gp.quicksum(gridVars),
+            0,
+        )
+    elif ini.goal is Goal.GREEN_HOUSE_QUADRATIC:
+        model.setObjective(
+            ini.co2Diesel
+            * sum(
+                [
+                    dieselGeneratorsVars[index, 0] * dieselGeneratorsVars[index, 0]
+                    for index in range(len(ini.timestamps))
+                ]
+            )
+            + ini.co2Grid
+            * sum(
+                [
+                    gridVars[index, 0] * gridVars[index, 0]
+                    for index in range(len(ini.timestamps))
+                ]
+            ),
             0,
         )
     elif ini.goal is Goal.GRID_INDEPENDENCE:
