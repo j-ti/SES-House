@@ -168,7 +168,12 @@ def setObjective(model, ini, dieselGeneratorsVars, dieselStatusVars, gridVars):
         )
     elif ini.goal is Goal.GRID_INDEPENDENCE:
         model.setObjective(
-            sum([gridVars[index, 0] * gridVars[index, 0] for index in range(len(ini.timestamps))]),
+            sum(
+                [
+                    gridVars[index, 0] * gridVars[index, 0]
+                    for index in range(len(ini.timestamps))
+                ]
+            ),
             0,
         )
 
