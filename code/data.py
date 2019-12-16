@@ -251,7 +251,7 @@ def getPriceData(filePath, timestamps, offset):
         elif origStepsize < wantedStepsize:
             data = data.resample(wantedStepsize).sum()
         assert data.shape[1] <= 2
-        return data.iloc[:, 0] * FROM_MEGAWATTHOURS_TO_KILOWATTHOURS
+        return data.iloc[:, 0] / FROM_MEGAWATTHOURS_TO_KILOWATTHOURS
 
 
 def _applyOppositeOfResampleSum(data, timestamps, relation):
