@@ -4,6 +4,7 @@ import configparser
 from datetime import datetime, timedelta
 from enum import Enum
 import sys
+import os
 
 from util import constructTimeStamps, getStepsize, getTimeIndexRange
 
@@ -14,6 +15,8 @@ import gurobipy as gp
 from gurobipy import QuadExpr
 from gurobipy import GRB
 
+
+outputFolder = ""
 
 class Goal(Enum):
     MINIMIZE_COST = "MINIMIZE_COST"
@@ -121,13 +124,7 @@ def runSimpleModel(ini):
     setObjective(model, ini, dieselGeneratorsVars, dieselStatusVars, gridVars)
 
     model.optimize()
-
-    file = (
-        "./results/"
-        + str(datetime.now()).replace(" ", "_").replace(":", "-")
-        + "_res.sol"
-    )
-    model.write(file)
+    model.write(outputFolder + "/res.sol")
 
     printResults(model, ini)
     plotResults(model, ini)
@@ -508,6 +505,14 @@ def plotResults(model, ini):
 
 
 def main(argv):
+    global outputFolder
+    outputFolder = (
+            "output/"
+            + str(datetime.now()).split('.')[0].replace(' ', '_').replace(':','-')
+            + "/"
+    )
+    if not os.path.isdir(outputFolder):
+        os.makedirs(outputFolder)
     config = configparser.ConfigParser()
     config.read(argv[1])
     runSimpleModel(Configure(config))
