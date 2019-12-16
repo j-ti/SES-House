@@ -202,21 +202,76 @@ def setUpDiesel(model, ini):
     )
 
     for i in range(len(ini.timestamps) - 1):
-        deltaDieselPower = LinExpr(
-            [
-                (0, dieselStatusVars[i + 1, 0]),
-                (ini.deltaStartUp, dieselStatusVars[i + 1, 1]),
-                (ini.deltaShutDown, dieselStatusVars[i + 1, 2]),
-                (0, dieselStatusVars[i + 1, 3]),
-            ]
-        )
         model.addConstr(
             (
-                dieselGeneratorsVars[i + 1, 0]
-                == dieselGeneratorsVars[i, 0] + deltaDieselPower
+                (dieselStatusVars[i, 1] == 1)
+                >> (
+                    dieselGeneratorsVars[i + 1, 0]
+                    == dieselGeneratorsVars[i, 0] + ini.deltaStartUp
+                )
             ),
             "diesel generator power change considering Startup/Shutdown",
         )
+        model.addConstr(
+            (
+                (dieselStatusVars[i, 2] == 1)
+                >> (
+                    dieselGeneratorsVars[i + 1, 0]
+                    == dieselGeneratorsVars[i, 0] - ini.deltaShutDown
+                )
+            ),
+            "diesel generator power change considering Startup/Shutdown",
+        )
+
+    model.addConstrs(
+        (
+            (dieselStatusVars[index, 0] == 1) >> (dieselStatusVars[index + 1, 3] == 0)
+            for index in range(len(ini.timestamps) - 1)
+        ),
+        "Not Working -> Working IMPOSSIBLE",
+    )
+    model.addConstrs(
+        (
+            (dieselStatusVars[index, 0] == 1) >> (dieselStatusVars[index + 1, 2] == 0)
+            for index in range(len(ini.timestamps) - 1)
+        ),
+        "Not Working -> Shutdown IMPOSSIBLE",
+    )
+    model.addConstrs(
+        (
+            (dieselStatusVars[index, 1] == 1) >> (dieselStatusVars[index + 1, 2] == 0)
+            for index in range(len(ini.timestamps) - 1)
+        ),
+        "Startup -> Shutdown IMPOSSIBLE",
+    )
+    model.addConstrs(
+        (
+            (dieselStatusVars[index, 1] == 1) >> (dieselStatusVars[index + 1, 3] == 0)
+            for index in range(len(ini.timestamps) - 1)
+        ),
+        "Startup -> Not working IMPOSSIBLE",
+    )
+    model.addConstrs(
+        (
+            (dieselStatusVars[index, 2] == 1) >> (dieselStatusVars[index + 1, 3] == 0)
+            for index in range(len(ini.timestamps) - 1)
+        ),
+        "Shutdown -> working IMPOSSIBLE",
+    )
+    model.addConstrs(
+        (
+            (dieselStatusVars[index, 3] == 1) >> (dieselStatusVars[index + 1, 0] == 0)
+            for index in range(len(ini.timestamps) - 1)
+        ),
+        "Working -> Not working IMPOSSIBLE",
+    )
+    model.addConstrs(
+        (
+            (dieselStatusVars[index, 3] == 1) >> (dieselStatusVars[index + 1, 1] == 0)
+            for index in range(len(ini.timestamps) - 1)
+        ),
+        "Working -> Startup IMPOSSIBLE",
+    )
 
     # TODO: to be changed, if timestep not equals 1hour
     model.addConstrs(
