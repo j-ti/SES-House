@@ -18,6 +18,7 @@ from gurobipy import LinExpr
 class Goal(Enum):
     MINIMIZE_COST = "MINIMIZE_COST"
     GREEN_HOUSE = "GREEN_HOUSE"
+    GRID_INDEPENDENCE = "GRID_INDEPENDENCE"
 
 
 class Configure:
@@ -158,11 +159,16 @@ def setObjective(model, ini, dieselGeneratorsVars, dieselStatusVars, gridVars):
             + sum([gridVars[index, 0] * price for index, price in enumerate(prices)]),
             0,
         )
-    else:
+    elif ini.goal is Goal.GREEN_HOUSE:
         # TODO adapt to new diesel model
         model.setObjective(
             ini.co2Diesel * gp.quicksum(dieselGeneratorsVars)
             + ini.co2Grid * gp.quicksum(gridVars),
+            0,
+        )
+    elif ini.goal is Goal.GRID_INDEPENDENCE:
+        model.setObjective(
+            sum([gridVars[index, 0] * gridVars[index, 0] for index in range(len(ini.timestamps))]),
             0,
         )
 
