@@ -1,7 +1,7 @@
 #!/usr/bin/env python3.7
 
 import configparser
-from datetime import datetime
+from datetime import datetime, timedelta
 from enum import Enum
 import sys
 
@@ -134,7 +134,9 @@ def runSimpleModel(ini):
 
 def setObjective(model, ini, dieselGeneratorsVars, dieselStatusVars, gridVars):
     if ini.goal is Goal.MINIMIZE_COST:
-        prices = getPriceData(ini.costFileGrid, ini.timestamps)
+        prices = getPriceData(
+            ini.costFileGrid, ini.timestamps, timedelta(days=365 * 5 + 1)
+        )
 
         dieselObjExp = QuadExpr()
         for index in range(len(ini.timestamps)):
@@ -380,6 +382,7 @@ def setUpEv(model, ini):
         vtype=GRB.CONTINUOUS,
         name="evEnergys",
     )
+
     model.addConstrs(
         (
             evEnergyVars[i + 1, 0]
@@ -403,6 +406,24 @@ def setUpEv(model, ini):
             )
         ),
         "ev init",
+    )
+    # model.addConstr(
+    #     (
+    #         evEnergyVars[ini.timestamps.index(ini.t_b_ev)-2, 0] == 0.1 * ini.E_ev_max
+    #     ),
+    #     "ev after work",
+    # )
+    # TODO: to be changed, if multiple days are considered
+    model.addConstr(
+        (
+            evEnergyVars[len(ini.timestamps) - 1, 0]
+            - ini.eta_ev
+            * evPowerVars[len(ini.timestamps) - 1, 0]
+            * getStepsize(ini.timestamps).total_seconds()
+            / 3600
+            == evEnergyVars[0, 0]  # ini.SOC_ev_init * ini.E_ev_max
+        ),
+        "ev end-of-day value",
     )
 
     return evPowerVars
