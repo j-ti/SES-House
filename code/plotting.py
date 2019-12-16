@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 
 
-def plotting(varName, varVal, soc_min_val):
+def plotting(varName, varVal, soc_min_val, outputFolder):
     dico = {'pvPowers': [],
             'windPowers': [],
             'batPowers': [],
@@ -33,6 +33,7 @@ def plotting(varName, varVal, soc_min_val):
     plt.legend(loc='upper right', prop={'size': 8})
     plt.xlabel("Hour")
     plt.ylabel("Power (kW)\nEnergy (kWh)")
+    plt.savefig(outputFolder + "/bat_ev.png")
     plt.show()
 
     plt.plot(dico["gridPowers"], label="gridPowers")
@@ -40,4 +41,5 @@ def plotting(varName, varVal, soc_min_val):
     plt.xlabel("Hour")
     plt.ylabel("Power (kW)")
     plt.legend(loc='upper right')
+    plt.savefig(outputFolder + "/grid_diesel.png")
     plt.show()
