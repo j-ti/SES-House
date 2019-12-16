@@ -1,5 +1,6 @@
 import matplotlib.pyplot as plt
 
+
 def plotting(varName, varVal, soc_min_val):
     dico = {'pvPowers': [],
             'windPowers': [],
@@ -23,16 +24,20 @@ def plotting(varName, varVal, soc_min_val):
     # plt.legend()
     # plt.show()
 
-    plt.plot(dico["batPowers"], label="bat Powers")
-    plt.plot(dico["batEnergys"], label="bat Energys")
-    plt.plot(dico["evPowers"], label="ev Powers")
-    plt.plot(dico["evEnergys"], label="ev Energys")
+    plt.plot(dico["batPowers"], label="Battery Power")
+    plt.plot(dico["evPowers"], label="EV Power")
+    plt.plot(dico["batEnergys"], label="Battery Energy")
+    plt.plot(dico["evEnergys"], label="EV Energy")
     plt.plot([0, max([len(i) for i in dico.values()])], [soc_min_val, soc_min_val], color='r', linestyle='--',
              linewidth=1, label='Minimal energy')
-    plt.legend(loc = 'upper right', prop={'size': 8})
+    plt.legend(loc='upper right', prop={'size': 8})
+    plt.xlabel("Hour")
+    plt.ylabel("Power (kW)\nEnergy (kWh)")
     plt.show()
 
     plt.plot(dico["gridPowers"], label="gridPowers")
     plt.plot(dico["dieselGenerators"], label="dieselGenerators")
-    plt.legend(loc = 'upper right')
+    plt.xlabel("Hour")
+    plt.ylabel("Power (kW)")
+    plt.legend(loc='upper right')
     plt.show()
