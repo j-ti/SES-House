@@ -58,9 +58,9 @@ class PriceTest(unittest.TestCase):
             len(constructTimeStamps(self.start, self.end, stepsize)), len(prices)
         )
         [self.assertGreaterEqual(price_n, 0) for price_n in prices]
-        self.assertAlmostEqual(prices[0], (25.308 + 20.291) * 1000)
-        self.assertEqual(prices[-2], (25.551 + 24.667) * 1000)
-        self.assertEqual(prices[-1], 24.2 * 1000)
+        self.assertAlmostEqual(prices[0], (25.308 + 20.291) / 1000)
+        self.assertAlmostEqual(prices[-2], (25.551 + 24.667) / 1000)
+        self.assertAlmostEqual(prices[-1], 24.2 / 1000)
 
     def testGetPriceDataOversample(self):
         stepsize = timedelta(minutes=1)
@@ -73,9 +73,9 @@ class PriceTest(unittest.TestCase):
             len(constructTimeStamps(self.start, self.end, stepsize)), len(prices)
         )
         [self.assertGreaterEqual(price_n, 0) for price_n in prices]
-        self.assertAlmostEqual(prices[0], (25.308 / 60) * 1000)
-        self.assertAlmostEqual(prices[59], (25.308 / 60) * 1000)
-        self.assertEqual(prices[-1], 24.2 / 60 * 1000)
+        self.assertAlmostEqual(prices[0], (25.308 / 60) / 1000)
+        self.assertAlmostEqual(prices[59], (25.308 / 60) / 1000)
+        self.assertAlmostEqual(prices[-1], 24.2 / 60 / 1000)
 
 
 class NinjaTest(unittest.TestCase):
