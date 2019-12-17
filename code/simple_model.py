@@ -108,6 +108,9 @@ def runSimpleModel(ini):
         vtype=GRB.CONTINUOUS,
         name="gridPowers",
     )
+    gridPrices = getPriceData(
+        ini.costFileGrid, ini.timestamps, timedelta(days=365 * 5 + 1)
+    )
 
     model.addConstrs(
         (
@@ -123,20 +126,19 @@ def runSimpleModel(ini):
         "power balance",
     )
 
-    setObjective(model, ini, dieselGeneratorsVars, dieselStatusVars, gridVars)
+    setObjective(
+        model, ini, dieselGeneratorsVars, dieselStatusVars, gridVars, gridPrices
+    )
 
     model.optimize()
     model.write(outputFolder + "/res.sol")
 
     printResults(model, ini)
-    plotResults(model, ini)
+    plotResults(model, ini, gridPrices)
 
 
-def setObjective(model, ini, dieselGeneratorsVars, dieselStatusVars, gridVars):
+def setObjective(model, ini, dieselGeneratorsVars, dieselStatusVars, gridVars, prices):
     if ini.goal is Goal.MINIMIZE_COST:
-        prices = getPriceData(
-            ini.costFileGrid, ini.timestamps, timedelta(days=365 * 5 + 1)
-        )
 
         dieselObjExp = QuadExpr()
         for index in range(len(ini.timestamps)):
@@ -514,13 +516,13 @@ def printResults(model, ini):
     print("Value of objective %s is %s" % (ini.goal, model.ObjVal))
 
 
-def plotResults(model, ini):
+def plotResults(model, ini, gridPrices):
     varN = []
     varX = []
     for v in model.getVars():
         varN.append(v.varName)
         varX.append(v.x)
-    plotting(varN, varX, ini.SOC_bat_min * ini.E_bat_max, outputFolder)
+    plotting(varN, varX, ini.SOC_bat_min * ini.E_bat_max, gridPrices, outputFolder)
 
 
 def main(argv):
