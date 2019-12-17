@@ -15,6 +15,24 @@ Do optimization for the following 3 scenarios:
 
 [![Build Status](https://api.travis-ci.com/j-ti/SES-House.svg?token=9GudSoJGkvnBmiR1HWN7&branch=master)](https://travis-ci.com/j-ti/SES-House)
 
+### Run code
+
+Create our conda environment and activate it:
+```
+conda env create -f conda.yml
+conda activate ses-house
+```
+
+Run our default example:
+```
+python code/simple_model.py configs/default.ini
+```
+
+Run our Vermont example:
+```
+python code/simple_model.py configs/Vermont.ini
+```
+
 ### Get started
 
 To get started, install anaconda. Therefore follow the installation instruction

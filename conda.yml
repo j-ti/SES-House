@@ -18,6 +18,7 @@ dependencies:
   - chardet=3.0.4=py37_1003
   - click=7.0=py37_0
   - cryptography=2.8=py37h1ba5d50_0
+  - cycler=0.10.0=py37_0
   - dbus=1.13.12=h746ee38_0
   - decorator=4.4.1=py_0
   - defusedxml=0.6.0=py_0
@@ -47,6 +48,7 @@ dependencies:
   - jupyter_client=5.3.4=py37_0
   - jupyter_console=6.0.0=py37_0
   - jupyter_core=4.6.1=py37_0
+  - kiwisolver=1.1.0=py37he6710b0_0
   - libedit=3.1.20181209=hc058e9b_0
   - libffi=3.2.1=hd88cf55_4
   - libgcc-ng=9.1.0=hdf63c60_0
@@ -58,6 +60,7 @@ dependencies:
   - libxcb=1.13=h1bed415_1
   - libxml2=2.9.9=hea5a465_1
   - markupsafe=1.1.1=py37h7b6447c_0
+  - matplotlib=3.1.1=py37h5429711_0
   - mccabe=0.6.1=py37_1
   - mistune=0.8.4=py37h7b6447c_0
   - mkl=2019.4=243
@@ -88,6 +91,7 @@ dependencies:
   - pyflakes=2.1.1=py37_0
   - pygments=2.5.2=py_0
   - pyopenssl=19.1.0=py37_0
+  - pyparsing=2.4.5=py_0
   - pyqt=5.9.2=py37h05f1152_2
   - pyrsistent=0.15.6=py37h7b6447c_0
   - pysocks=1.7.1=py37_0

@@ -25,13 +25,15 @@ def plotting(varName, varVal, soc_min_val, outputFolder):
     # plt.legend()
     # plt.show()
 
-    plt.plot(dico["PVPowers"], label="pv", color='orange')
-    plt.plot(dico["windPowers"], label="wind", color='blue')
+    plt.plot(dico["PVPowers"], label="pv", color="orange")
+    plt.plot(dico["windPowers"], label="wind", color="blue")
     plt.plot(dico["fixedLoads"], label="Loads Power", color="red")
     plt.xlabel("Hour")
     plt.ylabel("Output power - kW")
-    plt.legend(loc='upper left')
-    plt.savefig(outputFolder + '/pv_wind-power.png')#, dpi=save_dpi, figsize=save_size)
+    plt.legend(loc="upper left")
+    plt.savefig(
+        outputFolder + "/pv_wind-power.png"
+    )  # , dpi=save_dpi, figsize=save_size)
     plt.show()
 
     plt.plot(dico["batEnergys"], label="Battery Energy", color="green")
@@ -42,8 +44,7 @@ def plotting(varName, varVal, soc_min_val, outputFolder):
     plt.savefig(outputFolder + "/bat_ev-energy.png")
     plt.show()
 
-
-    #plt.plot([sum(x) for x in zip(dico["evPowers"],dico["batPowers"])], label="Battery + EV Power")
+    # plt.plot([sum(x) for x in zip(dico["evPowers"],dico["batPowers"])], label="Battery + EV Power")
     plt.plot(dico["batPowers"], label="Battery Power", color="green")
     plt.plot(dico["evPowers"], label="EV Power", color="lime")
     plt.plot(dico["windPowers"], label="Wind Power", color="blue")
@@ -56,4 +57,3 @@ def plotting(varName, varVal, soc_min_val, outputFolder):
     plt.legend(loc="upper right")
     plt.savefig(outputFolder + "/power-balance.png")
     plt.show()
-
