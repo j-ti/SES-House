@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 
 def plotting(varName, varVal, soc_min_val, outputFolder):
     dico = {
-        "pvPowers": [],
+        "PVPowers": [],
         "windPowers": [],
         "batPowers": [],
         "batEnergys": [],
@@ -25,28 +25,35 @@ def plotting(varName, varVal, soc_min_val, outputFolder):
     # plt.legend()
     # plt.show()
 
-    plt.plot(dico["batPowers"], label="Battery Power")
-    plt.plot(dico["evPowers"], label="EV Power")
-    plt.plot(dico["batEnergys"], label="Battery Energy")
-    plt.plot(dico["evEnergys"], label="EV Energy")
-    plt.plot(
-        [0, max([len(i) for i in dico.values()])],
-        [soc_min_val, soc_min_val],
-        color="r",
-        linestyle="--",
-        linewidth=1,
-        label="Minimal energy",
-    )
+    plt.plot(dico["PVPowers"], label="pv", color='orange')
+    plt.plot(dico["windPowers"], label="wind", color='blue')
+    plt.plot(dico["fixedLoads"], label="Loads Power", color="red")
+    plt.xlabel("Hour")
+    plt.ylabel("Output power - kW")
+    plt.legend(loc='upper left')
+    plt.savefig(outputFolder + '/pv_wind-power.png')#, dpi=save_dpi, figsize=save_size)
+    plt.show()
+
+    plt.plot(dico["batEnergys"], label="Battery Energy", color="green")
+    plt.plot(dico["evEnergys"], label="EV Energy", color="lime")
     plt.legend(loc="upper right", prop={"size": 8})
     plt.xlabel("Hour")
     plt.ylabel("Power (kW)\nEnergy (kWh)")
-    plt.savefig(outputFolder + "/bat_ev.png")
+    plt.savefig(outputFolder + "/bat_ev-energy.png")
     plt.show()
 
-    plt.plot(dico["gridPowers"], label="gridPowers")
-    plt.plot(dico["dieselGenerators"], label="dieselGenerators")
+
+    #plt.plot([sum(x) for x in zip(dico["evPowers"],dico["batPowers"])], label="Battery + EV Power")
+    plt.plot(dico["batPowers"], label="Battery Power", color="green")
+    plt.plot(dico["evPowers"], label="EV Power", color="lime")
+    plt.plot(dico["windPowers"], label="Wind Power", color="blue")
+    plt.plot(dico["PVPowers"], label="PV Power", color="orange")
+    plt.plot(dico["fixedLoads"], label="Loads Power", color="red")
+    plt.plot(dico["gridPowers"], label="gridPowers", color="black")
+    plt.plot(dico["dieselGenerators"], label="dieselGenerators", color="silver")
     plt.xlabel("Hour")
     plt.ylabel("Power (kW)")
     plt.legend(loc="upper right")
-    plt.savefig(outputFolder + "/grid_diesel.png")
+    plt.savefig(outputFolder + "/power-balance.png")
     plt.show()
+
