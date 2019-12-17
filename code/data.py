@@ -8,6 +8,9 @@ from datetime import timedelta
 from util import getStepsize
 
 
+FROM_MEGAWATTHOURS_TO_KILOWATTHOURS = 1000
+
+
 class NetworkException(Exception):
     pass
 
