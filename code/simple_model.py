@@ -22,6 +22,7 @@ outputFolder = ""
 class Goal(Enum):
     MINIMIZE_COST = "MINIMIZE_COST"
     GREEN_HOUSE = "GREEN_HOUSE"
+    GREEN_HOUSE_QUADRATIC = "GREEN_HOUSE_QUADRATIC"
     GRID_INDEPENDENCE = "GRID_INDEPENDENCE"
 
 
@@ -86,8 +87,8 @@ class Configure:
         self.windFile = config["WIND"]["file"]
         self.loadsFile = config["LOADS"]["file"]
         self.costFileGrid = config["COST"]["file_grid"]
-        self.co2Grid = config["CO2"]["grid_CO2"]
-        self.co2Diesel = config["CO2"]["diesel_CO2"]
+        self.co2Grid = float(config["CO2"]["grid_CO2"])
+        self.co2Diesel = float(config["CO2"]["diesel_CO2"])
 
 
 def runSimpleModel(ini):
@@ -158,14 +159,32 @@ def setObjective(model, ini, dieselGeneratorsVars, dieselStatusVars, gridVars):
         model.setObjective(
             dieselObjExp
             + sum([gridVars[index, 0] * price for index, price in enumerate(prices)]),
-            0,
+            GRB.MINIMIZE,
         )
     elif ini.goal is Goal.GREEN_HOUSE:
         # TODO adapt to new diesel model
         model.setObjective(
             ini.co2Diesel * gp.quicksum(dieselGeneratorsVars)
             + ini.co2Grid * gp.quicksum(gridVars),
-            0,
+            GRB.MINIMIZE,
+        )
+    elif ini.goal is Goal.GREEN_HOUSE_QUADRATIC:
+        model.setObjective(
+            ini.co2Diesel
+            * sum(
+                [
+                    dieselGeneratorsVars[index, 0] * dieselGeneratorsVars[index, 0]
+                    for index in range(len(ini.timestamps))
+                ]
+            )
+            + ini.co2Grid
+            * sum(
+                [
+                    gridVars[index, 0] * gridVars[index, 0]
+                    for index in range(len(ini.timestamps))
+                ]
+            ),
+            GRB.MINIMIZE,
         )
     elif ini.goal is Goal.GRID_INDEPENDENCE:
         model.setObjective(
@@ -175,7 +194,7 @@ def setObjective(model, ini, dieselGeneratorsVars, dieselStatusVars, gridVars):
                     for index in range(len(ini.timestamps))
                 ]
             ),
-            0,
+            GRB.MINIMIZE,
         )
 
 
@@ -201,6 +220,14 @@ def setUpDiesel(model, ini):
     )
 
     for i in range(len(ini.timestamps) - 1):
+        model.addConstr(
+            ((dieselStatusVars[i, 3] == 1) >> (dieselGeneratorsVars[i, 0] >= 0)),
+            "Energy consumption when diesel generator is turned on",
+        )
+        model.addConstr(
+            ((dieselStatusVars[i, 0] == 1) >> (dieselGeneratorsVars[i, 0] == 0)),
+            "No energy consumption when diesel generator is turned off",
+        )
         model.addConstr(
             (
                 (dieselStatusVars[i, 1] == 1)
