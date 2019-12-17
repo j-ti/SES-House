@@ -204,7 +204,13 @@ class RenewNinja:
 
 def getLoadsData(filePath, timestamps):
     with open(filePath, "r", encoding="utf-8") as dataFile:
-        data = pd.read_csv(dataFile, parse_dates=["DateTime"], index_col="DateTime")
+        data = pd.read_csv(
+            dataFile,
+            parse_dates=["DateTime"],
+            index_col="DateTime",
+            sep=";",
+            decimal=",",
+        )
         data = data.loc[timestamps[0] : timestamps[-1]]
         origStepsize = getStepsize(data.index)
         wantedStepsize = getStepsize(timestamps)
@@ -222,10 +228,16 @@ def getLoadsData(filePath, timestamps):
         return loads
 
 
-def getPriceData(filePath, timestamps):
+def getPriceData(filePath, timestamps, offset):
     with open(filePath, "r", encoding="utf-8") as dataFile:
-        data = pd.read_csv(dataFile, parse_dates=["DateTime"], index_col="DateTime")
-        data = data.loc[timestamps[0] : timestamps[-1]]
+        data = pd.read_csv(
+            dataFile,
+            parse_dates=["DateTime"],
+            index_col="DateTime",
+            sep=";",
+            decimal=",",
+        )
+        data = data.loc[timestamps[0] + offset : timestamps[-1] + offset]
         origStepsize = getStepsize(data.index)
         assert origStepsize == timedelta(hours=1)
         wantedStepsize = getStepsize(timestamps)
@@ -236,8 +248,8 @@ def getPriceData(filePath, timestamps):
         elif origStepsize < wantedStepsize:
             data = data.resample(wantedStepsize).sum()
         assert data.shape[1] <= 2
-        return data.iloc[:, 0]
 
+        return data.iloc[:, 0] / FROM_MEGAWATTHOURS_TO_KILOWATTHOURS
 
 def _applyOppositeOfResampleSum(data, timestamps, relation):
     for index in range(len(timestamps)):
