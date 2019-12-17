@@ -15,9 +15,6 @@ import gurobipy as gp
 from gurobipy import QuadExpr
 from gurobipy import GRB
 
-from gurobipy import LinExpr
-from gurobipy import and_, or_
-
 
 outputFolder = ""
 
