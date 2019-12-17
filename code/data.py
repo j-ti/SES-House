@@ -254,6 +254,7 @@ def getPriceData(filePath, timestamps, offset):
 
         return data.iloc[:, 0] / FROM_MEGAWATTHOURS_TO_KILOWATTHOURS
 
+
 def _applyOppositeOfResampleSum(data, timestamps, relation):
     for index in range(len(timestamps)):
         if np.isnan(data.iloc[index, 0]):

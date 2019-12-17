@@ -19,7 +19,6 @@ from gurobipy import LinExpr
 from gurobipy import and_, or_
 
 
-
 outputFolder = ""
 
 
@@ -28,7 +27,6 @@ class Goal(Enum):
     GREEN_HOUSE = "GREEN_HOUSE"
     GREEN_HOUSE_QUADRATIC = "GREEN_HOUSE_QUADRATIC"
     GRID_INDEPENDENCE = "GRID_INDEPENDENCE"
-
 
 
 class Configure:
@@ -215,7 +213,7 @@ def setUpDiesel(model, ini):
 
     dieselStatusVars = model.addVars(
         len(ini.timestamps),
-        4,#the first column: diesel not in work/second: diesel start up, third: diesel shut down/fourth: diesel is working
+        4,  # the first column: diesel not in work/second: diesel start up, third: diesel shut down/fourth: diesel is working
         vtype=GRB.BINARY,
         name="dieselStatus",  # startup/shutdown/keep constant
     )
@@ -333,10 +331,10 @@ def setUpDiesel(model, ini):
         "Least Running Time",
     )
     model.addConstr(
-        ((dieselStatusVars[0, 0] == 1)), "Diesel Generator status initialization",
+        ((dieselStatusVars[0, 0] == 1)), "Diesel Generator status initialization"
     )
     model.addConstr(
-        ((dieselGeneratorsVars[0, 0] == 0)), "Diesel Generator power initialization ",
+        ((dieselGeneratorsVars[0, 0] == 0)), "Diesel Generator power initialization "
     )
 
     return [dieselGeneratorsVars, dieselStatusVars]
