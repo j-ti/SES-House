@@ -9,6 +9,7 @@ from util import getStepsize
 
 
 FROM_MEGAWATTHOURS_TO_KILOWATTHOURS = 1000
+constantPrice = 0.20 ## based on an average price of 20 c / kWh in France
 
 
 class NetworkException(Exception):
@@ -252,7 +253,7 @@ def getPriceData(filePath, timestamps, offset):
             data = data.resample(wantedStepsize).sum()
         assert data.shape[1] <= 2
 
-        return data.iloc[:, 0] / FROM_MEGAWATTHOURS_TO_KILOWATTHOURS
+        return data.iloc[:, 0] / FROM_MEGAWATTHOURS_TO_KILOWATTHOURS + constantPrice
 
 
 def _applyOppositeOfResampleSum(data, timestamps, relation):
