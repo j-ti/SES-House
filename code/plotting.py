@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 
-def plotting(varName, varVal, soc_min_val, gridPrices, outputFolder, pieChart = True):
+def plotting(varName, varVal, soc_min_val, gridPrices, outputFolder, pieChart=True):
     dico = {
         "PVPowers": [],
         "windPowers": [],
@@ -27,7 +27,7 @@ def plotting(varName, varVal, soc_min_val, gridPrices, outputFolder, pieChart = 
         plotting_1day(dico, outputFolder, gridPrices)
 
 
-def plotting_1day(dico, outputFolder, gridPrices) :
+def plotting_1day(dico, outputFolder, gridPrices):
     plt.plot(dico["PVPowers"], label="pv", color="orange")
     plt.plot(dico["windPowers"], label="wind", color="blue")
     plt.plot(dico["fixedLoads"], label="Loads Power", color="red")
@@ -85,7 +85,6 @@ def plotting_1day(dico, outputFolder, gridPrices) :
 #         "dieselGenerators": [],
 
 def plotting_pieChart(dico, outputFolder, gridPrices):
-
     plot1 = [np.sum(dico["PVPowers"]), np.sum(dico["windPowers"]), np.sum(dico["gridPowers"]),
              np.sum(dico["dieselGenerators"])]
     plt.pie(plot1, labels=["PVPowers", "windPowers", "gridPowers", "dieselGenerators"])
@@ -97,4 +96,18 @@ def plotting_pieChart(dico, outputFolder, gridPrices):
     plt.pie(plot2, labels=["batEnergys", "evEnergys"])
     plt.title("Energy inside the batteries")
     plt.savefig(outputFolder + "/energy_batteries.png")
+    plt.show()
+
+    p1 = plt.bar(0, np.sum(dico["PVPowers"]), 0.2)
+    p2 = plt.bar(0, np.sum(dico["windPowers"]), 0.2, bottom=np.sum(dico["PVPowers"]))
+    p3 = plt.bar(0, np.sum(dico["gridPowers"]), 0.2, bottom=np.sum(dico["windPowers"]) + np.sum(dico["PVPowers"]))
+    p4 = plt.bar(0, np.sum(dico["dieselGenerators"]), 0.2,
+                 bottom=np.sum(dico["windPowers"]) + np.sum(dico["PVPowers"]) + np.sum(dico["gridPowers"]))
+    p5 = plt.bar(0.7, np.sum(dico["fixedLoads"]), 0.2)
+    p6 = plt.bar(0.7, np.sum(dico["batPowers"]), 0.2, bottom=np.sum(dico["fixedLoads"]))
+    p7 = plt.bar(0.7, np.sum(dico["evPowers"]), 0.2, bottom=np.sum(dico["fixedLoads"]) + np.sum(dico["batPowers"]))
+
+    plt.xticks([0, 0.7], ("Generator", "Loads"))
+    plt.legend((p1[0], p2[0], p3[0], p4[0], p5[0], p6[0], p7[0]),
+               ('PV power', 'wind Power', 'grid Power', 'diesel Power', 'fixed Loads', 'battery Power', 'EV power'))
     plt.show()
