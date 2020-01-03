@@ -1,7 +1,8 @@
 import matplotlib.pyplot as plt
+import numpy as np
 
 
-def plotting(varName, varVal, soc_min_val, gridPrices, outputFolder):
+def plotting(varName, varVal, soc_min_val, gridPrices, outputFolder, pieChart = True):
     dico = {
         "PVPowers": [],
         "windPowers": [],
@@ -20,12 +21,13 @@ def plotting(varName, varVal, soc_min_val, gridPrices, outputFolder):
             if val in varName[i]:
                 dico[val].append(varVal[i])
                 break
+    if pieChart:
+        plotting_pieChart(dico, outputFolder, gridPrices)
+    else:
+        plotting_1day(dico, outputFolder, gridPrices)
 
-    # for val in dico.keys():
-    #     plt.plot(dico[val], label=val)
-    # plt.legend()
-    # plt.show()
 
+def plotting_1day(dico, outputFolder, gridPrices) :
     plt.plot(dico["PVPowers"], label="pv", color="orange")
     plt.plot(dico["windPowers"], label="wind", color="blue")
     plt.plot(dico["fixedLoads"], label="Loads Power", color="red")
@@ -69,4 +71,30 @@ def plotting(varName, varVal, soc_min_val, gridPrices, outputFolder):
     ax1.legend(loc="upper right")
     ax2.legend(loc="upper left")
     plt.savefig(outputFolder + "price - 1day.png")
+    plt.show()
+
+
+# PVPowers": [],
+#         "windPowers": [],
+#         "batPowers": [],
+#         "batEnergys": [],
+#         "evPowers": [],
+#         "evEnergys": [],
+#         "fixedLoads": [],
+#         "gridPowers": [],
+#         "dieselGenerators": [],
+
+def plotting_pieChart(dico, outputFolder, gridPrices):
+
+    plot1 = [np.sum(dico["PVPowers"]), np.sum(dico["windPowers"]), np.sum(dico["gridPowers"]),
+             np.sum(dico["dieselGenerators"])]
+    plt.pie(plot1, labels=["PVPowers", "windPowers", "gridPowers", "dieselGenerators"])
+    plt.title("Power given by the grid, pv, wind and diesel")
+    plt.savefig(outputFolder + "/power_output_gen.png")
+    plt.show()
+
+    plot2 = [np.sum(dico["batEnergys"]), np.sum(dico["evEnergys"])]
+    plt.pie(plot2, labels=["batEnergys", "evEnergys"])
+    plt.title("Energy inside the batteries")
+    plt.savefig(outputFolder + "/energy_batteries.png")
     plt.show()
