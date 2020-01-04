@@ -162,7 +162,6 @@ def setObjective(model, ini, dieselGeneratorsVars, dieselStatusVars, gridVars, p
             GRB.MINIMIZE,
         )
     elif ini.goal is Goal.GREEN_HOUSE:
-        # TODO adapt to new diesel model
         model.setObjective(
             ini.co2Diesel * gp.quicksum(dieselGeneratorsVars)
             + ini.co2Grid * gp.quicksum(gridVars),
