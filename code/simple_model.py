@@ -100,33 +100,33 @@ def runSimpleModel(ini):
     evPowerVars = setUpEv(model, ini)
     fixedLoadVars = setUpFixedLoads(model, ini)
     dieselGeneratorsVars, dieselStatusVars = setUpDiesel(model, ini)
-    gridVars = model.addVars(
-        len(ini.timestamps),
-        1,
-        lb=-GRB.INFINITY,
-        vtype=GRB.CONTINUOUS,
-        name="gridPowers",
-    )
+    fromGridVars, toGridVars = setUpGrid(model, ini)
     gridPrices = getPriceData(
         ini.costFileGrid, ini.timestamps, timedelta(days=365 * 5 + 1)
     )
 
     model.addConstrs(
         (
-            gridVars.sum(i, "*")
+            fromGridVars.sum(i, "*")
             + pvVars.sum(i, "*")
             + windVars.sum(i, "*")
             + dieselGeneratorsVars.sum(i, "*")
             + batteryPowerVars.sum(i, "*")
             + evPowerVars.sum(i, "*")
-            == fixedLoadVars.sum(i, "*")
+            == fixedLoadVars.sum(i, "*") + toGridVars.sum(i, "*")
             for i in range(len(ini.timestamps))
         ),
         "power balance",
     )
 
     setObjective(
-        model, ini, dieselGeneratorsVars, dieselStatusVars, gridVars, gridPrices
+        model,
+        ini,
+        dieselGeneratorsVars,
+        dieselStatusVars,
+        fromGridVars,
+        toGridVars,
+        gridPrices,
     )
 
     model.optimize()
@@ -136,7 +136,9 @@ def runSimpleModel(ini):
     plotResults(model, ini, gridPrices)
 
 
-def setObjective(model, ini, dieselGeneratorsVars, dieselStatusVars, gridVars, prices):
+def setObjective(
+    model, ini, dieselGeneratorsVars, dieselStatusVars, fromGridVars, toGridVars, prices
+):
     if ini.goal is Goal.MINIMIZE_COST:
         dieselObjExp = QuadExpr()
         for index in range(len(ini.timestamps)):
@@ -158,13 +160,18 @@ def setObjective(model, ini, dieselGeneratorsVars, dieselStatusVars, gridVars, p
 
         model.setObjective(
             dieselObjExp
-            + sum([gridVars[index, 0] * price for index, price in enumerate(prices)]),
+            + sum(
+                [
+                    (fromGridVars[index, 0] - toGridVars[index, 0]) * price
+                    for index, price in enumerate(prices)
+                ]
+            ),
             GRB.MINIMIZE,
         )
     elif ini.goal is Goal.GREEN_HOUSE:
         model.setObjective(
             ini.co2Diesel * gp.quicksum(dieselGeneratorsVars)
-            + ini.co2Grid * gp.quicksum(gridVars),
+            + ini.co2Grid * gp.quicksum(fromGridVars),
             GRB.MINIMIZE,
         )
     elif ini.goal is Goal.GREEN_HOUSE_QUADRATIC:
@@ -179,7 +186,7 @@ def setObjective(model, ini, dieselGeneratorsVars, dieselStatusVars, gridVars, p
             + ini.co2Grid
             * sum(
                 [
-                    gridVars[index, 0] * gridVars[index, 0]
+                    fromGridVars[index, 0] * fromGridVars[index, 0]
                     for index in range(len(ini.timestamps))
                 ]
             ),
@@ -189,12 +196,30 @@ def setObjective(model, ini, dieselGeneratorsVars, dieselStatusVars, gridVars, p
         model.setObjective(
             sum(
                 [
-                    gridVars[index, 0] * gridVars[index, 0]
+                    fromGridVars[index, 0] * fromGridVars[index, 0]
                     for index in range(len(ini.timestamps))
                 ]
             ),
             GRB.MINIMIZE,
         )
+
+
+def setUpGrid(model, ini):
+    fromGridVars = model.addVars(
+        len(ini.timestamps), 1, vtype=GRB.CONTINUOUS, name="fromGridPowers"
+    )
+    toGridVars = model.addVars(
+        len(ini.timestamps), 1, vtype=GRB.CONTINUOUS, name="toGridPowers"
+    )
+
+    model.addConstrs(
+        (
+            fromGridVars[index, 0] * toGridVars[index, 0] == 0
+            for index in range(len(ini.timestamps))
+        )
+    )
+
+    return fromGridVars, toGridVars
 
 
 def setUpDiesel(model, ini):

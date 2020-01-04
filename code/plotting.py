@@ -10,7 +10,8 @@ def plotting(varName, varVal, soc_min_val, gridPrices, outputFolder):
         "evPowers": [],
         "evEnergys": [],
         "fixedLoads": [],
-        "gridPowers": [],
+        "fromGridPowers": [],
+        "toGridPowers": [],
         "dieselGenerators": [],
     }
 
@@ -48,7 +49,8 @@ def plotting(varName, varVal, soc_min_val, gridPrices, outputFolder):
     plt.plot(dico["windPowers"], label="Wind Power", color="blue")
     plt.plot(dico["PVPowers"], label="PV Power", color="orange")
     plt.plot(dico["fixedLoads"], label="Loads Power", color="red")
-    plt.plot(dico["gridPowers"], label="Grid Power", color="black")
+    plt.plot(dico["fromGridPowers"], label="Grid Power In", color="black")
+    plt.plot(dico["toGridPowers"], label="Grid Power Out", color="cyan")
     plt.plot(dico["dieselGenerators"], label="Diesel Power", color="silver")
     plt.xlabel("Hour")
     plt.ylabel("Power (kW)")
@@ -59,7 +61,8 @@ def plotting(varName, varVal, soc_min_val, gridPrices, outputFolder):
     fig, ax1 = plt.subplots()
     ax2 = ax1.twinx()
     ax1.plot(range(len(gridPrices)), gridPrices, label="Grid Price", color="gold")
-    ax2.plot(dico["gridPowers"], label="Grid Power", color="black")
+    ax2.plot(dico["fromGridPowers"], label="Grid Power In", color="black")
+    ax2.plot(dico["toGridPowers"], label="Grid Power Out", color="cyan")
     ax1.set_xlabel("Hour")
     ax1.set_ylabel("Price - $ / kWh")
     ax2.set_ylabel("Power (kW)")
