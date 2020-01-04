@@ -99,7 +99,7 @@ def runSimpleModel(ini):
     batteryPowerVars = setUpBattery(model, ini)
     evPowerVars = setUpEv(model, ini)
     fixedLoadVars = setUpFixedLoads(model, ini)
-    [dieselGeneratorsVars, dieselStatusVars] = setUpDiesel(model, ini)
+    dieselGeneratorsVars, dieselStatusVars = setUpDiesel(model, ini)
     gridVars = model.addVars(
         len(ini.timestamps),
         1,
@@ -334,7 +334,7 @@ def setUpDiesel(model, ini):
         ((dieselGeneratorsVars[0, 0] == 0)), "Diesel Generator power initialization "
     )
 
-    return [dieselGeneratorsVars, dieselStatusVars]
+    return dieselGeneratorsVars, dieselStatusVars
 
 
 def setUpPV(model, ini):
