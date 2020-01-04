@@ -92,7 +92,6 @@ class Configure:
 
 
 def runSimpleModel(ini):
-
     model = gp.Model("simple-model")
 
     pvVars = setUpPV(model, ini)
@@ -139,7 +138,6 @@ def runSimpleModel(ini):
 
 def setObjective(model, ini, dieselGeneratorsVars, dieselStatusVars, gridVars, prices):
     if ini.goal is Goal.MINIMIZE_COST:
-
         dieselObjExp = QuadExpr()
         for index in range(len(ini.timestamps)):
             dieselObjExp.add(
