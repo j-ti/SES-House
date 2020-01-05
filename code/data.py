@@ -9,7 +9,7 @@ from util import getStepsize
 
 
 FROM_MEGAWATTHOURS_TO_KILOWATTHOURS = 1000
-constantPrice = 0.14  ## based on an average price of 14 c / kWh in France
+constantPrice = 0.14  # based on an average price of 14 c / kWh in France
 
 
 class NetworkException(Exception):
