@@ -1,9 +1,10 @@
 import unittest
-
 from datetime import datetime, timedelta
 
 from data import getPriceData, getLoadsData, getNinjaPvApi, getNinja, NetworkException
 from util import constructTimeStamps
+
+constantPrice = 0.14
 
 
 class LoadsTest(unittest.TestCase):
@@ -59,9 +60,9 @@ class PriceTest(unittest.TestCase):
         )
         [self.assertGreaterEqual(price_n, 0) for price_n in prices]
 
-        self.assertAlmostEqual(prices[0], (25.308 + 20.291) / 1000)
-        self.assertAlmostEqual(prices[-2], (25.551 + 24.667) / 1000)
-        self.assertAlmostEqual(prices[-1], 24.2 / 1000)
+        self.assertAlmostEqual(prices[0], (25.308 + 20.291) / 1000 + constantPrice)
+        self.assertAlmostEqual(prices[-2], (25.551 + 24.667) / 1000 + constantPrice)
+        self.assertAlmostEqual(prices[-1], 24.2 / 1000 + constantPrice)
 
     def testGetPriceDataOversample(self):
         stepsize = timedelta(minutes=1)
@@ -75,9 +76,9 @@ class PriceTest(unittest.TestCase):
         )
         [self.assertGreaterEqual(price_n, 0) for price_n in prices]
 
-        self.assertAlmostEqual(prices[0], (25.308 / 60) / 1000)
-        self.assertAlmostEqual(prices[59], (25.308 / 60) / 1000)
-        self.assertAlmostEqual(prices[-1], 24.2 / 60 / 1000)
+        self.assertAlmostEqual(prices[0], (25.308 / 60) / 1000 + constantPrice)
+        self.assertAlmostEqual(prices[59], (25.308 / 60) / 1000 + constantPrice)
+        self.assertAlmostEqual(prices[-1], 24.2 / 60 / 1000 + constantPrice)
 
 
 class NinjaTest(unittest.TestCase):
