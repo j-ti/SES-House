@@ -3,7 +3,6 @@ channels:
   - gurobi
   - http://conda.anaconda.org/gurobi
   - defaults
-  - conda-forge
 dependencies:
   - _libgcc_mutex=0.1=main
   - appdirs=1.4.3=py37h28b3542_0
@@ -124,6 +123,6 @@ dependencies:
   - zeromq=4.3.1=he6710b0_3
   - zipp=0.6.0=py_0
   - zlib=1.2.11=h7b6447c_3
-  - keras=2.3.1=py37h21ff451_0
+  - keras=2.2.4=0
 prefix: /home/joris/anaconda3/envs/ses-house
 
