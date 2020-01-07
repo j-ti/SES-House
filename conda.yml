@@ -3,6 +3,7 @@ channels:
   - gurobi
   - http://conda.anaconda.org/gurobi
   - defaults
+  - conda-forge
 dependencies:
   - _libgcc_mutex=0.1=main
   - appdirs=1.4.3=py37h28b3542_0
