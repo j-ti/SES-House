@@ -4,8 +4,6 @@ from datetime import datetime, timedelta
 from data import getPriceData, getLoadsData, getNinjaPvApi, getNinja, NetworkException
 from util import constructTimeStamps
 
-constantPrice = 0.14
-
 
 class LoadsTest(unittest.TestCase):
     def setUp(self):
@@ -47,6 +45,7 @@ class PriceTest(unittest.TestCase):
         self.start = datetime(2014, 1, 1, 0, 0, 0)
         self.end = datetime(2014, 1, 1, 22, 0, 0)
         self.offset = 5 * 365 + 1  # 5 years difference
+        self.constantPrice = 0.14
 
     def testGetPriceDataDownsample(self):
         stepsize = timedelta(hours=2)
@@ -54,15 +53,18 @@ class PriceTest(unittest.TestCase):
             "./sample/pecan-iso_neiso-day_ahead_lmp_avg-201901010000-201902010000.csv",
             constructTimeStamps(self.start, self.end, stepsize),
             timedelta(days=self.offset),
+            self.constantPrice,
         )
         self.assertEqual(
             len(constructTimeStamps(self.start, self.end, stepsize)), len(prices)
         )
         [self.assertGreaterEqual(price_n, 0) for price_n in prices]
 
-        self.assertAlmostEqual(prices[0], (25.308 + 20.291) / 1000 + constantPrice)
-        self.assertAlmostEqual(prices[-2], (25.551 + 24.667) / 1000 + constantPrice)
-        self.assertAlmostEqual(prices[-1], 24.2 / 1000 + constantPrice)
+        self.assertAlmostEqual(prices[0], (25.308 + 20.291) / 1000 + self.constantPrice)
+        self.assertAlmostEqual(
+            prices[-2], (25.551 + 24.667) / 1000 + self.constantPrice
+        )
+        self.assertAlmostEqual(prices[-1], 24.2 / 1000 + self.constantPrice)
 
     def testGetPriceDataOversample(self):
         stepsize = timedelta(minutes=1)
@@ -70,15 +72,16 @@ class PriceTest(unittest.TestCase):
             "./sample/pecan-iso_neiso-day_ahead_lmp_avg-201901010000-201902010000.csv",
             constructTimeStamps(self.start, self.end, stepsize),
             timedelta(days=self.offset),
+            self.constantPrice,
         )
         self.assertEqual(
             len(constructTimeStamps(self.start, self.end, stepsize)), len(prices)
         )
         [self.assertGreaterEqual(price_n, 0) for price_n in prices]
 
-        self.assertAlmostEqual(prices[0], (25.308 / 60) / 1000 + constantPrice)
-        self.assertAlmostEqual(prices[59], (25.308 / 60) / 1000 + constantPrice)
-        self.assertAlmostEqual(prices[-1], 24.2 / 60 / 1000 + constantPrice)
+        self.assertAlmostEqual(prices[0], (25.308 / 60) / 1000 + self.constantPrice)
+        self.assertAlmostEqual(prices[59], (25.308 / 60) / 1000 + self.constantPrice)
+        self.assertAlmostEqual(prices[-1], 24.2 / 60 / 1000 + self.constantPrice)
 
 
 class NinjaTest(unittest.TestCase):
