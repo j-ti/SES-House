@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 
-def plotting(varName, varVal, soc_min_val, gridPrices, outputFolder, pieChart=True):
+def plotting(varName, varVal, gridPrices, outputFolder):
     dico = {
         "PVPowers": [],
         "windPowers": [],
@@ -22,6 +22,16 @@ def plotting(varName, varVal, soc_min_val, gridPrices, outputFolder, pieChart=Tr
                 dico[val].append(varVal[i])
                 break
 
+    plotting_powers(dico, outputFolder)
+    plotting_energys(dico, outputFolder)
+    plotting_all_powers(dico, outputFolder)
+    plotting_in_out_price(dico, outputFolder, gridPrices)
+    plotting_pie_gen_pow(dico, outputFolder)
+    plotting_bar_in_out(dico, outputFolder)
+    plotting_bar_all_powers(dico, outputFolder)
+
+
+def plotting_powers(dico, outputFolder):
     # Plotting PV power, wind power and fixed loads power.
     plt.plot(dico["PVPowers"], label="pv", color="orange")
     plt.plot(dico["windPowers"], label="wind", color="blue")
@@ -32,6 +42,8 @@ def plotting(varName, varVal, soc_min_val, gridPrices, outputFolder, pieChart=Tr
     plt.savefig(outputFolder + "/pv_wind-power.png")
     plt.show()
 
+
+def plotting_energys(dico, outputFolder):
     # Plotting EV and batteries energies
     plt.plot(dico["batEnergys"], label="Battery Energy", color="green")
     plt.plot(dico["evEnergys"], label="EV Energy", color="lime")
@@ -41,6 +53,8 @@ def plotting(varName, varVal, soc_min_val, gridPrices, outputFolder, pieChart=Tr
     plt.savefig(outputFolder + "/bat_ev-energy.png")
     plt.show()
 
+
+def plotting_all_powers(dico, outputFolder):
     # Plotting all the powers from our system inside one graph
     plt.plot(dico["batPowers"], label="Battery Power", color="green")
     plt.plot(dico["evPowers"], label="EV Power", color="lime")
@@ -56,6 +70,8 @@ def plotting(varName, varVal, soc_min_val, gridPrices, outputFolder, pieChart=Tr
     plt.savefig(outputFolder + "/power-balance.png")
     plt.show()
 
+
+def plotting_in_out_price(dico, outputFolder, gridPrices):
     # Plotting the evolution of the power in and out on the grid and the evolution of prices
     fig, ax1 = plt.subplots()
     ax2 = ax1.twinx()
@@ -70,6 +86,8 @@ def plotting(varName, varVal, soc_min_val, gridPrices, outputFolder, pieChart=Tr
     plt.savefig(outputFolder + "price - 1day.png")
     plt.show()
 
+
+def plotting_pie_gen_pow(dico, outputFolder):
     # Pie plot with the repartion of the power generated inside our system
     plot1 = [np.sum(dico["PVPowers"]), np.sum(dico["windPowers"]), np.sum(dico["fromGridPowers"]),
              np.sum(dico["dieselGenerators"])]
@@ -78,6 +96,8 @@ def plotting(varName, varVal, soc_min_val, gridPrices, outputFolder, pieChart=Tr
     plt.savefig(outputFolder + "/power_output_gen.png")
     plt.show()
 
+
+def plotting_bar_in_out(dico, outputFolder):
     # Bar plot
     plt.bar(0, np.sum(dico["fromGridPowers"]))
     plt.bar(1, np.sum(dico["toGridPowers"]))
@@ -87,6 +107,8 @@ def plotting(varName, varVal, soc_min_val, gridPrices, outputFolder, pieChart=Tr
     plt.savefig(outputFolder + "/grid_in-out.png")
     plt.show()
 
+
+def plotting_bar_all_powers(dico, outputFolder):
     # bar chart of the production vs the loads
     p1 = plt.bar(0, np.sum(dico["PVPowers"]), 0.2)
     p2 = plt.bar(0, np.sum(dico["windPowers"]), 0.2, bottom=np.sum(dico["PVPowers"]))
