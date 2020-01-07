@@ -4,7 +4,6 @@ def constructTimeStamps(start, end, stepsize):
     while timeIterator <= end:
         times.append(timeIterator)
         timeIterator += stepsize
-    assert times[-1] == end
     return times
 
 

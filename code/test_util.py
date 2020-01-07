@@ -15,15 +15,13 @@ class Test(unittest.TestCase):
         self.assertEqual(start, timestamps[0])
         self.assertEqual(datetime(2014, 1, 2, 23, 0, 0), timestamps[23])
 
-    def testConstructTimeStampsError(self):
+    def testConstructTimeStampsWithUnfittingEnd(self):
         start = datetime(2014, 1, 2, 0, 0, 0)
-        end = datetime(2014, 1, 2, 5, 0, 0)
+        end = datetime(2014, 1, 2, 5, 5, 5)
         stepsize = timedelta(hours=2)
-        try:
-            constructTimeStamps(start, end, stepsize)
-            self.assertTrue(False)
-        except AssertionError:
-            self.assertTrue(True)
+        timestamps = constructTimeStamps(start, end, stepsize)
+        self.assertEqual(3, len(timestamps))
+        self.assertEqual(datetime(2014, 1, 2, 4, 0, 0), timestamps[-1])
 
     def testStepsize(self):
         start = datetime(2014, 1, 2, 0, 0, 0)
