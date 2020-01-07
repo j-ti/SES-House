@@ -25,8 +25,10 @@ def getNinja(filePath, timestamps):
         origStepsize = getStepsize(data.index)
         wantedStepsize = getStepsize(timestamps)
         if origStepsize > wantedStepsize:
+            assert (origStepsize / wantedStepsize).is_integer()
             data = data.resample(wantedStepsize).ffill()
         elif origStepsize < wantedStepsize:
+            assert (wantedStepsize / origStepsize).is_integer()
             data = data.resample(wantedStepsize).mean()
         return data["electricity"]
 
@@ -218,8 +220,10 @@ def getLoadsData(filePath, timestamps):
         origStepsize = getStepsize(data.index)
         wantedStepsize = getStepsize(timestamps)
         if origStepsize > wantedStepsize:
+            assert (origStepsize / wantedStepsize).is_integer()
             data = data.resample(wantedStepsize).ffill()
         elif origStepsize < wantedStepsize:
+            assert (wantedStepsize / origStepsize).is_integer()
             data = data.resample(wantedStepsize).mean()
         assert data.shape[1] <= 2
         if data.shape[1] == 2:
@@ -249,6 +253,7 @@ def getPriceData(filePath, timestamps, offset, constantPrice):
             data = data.resample(wantedStepsize).asfreq()
             _applyOppositeOfResampleSum(data, timestamps, origStepsize / wantedStepsize)
         elif origStepsize < wantedStepsize:
+            assert (wantedStepsize / origStepsize).is_integer()
             data = data.resample(wantedStepsize).sum()
         assert data.shape[1] <= 2
 
