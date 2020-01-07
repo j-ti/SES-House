@@ -9,7 +9,6 @@ from util import getStepsize
 
 
 FROM_MEGAWATTHOURS_TO_KILOWATTHOURS = 1000
-constantPrice = 0.14  # based on an average price of 14 c / kWh in France
 
 
 class NetworkException(Exception):
@@ -232,7 +231,7 @@ def getLoadsData(filePath, timestamps):
         return loads
 
 
-def getPriceData(filePath, timestamps, offset):
+def getPriceData(filePath, timestamps, offset, constantPrice):
     with open(filePath, "r", encoding="utf-8") as dataFile:
         data = pd.read_csv(
             dataFile,
