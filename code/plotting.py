@@ -83,7 +83,7 @@ def plotting_in_out_price(dico, outputFolder, gridPrices):
     ax2.set_ylabel("Power (kW)")
     ax1.legend(loc="upper right")
     ax2.legend(loc="upper left")
-    plt.savefig(outputFolder + "price - 1day.png")
+    plt.savefig(outputFolder + "grid_in-out_price.png")
     plt.show()
 
 
@@ -92,8 +92,8 @@ def plotting_pie_gen_pow(dico, outputFolder):
     plot1 = [np.sum(dico["PVPowers"]), np.sum(dico["windPowers"]), np.sum(dico["fromGridPowers"]),
              np.sum(dico["dieselGenerators"])]
     plt.pie(plot1, labels=["PVPowers", "windPowers", "fromGridPowers", "dieselGenerators"])
-    plt.title("Power given by the grid, pv, wind and diesel")
-    plt.savefig(outputFolder + "/power_output_gen.png")
+    plt.title("Repartion of power given by the grid, pv, wind and diesel")
+    plt.savefig(outputFolder + "/power_generated_pie.png")
     plt.show()
 
 
@@ -104,7 +104,7 @@ def plotting_bar_in_out(dico, outputFolder):
     plt.xticks([0, 1], ["From Grid", "To Grid"])
     plt.ylabel("Power (kW)")
     plt.title("Proportion grid in and out")
-    plt.savefig(outputFolder + "/grid_in-out.png")
+    plt.savefig(outputFolder + "/grid_in-out_bar.png")
     plt.show()
 
 
@@ -127,4 +127,5 @@ def plotting_bar_all_powers(dico, outputFolder):
     plt.legend((p1[0], p2[0], p3[0], p4[0], p5[0], p6[0], p7[0], p8[0]),
                ('PV power', 'wind Power', 'from grid Power', 'diesel Power', 'fixed Loads', 'battery Power', 'EV power',
                 'toGridPowers'))
+    plt.savefig(outputFolder + "all-pow_bar.png")
     plt.show()

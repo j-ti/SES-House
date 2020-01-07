@@ -544,7 +544,7 @@ def plotResults(model, ini, gridPrices):
     for v in model.getVars():
         varN.append(v.varName)
         varX.append(v.x)
-    plotting(varN, varX, ini.SOC_bat_min * ini.E_bat_max, gridPrices, outputFolder)
+    plotting(varN, varX, gridPrices, outputFolder)
 
 
 def main(argv):
