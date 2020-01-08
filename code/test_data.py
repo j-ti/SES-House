@@ -12,7 +12,7 @@ class LoadsTest(unittest.TestCase):
         self.dataFile = "./sample/pecan-home86-grid-201401010000_201402010000-15m.csv"
 
     def testGetLoadsData(self):
-        stepsize = timedelta(hours=1)
+        stepsize = timedelta(minutes=15)
         loads = getLoadsData(
             self.dataFile, constructTimeStamps(self.start, self.end, stepsize)
         )
