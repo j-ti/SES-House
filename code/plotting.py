@@ -14,7 +14,7 @@ colorDico = {
     "fromGridPowers": "black",
     "toGridPowers": "cyan",
     "dieselGenerators": "silver",
-    "gridPrice": "gold"
+    "gridPrice": "gold",
 }
 
 
@@ -77,9 +77,17 @@ def plotting_all_powers(dico, outputFolder):
     plt.plot(dico["windPowers"], label="Wind Power", color=colorDico["windPowers"])
     plt.plot(dico["PVPowers"], label="PV Power", color=colorDico["PVPowers"])
     plt.plot(dico["fixedLoads"], label="Loads Power", color=colorDico["fixedLoads"])
-    plt.plot(dico["fromGridPowers"], label="Grid Power In", color=colorDico["fromGridPowers"])
-    plt.plot(dico["toGridPowers"], label="Grid Power Out", color=colorDico["toGridPowers"])
-    plt.plot(dico["dieselGenerators"], label="Diesel Power", color=colorDico["dieselGenerators"])
+    plt.plot(
+        dico["fromGridPowers"], label="Grid Power In", color=colorDico["fromGridPowers"]
+    )
+    plt.plot(
+        dico["toGridPowers"], label="Grid Power Out", color=colorDico["toGridPowers"]
+    )
+    plt.plot(
+        dico["dieselGenerators"],
+        label="Diesel Power",
+        color=colorDico["dieselGenerators"],
+    )
     plt.xlabel("Hour")
     plt.ylabel("Power (kW)")
     plt.legend(loc="upper right")
@@ -91,9 +99,18 @@ def plotting_all_powers(dico, outputFolder):
 def plotting_in_out_price(dico, outputFolder, gridPrices):
     fig, ax1 = plt.subplots()
     ax2 = ax1.twinx()
-    ax1.plot(range(len(gridPrices)), gridPrices, label="Grid Price", color=colorDico["gridPrice"])
-    ax2.plot(dico["fromGridPowers"], label="Grid Power In", color=colorDico["fromGridPowers"])
-    ax2.plot(dico["toGridPowers"], label="Grid Power Out", color=colorDico["toGridPowers"])
+    ax1.plot(
+        range(len(gridPrices)),
+        gridPrices,
+        label="Grid Price",
+        color=colorDico["gridPrice"],
+    )
+    ax2.plot(
+        dico["fromGridPowers"], label="Grid Power In", color=colorDico["fromGridPowers"]
+    )
+    ax2.plot(
+        dico["toGridPowers"], label="Grid Power Out", color=colorDico["toGridPowers"]
+    )
     ax1.set_xlabel("Hour")
     ax1.set_ylabel("Price - $ / kWh")
     ax2.set_ylabel("Power (kW)")
@@ -105,11 +122,22 @@ def plotting_in_out_price(dico, outputFolder, gridPrices):
 
 # Pie plot with the repartion of the power generated inside our system
 def plotting_pie_gen_pow(dico, outputFolder):
-    plot1 = [np.sum(dico["PVPowers"]), np.sum(dico["windPowers"]), np.sum(dico["fromGridPowers"]),
-             np.sum(dico["dieselGenerators"])]
-    plt.pie(plot1, labels=["PVPowers", "windPowers", "fromGridPowers", "dieselGenerators"]
-            , colors=[colorDico["PVPowers"], colorDico["windPowers"], colorDico["fromGridPowers"],
-                      colorDico["dieselGenerators"]])
+    plot1 = [
+        np.sum(dico["PVPowers"]),
+        np.sum(dico["windPowers"]),
+        np.sum(dico["fromGridPowers"]),
+        np.sum(dico["dieselGenerators"]),
+    ]
+    plt.pie(
+        plot1,
+        labels=["PVPowers", "windPowers", "fromGridPowers", "dieselGenerators"],
+        colors=[
+            colorDico["PVPowers"],
+            colorDico["windPowers"],
+            colorDico["fromGridPowers"],
+            colorDico["dieselGenerators"],
+        ],
+    )
     plt.title("Repartion of power given by the grid, pv, wind and diesel")
     plt.savefig(outputFolder + "/power_generated_pie.png")
     plt.show()
@@ -143,23 +171,61 @@ def plotting_bar_all_powers(dico, outputFolder):
 
     p1 = plt.bar(0, pvPow, 0.2, color=colorDico["PVPowers"])
     p2 = plt.bar(0, windPow, 0.2, bottom=pvPow, color=colorDico["windPowers"])
-    p3 = plt.bar(0, fromGridPow, 0.2, bottom=pvPow + windPow, color=colorDico["fromGridPowers"])
-    p4 = plt.bar(0, dieselPow, 0.1, bottom=pvPow + windPow + fromGridPow, color=colorDico["dieselGenerators"])
-    p5 = plt.bar(0.05, batNegPow, 0.1, bottom=pvPow + windPow + fromGridPow + dieselPow,
-                 color=colorDico["batPowersNeg"])
-    p6 = plt.bar(0.05, evNegPow, 0.1, bottom=pvPow + windPow + fromGridPow + dieselPow + batNegPow,
-                 color=colorDico["evPowersNeg"])
+    p3 = plt.bar(
+        0, fromGridPow, 0.2, bottom=pvPow + windPow, color=colorDico["fromGridPowers"]
+    )
+    p4 = plt.bar(
+        0,
+        dieselPow,
+        0.1,
+        bottom=pvPow + windPow + fromGridPow,
+        color=colorDico["dieselGenerators"],
+    )
+    p5 = plt.bar(
+        0.05,
+        batNegPow,
+        0.1,
+        bottom=pvPow + windPow + fromGridPow + dieselPow,
+        color=colorDico["batPowersNeg"],
+    )
+    p6 = plt.bar(
+        0.05,
+        evNegPow,
+        0.1,
+        bottom=pvPow + windPow + fromGridPow + dieselPow + batNegPow,
+        color=colorDico["evPowersNeg"],
+    )
 
     p7 = plt.bar(0.7, fixLoadPow, 0.2, color=colorDico["fixedLoads"])
     p8 = plt.bar(0.7, batPosPow, 0.2, bottom=fixLoadPow, color=colorDico["batPowers"])
-    p9 = plt.bar(0.7, evPosPow, 0.2, bottom=fixLoadPow + batPosPow, color=colorDico["evPowers"])
-    p10 = plt.bar(0.75, toGridPow, 0.1, bottom=fixLoadPow + batPosPow + evPosPow, color=colorDico["toGridPowers"])
+    p9 = plt.bar(
+        0.7, evPosPow, 0.2, bottom=fixLoadPow + batPosPow, color=colorDico["evPowers"]
+    )
+    p10 = plt.bar(
+        0.75,
+        toGridPow,
+        0.1,
+        bottom=fixLoadPow + batPosPow + evPosPow,
+        color=colorDico["toGridPowers"],
+    )
 
     plt.xticks([0, 0.7], ("Generator", "Loads"))
     plt.ylabel("Power (kW)")
-    plt.legend((p1[0], p2[0], p3[0], p4[0], p5[0], p6[0], p7[0], p8[0], p9[0], p10[0]),
-               ('PV', 'Wind', 'Buy from the Grid', 'Diesel', 'Battery discharging', 'EV discharging',
-                'Fixed Loads', 'Battery charging', 'EV charging', 'Sell to the Grid'))
+    plt.legend(
+        (p1[0], p2[0], p3[0], p4[0], p5[0], p6[0], p7[0], p8[0], p9[0], p10[0]),
+        (
+            "PV",
+            "Wind",
+            "Buy from the Grid",
+            "Diesel",
+            "Battery discharging",
+            "EV discharging",
+            "Fixed Loads",
+            "Battery charging",
+            "EV charging",
+            "Sell to the Grid",
+        ),
+    )
     plt.title("Power generated & Power needed")
     plt.savefig(outputFolder + "all-pow_bar.png")
     plt.show()
