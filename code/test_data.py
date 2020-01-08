@@ -61,10 +61,7 @@ class PriceTest(unittest.TestCase):
         [self.assertGreaterEqual(price_n, 0) for price_n in prices]
 
         self.assertAlmostEqual(prices[0], (25.308 + 20.291) / 1000 + self.constantPrice)
-        self.assertAlmostEqual(
-            prices[-2], (25.551 + 24.667) / 1000 + self.constantPrice
-        )
-        self.assertAlmostEqual(prices[-1], 24.2 / 1000 + self.constantPrice)
+        self.assertAlmostEqual(prices[-1], (24.2 + 23.417) / 1000 + self.constantPrice)
 
     def testGetPriceDataOversample(self):
         stepsize = timedelta(minutes=1)
