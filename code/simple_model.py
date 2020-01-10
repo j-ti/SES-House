@@ -72,12 +72,14 @@ class Configure:
         self.startUpCost = float(config["DIESEL"]["StartUpCost"])
         self.dieselLeastRunHour = int(config["DIESEL"]["LeastRunningTime"])
         self.dieselLeastPauseHour = int(config["DIESEL"]["LeastPauseTime"])
-        self.dieselLeastRunTimestepNumber = int(self.dieselLeastRunHour/(
-                getStepsize(self.timestamps).total_seconds() / 3600
-        ))
-        self.dieselLeastPauseTimestepNumber = int(self.dieselLeastPauseHour / (
-                getStepsize(self.timestamps).total_seconds() / 3600
-        ))
+        self.dieselLeastRunTimestepNumber = int(
+            self.dieselLeastRunHour
+            / (getStepsize(self.timestamps).total_seconds() / 3600)
+        )
+        self.dieselLeastPauseTimestepNumber = int(
+            self.dieselLeastPauseHour
+            / (getStepsize(self.timestamps).total_seconds() / 3600)
+        )
         self.startUpHour = int(config["DIESEL"]["StartUpTime"])
         self.shutDownHour = int(config["DIESEL"]["ShutDownTime"])
 
@@ -248,7 +250,7 @@ def setUpDiesel(model, ini):
         model.addConstr(
             (
                 (dieselStatusVars[index, 3] == 1)
-                >> (dieselGeneratorsVars[index, 0] >= 0)
+                >> (dieselGeneratorsVars[index, 0] == ini.P_dg_max)
             ),
             "Energy consumption when diesel generator is turned on",
         )
@@ -304,7 +306,7 @@ def setUpDiesel(model, ini):
         model.addConstr(
             (
                 (dieselStatusVars[index, 1] == 1)
-                >> (dieselStatusVars[index + 1, 3] == 0)
+                >> (dieselStatusVars[index + 1, 0] == 0)
             ),
             "Startup -> Not working IMPOSSIBLE",
         )
@@ -314,6 +316,13 @@ def setUpDiesel(model, ini):
                 >> (dieselStatusVars[index + 1, 3] == 0)
             ),
             "Shutdown -> working IMPOSSIBLE",
+        )
+        model.addConstr(
+            (
+                (dieselStatusVars[index, 2] == 1)
+                >> (dieselStatusVars[index + 1, 1] == 0)
+            ),
+            "Shutdown -> startup IMPOSSIBLE",
         )
         model.addConstr(
             (
@@ -338,7 +347,9 @@ def setUpDiesel(model, ini):
             )
             >= ini.dieselLeastRunTimestepNumber
             * (dieselStatusVars[index, 3] - dieselStatusVars[index - 1, 3])
-            for index in range(1, len(ini.timestamps) - ini.dieselLeastRunTimestepNumber)
+            for index in range(
+                1, len(ini.timestamps) - ini.dieselLeastRunTimestepNumber
+            )
         ),
         "Least Running time",
     )
@@ -351,13 +362,19 @@ def setUpDiesel(model, ini):
             )
             >= ini.dieselLeastPauseTimestepNumber
             * (dieselStatusVars[index, 0] - dieselStatusVars[index - 1, 0])
-            for index in range(1, len(ini.timestamps) - ini.dieselLeastPauseTimestepNumber)
+            for index in range(
+                1, len(ini.timestamps) - ini.dieselLeastPauseTimestepNumber
+            )
         ),
         "Least pause time",
     )
 
     model.addConstr(
         ((dieselStatusVars[0, 0] == 1)), "Diesel Generator status initialization"
+    )
+    model.addConstr(
+        ((dieselStatusVars[len(ini.timestamps) - 1, 0] == 1)),
+        "Diesel Generator status in the end",
     )
 
     return dieselGeneratorsVars, dieselStatusVars
