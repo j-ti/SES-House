@@ -1,31 +1,33 @@
+from datetime import datetime
+
 import numpy as np
+from data import getNinjaPvApi
+from util import constructTimeStamps
+
 from keras.layers.core import Dense
 from keras.models import Sequential
 from keras.utils import np_utils
 from sklearn.model_selection import train_test_split
 
+
 # fixing the random seed to have a better reproducibility
 seed = 3
 np.random.seed(seed)
 
-# input datas
-datas = np.array([[5.1, 3.5, 1.4, 0.2],
-                  [4.9, 3., 1.4, 0.2],
-                  [4.7, 3.2, 1.3, 0.2],
-                  [4.6, 3.1, 1.5, 0.2]
-                  ])
+# input datas : uncontrolable resource : solar production
+timestamps = constructTimeStamps(
+    datetime.strptime("2014-01-01 00:00:00", "20%y-%m-%d %H:%M:%S"),
+    datetime.strptime("2014-02-01 00:00:00", "20%y-%m-%d %H:%M:%S"),
+    datetime.strptime("01:00:00", "%H:%M:%S") - datetime.strptime("00:00:00", "%H:%M:%S")
+)
 
-label = np.array([[0],
-                  [1],
-                  [0],
-                  [1]
-                  ])
-print(datas)
+metadata, df_pvPower = getNinjaPvApi(
+    52.5170, 13.3889, timestamps
+)
 
-train_X, test_X, train_y, test_y = train_test_split(datas, label, test_size=0.2, random_state=seed)
+df_train = df_pvPower["electricity"][0:600]
 
-train_y_ohe = np_utils.to_categorical(train_y)
-test_y_ohe = np_utils.to_categorical(test_y)
+
 
 
 # building the model
