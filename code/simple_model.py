@@ -5,6 +5,7 @@ from datetime import datetime, timedelta
 from enum import Enum
 import sys
 import os
+from shutil import copyfile
 
 from util import constructTimeStamps, getStepsize, getTimeIndexRange
 
@@ -548,6 +549,10 @@ def plotResults(model, ini, gridPrices):
     plotting(varN, varX, gridPrices, outputFolder)
 
 
+def copyConfigFile(filepath, outputFolder):
+    copyfile(filepath, os.path.join(outputFolder, "conf.ini"))
+
+
 def main(argv):
     global outputFolder
     outputFolder = (
@@ -557,6 +562,7 @@ def main(argv):
     )
     if not os.path.isdir(outputFolder):
         os.makedirs(outputFolder)
+    copyConfigFile(argv[1], outputFolder)
     config = configparser.ConfigParser()
     config.read(argv[1])
     runSimpleModel(Configure(config))
