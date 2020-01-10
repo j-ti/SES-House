@@ -241,6 +241,44 @@ def getLoadsData(filePath, timestamps):
         return loads
 
 
+def getPecanstreetData(
+    filePath, dataid, column, timestamps,
+):
+    with open(filePath, "r", encoding="utf-8") as dataFile:
+        data = pd.read_csv(
+            dataFile,
+            parse_dates=["local_15min"],
+            # index_col='local_15min'
+        )
+        data["local_15min"] = data["local_15min"].dt.tz_localize(None)
+        # pd.to_datetime(TradeData.index, format="%m/%d/%Y : %I:%M %p")
+        pd.to_datetime(data["local_15min"])
+        print(data.set_index("local_15min"))
+        print(timestamps[0])
+        print(data.loc[timestamps[0]])
+
+        data = data.loc[timestamps[0] : timestamps[-1] + getStepsize(timestamps)]
+        origStepsize = getStepsize(data.index)
+        wantedStepsize = getStepsize(timestamps)
+        if origStepsize > wantedStepsize:
+            assert (origStepsize / wantedStepsize).is_integer()
+            data = data.resample(wantedStepsize).ffill()
+        elif origStepsize < wantedStepsize:
+            data = _dropUnfittingValuesAtEndForDownSampling(
+                origStepsize, wantedStepsize, timestamps, data
+            )
+            data = data.resample(wantedStepsize).mean()
+        assert data.shape[1] <= 2
+        data = data.loc[timestamps[0] : timestamps[-1]]
+        if data.shape[1] == 2:
+            loads = data.iloc[:, 0] + data.iloc[:, 1]
+        else:
+            loads = data.iloc[:, 0]
+        for value in loads:
+            assert value >= 0
+        return loads
+
+
 def getPriceData(filePath, timestamps, offset, constantPrice):
     with open(filePath, "r", encoding="utf-8") as dataFile:
         data = pd.read_csv(
