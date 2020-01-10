@@ -8,6 +8,7 @@ from keras.layers.core import Dense
 from keras.models import Sequential
 from keras.utils import np_utils
 from sklearn.model_selection import train_test_split
+import matplotlib.pyplot as plt
 
 
 # fixing the random seed to have a better reproducibility
@@ -25,34 +26,32 @@ metadata, df_pvPower = getNinjaPvApi(
     52.5170, 13.3889, timestamps
 )
 
-df_train = df_pvPower["electricity"][0:600]
+df_train = df_pvPower["electricity"][:600]
+df_train_label = df_pvPower["electricity"][1:601]
+
+df_test = df_pvPower["electricity"][602:len(df_pvPower) -2]
+df_test_lebel = df_pvPower["electricity"][603:len(df_pvPower) -1]
 
 
+model = Sequential()
+model.add(Dense(16, input_shape=(1,), activation='sigmoid'))
+model.add(Dense(15, activation='sigmoid'))
+model.add(Dense(1, activation='softmax'))
 
+model.compile(optimizer='adam', loss='mean_squared_error', metrics=["accuracy"])
 
-# building the model
-def createModel(inputLayer, lLayer):
-    model = Sequential()
-    model.add(Dense(inputLayer[1], input_shape=inputLayer[0], activation='sigmoid'))
-    for foo in lLayer:
-        if foo[0] == 'D':
-            if foo[2] == "sig":
-                model.add(Dense(foo[1], activation='sigmoid'))
-            elif foo[2] == "soft":
-                model.add(Dense(foo[1], activation='softmax'))
-
-    model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=["accuracy"])
-    return model
-
-
-model = createModel([(4,), 16], [('D', 16, 'sig'), ('D', 2, 'soft')])
 
 # training it
-model.fit(train_X, train_y_ohe, epochs=100, batch_size=1, verbose=0)
+model.fit(df_train, df_train_label, epochs=100, batch_size=1, verbose=0)
 
 # testing it
-loss, accuracy = model.evaluate(test_X, test_y_ohe, verbose=0)
+loss, accuracy = model.evaluate(df_test, df_test_lebel, verbose=0)
 print("Accuracy = {:.2f}".format(accuracy))
 
 # plotting
+predict = model.predict(df_test)
 
+plt.plot(predict)
+plt.plot(df_test_lebel)
+
+plt.show()
