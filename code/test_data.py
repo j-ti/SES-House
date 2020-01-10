@@ -1,7 +1,14 @@
 import unittest
 from datetime import datetime, timedelta
 
-from data import getPriceData, getLoadsData, getNinjaPvApi, getNinja, NetworkException
+from data import (
+    getPriceData,
+    getLoadsData,
+    getNinjaPvApi,
+    getNinja,
+    NetworkException,
+    getPecanstreetData,
+)
 from util import constructTimeStamps
 
 
@@ -38,6 +45,27 @@ class LoadsTest(unittest.TestCase):
         self.assertEqual(loads[0], 2.444)
         for index in range(14):
             self.assertEqual(loads[index], loads[index + 1])
+
+
+class PecanstreetTest(unittest.TestCase):
+    def setUp(self):
+        self.start = datetime(2018, 11, 21, 16, 0, 0)
+        self.end = datetime(2018, 11, 21, 19, 0, 0)
+        self.dataFile = (
+            "./data/austin/15minute_data_sample.csv"  # (local_15min), localminute
+        )
+        self.dataid = 661
+        self.timeindex = "local_15min"
+        self.column = "grid"
+
+    def testGetLoadsData(self):
+        stepsize = timedelta(minutes=15)
+        loads = getPecanstreetData(
+            self.dataFile,
+            self.dataid,
+            self.column,
+            constructTimeStamps(self.start, self.end, stepsize),
+        )
 
 
 class PriceTest(unittest.TestCase):
