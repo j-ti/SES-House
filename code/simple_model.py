@@ -203,12 +203,7 @@ def calcGreenhouseQuadraticObjective(ini, fromGridVars, dieselGeneratorsVars):
 
 
 def calcGridIndependenceObjective(ini, fromGridVars):
-    return sum(
-        [
-            fromGridVars[index, 0] * fromGridVars[index, 0]
-            for index in range(len(ini.timestamps))
-        ]
-    )
+    return gp.quicksum(fromGridVars)
 
 
 def setObjective(
