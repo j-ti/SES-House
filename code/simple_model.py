@@ -71,8 +71,8 @@ class Configure:
         self.dieselConstantCof = float(config["DIESEL"]["c_dg"])
         self.dieselFuelPrice = float(config["DIESEL"]["c_gen"])
         self.startUpCost = float(config["DIESEL"]["StartUpCost"])
-        self.dieselLeastRunHour = int(config["DIESEL"]["LeastRunningTime"])
-        self.dieselLeastPauseHour = int(config["DIESEL"]["LeastPauseTime"])
+        self.dieselLeastRunHour = datetime.strptime(config["DIESEL"]["LeastRunningTime"], "%H:%M:%S").hour
+        self.dieselLeastPauseHour =  datetime.strptime(config["DIESEL"]["LeastPauseTime"], "%H:%M:%S").hour
         self.dieselLeastRunTimestepNumber = int(
             self.dieselLeastRunHour
             / (getStepsize(self.timestamps).total_seconds() / 3600)
@@ -81,9 +81,13 @@ class Configure:
             self.dieselLeastPauseHour
             / (getStepsize(self.timestamps).total_seconds() / 3600)
         )
-        self.startUpHour = int(config["DIESEL"]["StartUpTime"])
-        self.shutDownHour = int(config["DIESEL"]["ShutDownTime"])
 
+        self.startUpHour = datetime.strptime(config["DIESEL"]["StartUpTime"], "%H:%M:%S").hour
+        self.shutDownHour = datetime.strptime(config["DIESEL"]["ShutDownTime"], "%H:%M:%S").hour
+        self.startUpTimestepNumber=int(
+            self.startUpHour
+            / (getStepsize(self.timestamps).total_seconds() / 3600)
+        )
         self.deltaShutDown = (
             self.P_dg_max
             / self.shutDownHour
@@ -247,21 +251,22 @@ def setUpDiesel(model, ini):
         (dieselStatusVars.sum(i, "*") == 1 for i in range(len(ini.timestamps)))
     )
 
+    model.addConstrs(
+        (
+            (dieselStatusVars[index, 3] == 1)
+            >> (dieselGeneratorsVars[index, 0] == ini.P_dg_max)
+            for index in range(len(ini.timestamps))
+        ),
+        "Energy consumption when diesel generator is turned on",
+    )
+    model.addConstrs(
+        (
+            (dieselStatusVars[index, 0] == 1) >> (dieselGeneratorsVars[index, 0] == 0)
+            for index in range(len(ini.timestamps))
+        ),
+        "No energy consumption when diesel generator is turned off",
+    )
     for index in range(len(ini.timestamps) - 1):
-        model.addConstr(
-            (
-                (dieselStatusVars[index, 3] == 1)
-                >> (dieselGeneratorsVars[index, 0] == ini.P_dg_max)
-            ),
-            "Energy consumption when diesel generator is turned on",
-        )
-        model.addConstr(
-            (
-                (dieselStatusVars[index, 0] == 1)
-                >> (dieselGeneratorsVars[index, 0] == 0)
-            ),
-            "No energy consumption when diesel generator is turned off",
-        )
         model.addConstr(
             (
                 (dieselStatusVars[index, 1] == 1)
@@ -344,12 +349,12 @@ def setUpDiesel(model, ini):
         (
             sum(
                 dieselStatusVars[index2, 3]
-                for index2 in range(index, index + ini.dieselLeastRunTimestepNumber)
+                for index2 in range(index, index + ini.dieselLeastRunTimestepNumber + 1)
             )
-            >= ini.dieselLeastRunTimestepNumber
+            >= (ini.dieselLeastRunTimestepNumber + 1)
             * (dieselStatusVars[index, 3] - dieselStatusVars[index - 1, 3])
             for index in range(
-                1, len(ini.timestamps) - ini.dieselLeastRunTimestepNumber
+                1, len(ini.timestamps) - (ini.dieselLeastRunTimestepNumber + 1)
             )
         ),
         "Least Running time",
@@ -359,17 +364,30 @@ def setUpDiesel(model, ini):
         (
             sum(
                 dieselStatusVars[index2, 0]
-                for index2 in range(index, index + ini.dieselLeastPauseTimestepNumber)
+                for index2 in range(
+                    index, index + ini.dieselLeastPauseTimestepNumber + 1
+                )
             )
-            >= ini.dieselLeastPauseTimestepNumber
+            >= (ini.dieselLeastPauseTimestepNumber + 1)
             * (dieselStatusVars[index, 0] - dieselStatusVars[index - 1, 0])
             for index in range(
-                1, len(ini.timestamps) - ini.dieselLeastPauseTimestepNumber
+                1, len(ini.timestamps) - (ini.dieselLeastPauseTimestepNumber + 1)
             )
         ),
         "Least pause time",
     )
 
+    model.addConstrs(
+        (
+            dieselStatusVars[index, 1] == 0
+            for index in range(
+                len(ini.timestamps) - (ini.dieselLeastRunTimestepNumber+ini.startUpTimestepNumber),
+                len(ini.timestamps),
+
+            )
+        ),
+        "do not startup if no enough time",
+    )
     model.addConstr(
         ((dieselStatusVars[0, 0] == 1)), "Diesel Generator status initialization"
     )
