@@ -206,6 +206,7 @@ def calcGreenhouseQuadraticObjective(ini, fromGridVars, dieselGeneratorsVars):
 def calcGridIndependenceObjective(ini, fromGridVars):
     return gp.quicksum(fromGridVars)
 
+
 def setObjective(
     model, ini, dieselGeneratorsVars, dieselStatusVars, fromGridVars, toGridVars, prices
 ):
