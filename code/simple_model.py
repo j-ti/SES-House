@@ -464,17 +464,6 @@ def setUpDiesel(model, ini):
         ),
         "ShutDown Constraint",
     )
-    model.addConstrs(
-        (
-            dieselStatusVars[index, 1] == 0
-            for index in range(
-                len(ini.timestamps)
-                - (ini.dieselLeastRunTimestepNumber + ini.shutDownTimestepNumber),
-                len(ini.timestamps),
-            )
-        ),
-        "do not startup if not enough time before end of simulation",
-    )
     model.addConstr(
         ((dieselStatusVars[0, 0] == 1)), "Diesel Generator status initialization"
     )
