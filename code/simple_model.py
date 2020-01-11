@@ -467,10 +467,6 @@ def setUpDiesel(model, ini):
     model.addConstr(
         ((dieselStatusVars[0, 0] == 1)), "Diesel Generator status initialization"
     )
-    model.addConstr(
-        ((dieselStatusVars[len(ini.timestamps) - 1, 0] == 1)),
-        "Diesel Generator status in the end of simulation",
-    )
 
     return dieselGeneratorsVars, dieselStatusVars
 
