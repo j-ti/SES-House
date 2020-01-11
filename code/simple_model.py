@@ -465,7 +465,7 @@ def setUpDiesel(model, ini):
         "ShutDown Constraint",
     )
     model.addConstr(
-        ((dieselStatusVars[0, 0] == 1)), "Diesel Generator status initialization"
+        ((dieselStatusVars[0, 0] == 1)), "diesel generator is not committed at start"
     )
 
     return dieselGeneratorsVars, dieselStatusVars
