@@ -474,7 +474,7 @@ def setUpDiesel(model, ini):
         "do not startup if not enough time before end of simulation",
     )
     model.addConstr(
-        ((dieselStatusVars[0, 0] == 1)), "Diesel Generator status initialization"
+        ((dieselStatusVars[0, 0] == 1)), "diesel generator is not committed at start"
     )
     model.addConstr(
         ((dieselStatusVars[len(ini.timestamps) - 1, 0] == 1)),
