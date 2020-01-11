@@ -15,7 +15,7 @@ from plotting import plotting
 
 import gurobipy as gp
 
-# from gurobipy import QuadExpr
+from gurobipy import QuadExpr
 from gurobipy import GRB
 
 
@@ -170,7 +170,76 @@ def runSimpleModel(ini):
     model.write(outputFolder + "/res.sol")
 
     printResults(model, ini)
+    printObjectiveResults(
+        ini,
+        fromGridVars,
+        toGridVars,
+        gridPrices,
+        dieselGeneratorsVars,
+        dieselStatusVars,
+    )
     plotResults(model, ini, gridPrices)
+
+
+def calcGreenhouseObjective(ini, fromGridVars, dieselGeneratorsVars):
+    return ini.co2Diesel * gp.quicksum(
+        dieselGeneratorsVars
+    ) + ini.co2Grid * gp.quicksum(fromGridVars)
+
+
+def calcDieselMinCostObjective(ini, dieselGeneratorsVars, dieselStatusVars):
+    dieselObjExp = QuadExpr()
+    for index in range(len(ini.timestamps)):
+        dieselObjExp.add(
+            dieselGeneratorsVars[index, 0]
+            * dieselGeneratorsVars[index, 0]
+            * ini.dieselQuadraticCof
+            * ini.dieselFuelPrice
+        )
+        dieselObjExp.add(
+            dieselGeneratorsVars[index, 0] * ini.dieselLinearCof * ini.dieselFuelPrice
+        )
+        dieselObjExp.add(ini.dieselConstantCof)
+        dieselObjExp.add(ini.startUpCost * dieselStatusVars[index, 2] / ini.startUpHour)
+    return dieselObjExp
+
+
+def calcGridMinCostObjective(ini, fromGridVars, toGridVars, prices):
+    return sum(
+        [
+            (fromGridVars[index, 0] - toGridVars[index, 0]) * price
+            for index, price in enumerate(prices)
+        ]
+    )
+
+
+def calcMinCostObjective(
+    ini, fromGridVars, toGridVars, prices, dieselGeneratorsVars, dieselStatusVars
+):
+    dieselObjExp = calcDieselMinCostObjective(
+        ini, dieselGeneratorsVars, dieselStatusVars
+    )
+    return dieselObjExp + calcGridMinCostObjective(
+        ini, fromGridVars, toGridVars, prices
+    )
+
+
+def calcGreenhouseQuadraticObjective(ini, fromGridVars, dieselGeneratorsVars):
+    return ini.co2Diesel * sum(
+        [
+            dieselGeneratorsVars[index, 0] * dieselGeneratorsVars[index, 0]
+            for index in range(len(ini.timestamps))
+        ]
+    ) + ini.co2Grid * sum(
+        [
+            fromGridVars[index, 0] * fromGridVars[index, 0]
+            for index in range(len(ini.timestamps))
+        ]
+    )
+
+
+def calcGridIndependenceObjective(ini, fromGridVars):
+    return gp.quicksum(fromGridVars)
 
 
 def setObjective(
@@ -178,59 +247,29 @@ def setObjective(
 ):
     if ini.goal is Goal.MINIMIZE_COST:
         model.setObjective(
-            sum(
-                dieselGeneratorsVars[index, 0]
-                * dieselGeneratorsVars[index, 0]
-                * ini.dieselQuadraticCof
-                * ini.dieselFuelPrice
-                + dieselGeneratorsVars[index, 0]
-                * ini.dieselLinearCof
-                * ini.dieselFuelPrice
-                + ini.dieselConstantCof * ini.dieselFuelPrice
-                # + ini.startUpCost * dieselStatusVars[index, 2] / ini.startUpHour
-                for index in range(len(ini.timestamps))
-            )
-            + sum(
-                [
-                    (fromGridVars[index, 0] - toGridVars[index, 0]) * price
-                    for index, price in enumerate(prices)
-                ]
+            calcMinCostObjective(
+                ini,
+                fromGridVars,
+                toGridVars,
+                prices,
+                dieselGeneratorsVars,
+                dieselStatusVars,
             ),
             GRB.MINIMIZE,
         )
     elif ini.goal is Goal.GREEN_HOUSE:
         model.setObjective(
-            ini.co2Diesel * gp.quicksum(dieselGeneratorsVars)
-            + ini.co2Grid * gp.quicksum(fromGridVars),
+            calcGreenhouseObjective(ini, fromGridVars, dieselGeneratorsVars),
             GRB.MINIMIZE,
         )
     elif ini.goal is Goal.GREEN_HOUSE_QUADRATIC:
         model.setObjective(
-            ini.co2Diesel
-            * sum(
-                [
-                    dieselGeneratorsVars[index, 0] * dieselGeneratorsVars[index, 0]
-                    for index in range(len(ini.timestamps))
-                ]
-            )
-            + ini.co2Grid
-            * sum(
-                [
-                    fromGridVars[index, 0] * fromGridVars[index, 0]
-                    for index in range(len(ini.timestamps))
-                ]
-            ),
+            calcGreenhouseQuadraticObjective(ini, fromGridVars, dieselGeneratorsVars),
             GRB.MINIMIZE,
         )
     elif ini.goal is Goal.GRID_INDEPENDENCE:
         model.setObjective(
-            sum(
-                [
-                    fromGridVars[index, 0] * fromGridVars[index, 0]
-                    for index in range(len(ini.timestamps))
-                ]
-            ),
-            GRB.MINIMIZE,
+            calcGridIndependenceObjective(ini, fromGridVars), GRB.MINIMIZE
         )
 
 
@@ -618,6 +657,40 @@ def setUpEv(model, ini):
     )
 
     return evPowerVars
+
+
+def printObjectiveResults(
+    ini, fromGridVars, toGridVars, gridPrices, dieselGeneratorsVars, dieselStatusVars
+):
+    print(
+        "MINIMIZE_COST goal: {}".format(
+            calcMinCostObjective(
+                ini,
+                fromGridVars,
+                toGridVars,
+                gridPrices,
+                dieselGeneratorsVars,
+                dieselStatusVars,
+            ).getValue()
+        )
+    )
+    print(
+        "GREEN_HOUSE goal: {}".format(
+            calcGreenhouseObjective(ini, fromGridVars, dieselGeneratorsVars).getValue()
+        )
+    )
+    print(
+        "GREEN_HOUSE_QUADRATIC goal: {}".format(
+            calcGreenhouseQuadraticObjective(
+                ini, fromGridVars, dieselGeneratorsVars
+            ).getValue()
+        )
+    )
+    print(
+        "GRID_INDEPENDENCE goal: {}".format(
+            calcGridIndependenceObjective(ini, fromGridVars).getValue()
+        )
+    )
 
 
 def printResults(model, ini):
