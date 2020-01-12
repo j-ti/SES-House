@@ -52,7 +52,7 @@ class PecanstreetTest(unittest.TestCase):
         self.start = datetime(2018, 11, 21, 16, 0, 0)
         self.end = datetime(2018, 11, 21, 19, 0, 0)
         self.dataFile = (
-            "./data/austin/15minute_data_sample.csv"  # (local_15min), localminute
+            "./sample/austin_15minute_data_sample.csv"  # (local_15min), localminute
         )
         self.dataid = 661
         self.timeindex = "local_15min"
