@@ -612,7 +612,7 @@ def plotResults(model, ini, gridPrices):
     for v in model.getVars():
         varN.append(v.varName)
         varX.append(v.x)
-    plotting(varN, varX, gridPrices, outputFolder)
+    plotting(varN, varX, gridPrices, outputFolder, ini.timestamps)
 
 
 def copyConfigFile(filepath, outputFolder):
