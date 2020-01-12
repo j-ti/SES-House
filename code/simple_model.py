@@ -69,6 +69,7 @@ class Configure:
 
         # Generators
         self.P_dg_max = float(config["DIESEL"]["P_dg_max"])
+        self.P_dg_min = float(config["DIESEL"]["P_dg_min"])
         self.dieselQuadraticCof = float(config["DIESEL"]["a_dg"])
         self.dieselLinearCof = float(config["DIESEL"]["b_dg"])
         self.dieselConstantCof = float(config["DIESEL"]["c_dg"])
@@ -98,8 +99,8 @@ class Configure:
         self.startUpTimestepNumber = int(
             math.ceil(self.startUpHour / self.stepsizeHour)
         )
-        self.deltaShutDown = self.P_dg_max / self.shutDownHour * self.stepsizeHour
-        self.deltaStartUp = self.P_dg_max / self.startUpHour * self.stepsizeHour
+        self.deltaShutDown = self.P_dg_min / self.shutDownHour * self.stepsizeHour
+        self.deltaStartUp = self.P_dg_min / self.startUpHour * self.stepsizeHour
 
         self.pvFile = config["PV"]["file"]
         self.windFile = config["WIND"]["file"]
@@ -302,7 +303,7 @@ def setUpDiesel(model, ini):
     model.addConstrs(
         (
             (dieselStatusVars[index, 3] == 1)
-            >> (dieselGeneratorsVars[index, 0] == ini.P_dg_max)
+            >> (dieselGeneratorsVars[index, 0] >= ini.P_dg_min)
             for index in range(len(ini.timestamps))
         ),
         "Power generation when diesel generator is turned on",
