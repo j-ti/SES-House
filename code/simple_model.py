@@ -65,6 +65,7 @@ class Configure:
             datetime.strptime(config["TIME"]["stepsize"], "%H:%M:%S")
             - datetime.strptime("00:00:00", "%H:%M:%S"),
         )
+        self.stepsize = getStepsize(self.timestamps).total_seconds() / 3600
 
         # Generators
         self.P_dg_max = float(config["DIESEL"]["P_dg_max"])
@@ -80,45 +81,22 @@ class Configure:
             config["DIESEL"]["LeastPauseTime"], "%H:%M:%S"
         ).hour
         self.dieselLeastRunTimestepNumber = int(
-            math.ceil(
-                self.dieselLeastRunHour
-                / (getStepsize(self.timestamps).total_seconds() / 3600)
-            )
+            math.ceil(self.dieselLeastRunHour / self.stepsize)
         )
         self.dieselLeastPauseTimestepNumber = int(
-            math.ceil(
-                self.dieselLeastPauseHour
-                / (getStepsize(self.timestamps).total_seconds() / 3600)
-            )
+            math.ceil(self.dieselLeastPauseHour / self.stepsize)
         )
-
         self.startUpHour = datetime.strptime(
             config["DIESEL"]["StartUpTime"], "%H:%M:%S"
         ).hour
         self.shutDownHour = datetime.strptime(
             config["DIESEL"]["ShutDownTime"], "%H:%M:%S"
         ).hour
-        self.shutDownTimestepNumber = int(
-            math.ceil(
-                self.shutDownHour
-                / (getStepsize(self.timestamps).total_seconds() / 3600)
-            )
-        )
-        self.startUpTimestepNumber = int(
-            math.ceil(
-                self.startUpHour / (getStepsize(self.timestamps).total_seconds() / 3600)
-            )
-        )
-        self.deltaShutDown = (
-            self.P_dg_max
-            / self.shutDownHour
-            * (getStepsize(self.timestamps).total_seconds() / 3600)
-        )
-        self.deltaStartUp = (
-            self.P_dg_max
-            / self.startUpHour
-            * (getStepsize(self.timestamps).total_seconds() / 3600)
-        )
+        self.shutDownTimestepNumber = int(math.ceil(self.shutDownHour / self.stepsize))
+        self.startUpTimestepNumber = int(math.ceil(self.startUpHour / self.stepsize))
+        self.deltaShutDown = self.P_dg_max / self.shutDownHour * self.stepsize
+        self.deltaStartUp = self.P_dg_max / self.startUpHour * self.stepsize
+
         self.pvFile = config["PV"]["file"]
         self.windFile = config["WIND"]["file"]
         self.loadsFile = config["LOADS"]["file"]
