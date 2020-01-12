@@ -65,7 +65,7 @@ class Configure:
             datetime.strptime(config["TIME"]["stepsize"], "%H:%M:%S")
             - datetime.strptime("00:00:00", "%H:%M:%S"),
         )
-        self.stepsize = getStepsize(self.timestamps).total_seconds() / 3600
+        self.stepsizeHour = getStepsize(self.timestamps).total_seconds() / 3600
 
         # Generators
         self.P_dg_max = float(config["DIESEL"]["P_dg_max"])
@@ -81,10 +81,10 @@ class Configure:
             config["DIESEL"]["LeastPauseTime"], "%H:%M:%S"
         ).hour
         self.dieselLeastRunTimestepNumber = int(
-            math.ceil(self.dieselLeastRunHour / self.stepsize)
+            math.ceil(self.dieselLeastRunHour / self.stepsizeHour)
         )
         self.dieselLeastPauseTimestepNumber = int(
-            math.ceil(self.dieselLeastPauseHour / self.stepsize)
+            math.ceil(self.dieselLeastPauseHour / self.stepsizeHour)
         )
         self.startUpHour = datetime.strptime(
             config["DIESEL"]["StartUpTime"], "%H:%M:%S"
@@ -92,10 +92,14 @@ class Configure:
         self.shutDownHour = datetime.strptime(
             config["DIESEL"]["ShutDownTime"], "%H:%M:%S"
         ).hour
-        self.shutDownTimestepNumber = int(math.ceil(self.shutDownHour / self.stepsize))
-        self.startUpTimestepNumber = int(math.ceil(self.startUpHour / self.stepsize))
-        self.deltaShutDown = self.P_dg_max / self.shutDownHour * self.stepsize
-        self.deltaStartUp = self.P_dg_max / self.startUpHour * self.stepsize
+        self.shutDownTimestepNumber = int(
+            math.ceil(self.shutDownHour / self.stepsizeHour)
+        )
+        self.startUpTimestepNumber = int(
+            math.ceil(self.startUpHour / self.stepsizeHour)
+        )
+        self.deltaShutDown = self.P_dg_max / self.shutDownHour * self.stepsizeHour
+        self.deltaStartUp = self.P_dg_max / self.startUpHour * self.stepsizeHour
 
         self.pvFile = config["PV"]["file"]
         self.windFile = config["WIND"]["file"]
@@ -181,6 +185,7 @@ def calcDieselMinCostObjective(ini, dieselGeneratorsVars, dieselStatusVars):
             ini.dieselConstantCof
             * (1 - dieselStatusVars[index, 0])
             * ini.dieselFuelPrice
+            / ini.stepsizeHour
         )
         dieselObjExp.add(ini.startUpCost * dieselStatusVars[index, 2] / ini.startUpHour)
     return dieselObjExp
@@ -558,8 +563,7 @@ def setUpBattery(model, ini):
             == batteryEnergyVars[i, 0]
             - ini.eta_bat
             * batteryPowerVars[i, 0]
-            * getStepsize(ini.timestamps).total_seconds()
-            / 3600  # stepsize: 1 hour
+            * ini.stepsizeHour  # E in kW per hour
             for i in range(len(ini.timestamps))
         ),
         "battery charging",
@@ -607,10 +611,7 @@ def setUpEv(model, ini):
         (
             evEnergyVars[i + 1, 0]
             == evEnergyVars[i, 0]
-            - ini.eta_ev
-            * evPowerVars[i, 0]
-            * getStepsize(ini.timestamps).total_seconds()
-            / 3600  # stepsize: 1 hour
+            - ini.eta_ev * evPowerVars[i, 0] * ini.stepsizeHour  # E in kW per hour
             for i in getTimeIndexRange(ini.timestamps, ini.timestamps[0], ini.t_a_ev)[
                 :-1
             ]
