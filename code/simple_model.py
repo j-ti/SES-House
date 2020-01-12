@@ -238,8 +238,8 @@ def calcGreenhouseQuadraticObjective(ini, fromGridVars, dieselGeneratorsVars):
     )
 
 
-def calcGridIndependenceObjective(ini, fromGridVars):
-    return gp.quicksum(fromGridVars)
+def calcGridIndependenceObjective(ini, fromGridVars, toGridVars):
+    return gp.quicksum(fromGridVars) + gp.quicksum(toGridVars)
 
 
 def setObjective(
@@ -269,7 +269,7 @@ def setObjective(
         )
     elif ini.goal is Goal.GRID_INDEPENDENCE:
         model.setObjective(
-            calcGridIndependenceObjective(ini, fromGridVars), GRB.MINIMIZE
+            calcGridIndependenceObjective(ini, fromGridVars, toGridVars), GRB.MINIMIZE
         )
 
 
@@ -688,7 +688,7 @@ def printObjectiveResults(
     )
     print(
         "GRID_INDEPENDENCE goal: {}".format(
-            calcGridIndependenceObjective(ini, fromGridVars).getValue()
+            calcGridIndependenceObjective(ini, fromGridVars, toGridVars).getValue()
         )
     )
 
