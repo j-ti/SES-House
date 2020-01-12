@@ -210,6 +210,28 @@ class RenewNinja:
         return metadata, data
 
 
+def resampleLoadsData(data, timestamps):
+    origStepsize = getStepsize(data.index)
+    wantedStepsize = getStepsize(timestamps)
+    if origStepsize > wantedStepsize:
+        assert (origStepsize / wantedStepsize).is_integer()
+        data = data.resample(wantedStepsize).ffill()
+    elif origStepsize < wantedStepsize:
+        data = _dropUnfittingValuesAtEndForDownSampling(
+            origStepsize, wantedStepsize, timestamps, data
+        )
+        data = data.resample(wantedStepsize).mean()
+    assert data.shape[1] <= 2
+    data = data.loc[timestamps[0] : timestamps[-1]]
+    if data.shape[1] == 2:
+        loads = data.iloc[:, 0] + data.iloc[:, 1]
+    else:
+        loads = data.iloc[:, 0]
+    for value in loads:
+        assert value >= 0
+    return loads
+
+
 def getLoadsData(filePath, timestamps):
     with open(filePath, "r", encoding="utf-8") as dataFile:
         data = pd.read_csv(
@@ -220,25 +242,7 @@ def getLoadsData(filePath, timestamps):
             decimal=",",
         )
         data = data.loc[timestamps[0] : timestamps[-1] + getStepsize(timestamps)]
-        origStepsize = getStepsize(data.index)
-        wantedStepsize = getStepsize(timestamps)
-        if origStepsize > wantedStepsize:
-            assert (origStepsize / wantedStepsize).is_integer()
-            data = data.resample(wantedStepsize).ffill()
-        elif origStepsize < wantedStepsize:
-            data = _dropUnfittingValuesAtEndForDownSampling(
-                origStepsize, wantedStepsize, timestamps, data
-            )
-            data = data.resample(wantedStepsize).mean()
-        assert data.shape[1] <= 2
-        data = data.loc[timestamps[0] : timestamps[-1]]
-        if data.shape[1] == 2:
-            loads = data.iloc[:, 0] + data.iloc[:, 1]
-        else:
-            loads = data.iloc[:, 0]
-        for value in loads:
-            assert value >= 0
-        return loads
+        return resampleLoadsData(data, timestamps)
 
 
 def getPecanstreetData(
@@ -252,25 +256,7 @@ def getPecanstreetData(
         data = data[data["dataid"] == dataid]
         data = data.loc[:, [column]]
         data = data.loc[timestamps[0] : timestamps[-1] + getStepsize(timestamps)]
-        origStepsize = getStepsize(data.index)
-        wantedStepsize = getStepsize(timestamps)
-        if origStepsize > wantedStepsize:
-            assert (origStepsize / wantedStepsize).is_integer()
-            data = data.resample(wantedStepsize).ffill()
-        elif origStepsize < wantedStepsize:
-            data = _dropUnfittingValuesAtEndForDownSampling(
-                origStepsize, wantedStepsize, timestamps, data
-            )
-            data = data.resample(wantedStepsize).mean()
-        assert data.shape[1] <= 2
-        data = data.loc[timestamps[0] : timestamps[-1]]
-        if data.shape[1] == 2:
-            loads = data.iloc[:, 0] + data.iloc[:, 1]
-        else:
-            loads = data.iloc[:, 0]
-        for value in loads:
-            assert value >= 0
-        return loads
+        return resampleLoadsData(data, timestamps)
 
 
 def getPriceData(filePath, timestamps, offset, constantPrice):
