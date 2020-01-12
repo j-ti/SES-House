@@ -1,8 +1,5 @@
 import matplotlib.pyplot as plt
 import numpy as np
-from datetime import timedelta, time, date
-
-from util import getStepsize
 
 colorDico = {
     "PVPowers": "orange",
@@ -36,8 +33,8 @@ def plotting(varName, varVal, gridPrices, outputFolder, timestamps):
     }
 
     step = int(len(timestamps) / 10)
-    time = [timestamps[i].strftime("%m-%d %H:%M") for i in range (len(timestamps))][::step]
-    tick = [i for i in range (len(timestamps))][::step]
+    time = [timestamps[i].strftime("%m-%d %H:%M") for i in range(len(timestamps))][::step]
+    tick = [i for i in range(len(timestamps))][::step]
 
     for i in range(len(varName)):
         for val in dico.keys():
