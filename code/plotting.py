@@ -1,5 +1,8 @@
 import matplotlib.pyplot as plt
 import numpy as np
+from datetime import timedelta, time, date
+
+from util import getStepsize
 
 colorDico = {
     "PVPowers": "orange",
@@ -18,7 +21,7 @@ colorDico = {
 }
 
 
-def plotting(varName, varVal, gridPrices, outputFolder):
+def plotting(varName, varVal, gridPrices, outputFolder, timestamps):
     dico = {
         "PVPowers": [],
         "windPowers": [],
@@ -32,27 +35,32 @@ def plotting(varName, varVal, gridPrices, outputFolder):
         "dieselGenerators": [],
     }
 
+    step = int(len(timestamps) / 10)
+    time = [timestamps[i].strftime("%m-%d %H:%M") for i in range (len(timestamps))][::step]
+    tick = [i for i in range (len(timestamps))][::step]
+
     for i in range(len(varName)):
         for val in dico.keys():
             if val in varName[i]:
                 dico[val].append(varVal[i])
                 break
 
-    plotting_powers(dico, outputFolder)
-    plotting_energys(dico, outputFolder)
-    plotting_all_powers(dico, outputFolder)
-    plotting_in_out_price(dico, outputFolder, gridPrices)
+    plotting_powers(dico, outputFolder, time, tick)
+    plotting_energys(dico, outputFolder, time, tick)
+    plotting_all_powers(dico, outputFolder, time, tick)
+    plotting_in_out_price(dico, outputFolder, gridPrices, time, tick)
     plotting_pie_gen_pow(dico, outputFolder)
     plotting_bar_in_out(dico, outputFolder)
     plotting_bar_all_powers(dico, outputFolder)
 
 
 # Plotting PV power, wind power and fixed loads power.
-def plotting_powers(dico, outputFolder):
+def plotting_powers(dico, outputFolder, time, tick):
     plt.plot(dico["PVPowers"], label="pv", color=colorDico["PVPowers"])
     plt.plot(dico["windPowers"], label="wind", color=colorDico["windPowers"])
     plt.plot(dico["fixedLoads"], label="Loads Power", color=colorDico["fixedLoads"])
-    plt.xlabel("Hour")
+    plt.xticks(tick, time, rotation=20)
+    plt.xlabel("Time")
     plt.ylabel("Output power - kW")
     plt.legend(loc="upper left")
     plt.savefig(outputFolder + "/pv_wind-power.png")
@@ -60,18 +68,19 @@ def plotting_powers(dico, outputFolder):
 
 
 # Plotting EV and batteries energies
-def plotting_energys(dico, outputFolder):
+def plotting_energys(dico, outputFolder, time, tick):
     plt.plot(dico["batEnergys"], label="Battery Energy", color=colorDico["batEnergys"])
     plt.plot(dico["evEnergys"], label="EV Energy", color=colorDico["evEnergys"])
     plt.legend(loc="upper right", prop={"size": 8})
-    plt.xlabel("Hour")
+    plt.xticks(tick, time, rotation=20)
+    plt.xlabel("Time")
     plt.ylabel("Energy (kWh)")
     plt.savefig(outputFolder + "/bat_ev-energy.png")
     plt.show()
 
 
 # Plotting all the powers from our system inside one graph
-def plotting_all_powers(dico, outputFolder):
+def plotting_all_powers(dico, outputFolder, time, tick):
     plt.plot(dico["batPowers"], label="Battery Power", color=colorDico["batPowers"])
     plt.plot(dico["evPowers"], label="EV Power", color=colorDico["evPowers"])
     plt.plot(dico["windPowers"], label="Wind Power", color=colorDico["windPowers"])
@@ -88,7 +97,8 @@ def plotting_all_powers(dico, outputFolder):
         label="Diesel Power",
         color=colorDico["dieselGenerators"],
     )
-    plt.xlabel("Hour")
+    plt.xticks(tick, time, rotation=20)
+    plt.xlabel("Time")
     plt.ylabel("Power (kW)")
     plt.legend(loc="upper right")
     plt.savefig(outputFolder + "/power-balance.png")
@@ -96,7 +106,7 @@ def plotting_all_powers(dico, outputFolder):
 
 
 # Plotting the evolution of the power in and out on the grid and the evolution of prices
-def plotting_in_out_price(dico, outputFolder, gridPrices):
+def plotting_in_out_price(dico, outputFolder, gridPrices, time, tick):
     fig, ax1 = plt.subplots()
     ax2 = ax1.twinx()
     ax1.plot(
@@ -111,7 +121,9 @@ def plotting_in_out_price(dico, outputFolder, gridPrices):
     ax2.plot(
         dico["toGridPowers"], label="Grid Power Out", color=colorDico["toGridPowers"]
     )
-    ax1.set_xlabel("Hour")
+    ax1.set_xticks(tick)
+    ax1.set_xticklabels(time, rotation=20)
+    ax1.set_xlabel("Time")
     ax1.set_ylabel("Price - $ / kWh")
     ax2.set_ylabel("Power (kW)")
     ax1.legend(loc="upper right")
