@@ -178,9 +178,13 @@ def calcDieselMinCostObjective(ini, dieselGeneratorsVars, dieselStatusVars):
             * dieselGeneratorsVars[index, 0]
             * ini.dieselQuadraticCof
             * ini.dieselFuelPrice
+            / ini.stepsizeHour
         )
         dieselObjExp.add(
-            dieselGeneratorsVars[index, 0] * ini.dieselLinearCof * ini.dieselFuelPrice
+            dieselGeneratorsVars[index, 0]
+            * ini.dieselLinearCof
+            * ini.dieselFuelPrice
+            / ini.stepsizeHour
         )
         dieselObjExp.add(
             ini.dieselConstantCof
@@ -188,7 +192,9 @@ def calcDieselMinCostObjective(ini, dieselGeneratorsVars, dieselStatusVars):
             * ini.dieselFuelPrice
             / ini.stepsizeHour
         )
-        dieselObjExp.add(ini.startUpCost * dieselStatusVars[index, 2] / ini.startUpHour)
+        dieselObjExp.add(
+            ini.startUpCost * dieselStatusVars[index, 2] / ini.startUpTimestepNumber
+        )
     return dieselObjExp
 
 
