@@ -245,10 +245,7 @@ def getPecanstreetData(
     filePath, dataid, column, timestamps,
 ):
     with open(filePath, "r", encoding="utf-8") as dataFile:
-        data = pd.read_csv(
-            dataFile,
-            parse_dates=["local_15min"],
-        )
+        data = pd.read_csv(dataFile, parse_dates=["local_15min"],)
         data["local_15min"] = data["local_15min"].dt.tz_localize(None)
         pd.to_datetime(data["local_15min"])
         data = data.set_index("local_15min")
