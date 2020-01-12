@@ -66,6 +66,35 @@ class PecanstreetTest(unittest.TestCase):
             self.column,
             constructTimeStamps(self.start, self.end, stepsize),
         )
+        self.assertEqual(
+            len(constructTimeStamps(self.start, self.end, stepsize)), len(loads)
+        )
+        [self.assertGreaterEqual(load, 0) for load in loads]
+
+    def testGetLoadsDataDownsample(self):
+        stepsize = timedelta(hours=2)
+        loads = getPecanstreetData(
+            self.dataFile,
+            self.dataid,
+            self.column,
+            constructTimeStamps(self.start, self.end, stepsize),
+        )
+        self.assertEqual(len(loads), 2)
+        self.assertAlmostEqual(loads[0], 1.064125)
+        self.assertAlmostEqual(loads[1], 1.206375)
+
+    def testGetLoadsDataOversample(self):
+        stepsize = timedelta(minutes=1)
+        loads = getPecanstreetData(
+            self.dataFile,
+            self.dataid,
+            self.column,
+            constructTimeStamps(self.start, self.end, stepsize),
+        )
+        self.assertEqual(len(loads), 3 * 60 + 1)
+        self.assertEqual(loads[0], 0.833)
+        for index in range(14):
+            self.assertEqual(loads[index], loads[index + 1])
 
 
 class PriceTest(unittest.TestCase):

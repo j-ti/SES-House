@@ -248,15 +248,12 @@ def getPecanstreetData(
         data = pd.read_csv(
             dataFile,
             parse_dates=["local_15min"],
-            # index_col='local_15min'
         )
         data["local_15min"] = data["local_15min"].dt.tz_localize(None)
-        # pd.to_datetime(TradeData.index, format="%m/%d/%Y : %I:%M %p")
         pd.to_datetime(data["local_15min"])
-        print(data.set_index("local_15min"))
-        print(timestamps[0])
-        print(data.loc[timestamps[0]])
-
+        data = data.set_index("local_15min")
+        data = data[data["dataid"] == dataid]
+        data = data.loc[:, [column]]
         data = data.loc[timestamps[0] : timestamps[-1] + getStepsize(timestamps)]
         origStepsize = getStepsize(data.index)
         wantedStepsize = getStepsize(timestamps)
