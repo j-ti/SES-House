@@ -113,6 +113,8 @@ class Configure:
         self.windFile = config["WIND"]["file"]
         self.loadsFile = config["LOADS"]["file"]
         self.dataFile = config["DATA_PS"]["file"]
+        self.dataPSLoads = "yes" == config["DATA_PS"]["loads"]
+        self.dataPSPv = "yes" == config["DATA_PS"]["pv"]
         self.timeHeader = config["DATA_PS"]["timeHeader"]
         self.dataid = config["DATA_PS"]["dataid"]
         self.costFileGrid = config["COST"]["file_grid"]
@@ -521,16 +523,18 @@ def setUpFixedLoads(model, ini):
     fixedLoadVars = model.addVars(
         len(ini.timestamps), 1, lb=0.0, vtype=GRB.CONTINUOUS, name="fixedLoads"
     )
+    if ini.dataPSLoads:
+        loadValues = getPecanstreetData(
+            ini.dataFile,
+            ini.timeHeader,
+            ini.dataid,
+            "grid",
+            ini.timestamps,
+            timedelta(days=365 * 4 + 1 + 1),
+        )
+    else:
+        loadValues = getLoadsData(ini.loadsFile, ini.timestamps)
 
-    # loadValues = getLoadsData(ini.loadsFile, ini.timestamps)
-    loadValues = getPecanstreetData(
-        ini.dataFile,
-        ini.timeHeader,
-        ini.dataid,
-        "grid",
-        ini.timestamps,
-        timedelta(days=365 * 5 + 1),
-    )
     assert len(loadValues) == len(ini.timestamps)
     model.addConstrs(
         (fixedLoadVars[i, 0] == loadValues[i] for i in range(len(ini.timestamps))),
