@@ -56,7 +56,7 @@ class PecanstreetTest(unittest.TestCase):
         self.offset = 0  # 4 * 365 + 1  # 4 years difference
         self.dataFile = (
             "./sample/austin_15minute_data_sample.csv"
-            #"./data/austin/15minute_data.csv"
+            # "./data/austin/15minute_data.csv"
         )
         self.dataid = 661
         self.timeHeader = "local_15min"  # "local_15min" or "localminute"
