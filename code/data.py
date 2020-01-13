@@ -252,12 +252,11 @@ def getPecanstreetData(
         # TODO: read more rows or split dataid into files
         data = pd.read_csv(dataFile, parse_dates=[timeHeader], nrows=1000,)
         data = data[data["dataid"] == dataid]
-
-        pd.to_datetime(data[timeHeader], utc=True)
         print(data)
         data[timeHeader] = data[timeHeader].dt.tz_localize(None) # or ('US/Central')
         print(data)
-        data = data.set_index(timeHeader) # works
+        pd.to_datetime(data[timeHeader], utc=True)
+        #data = data.set_index(timeHeader) # works
         data = data.loc[:, [column]] # works
 
         data = data.loc[
