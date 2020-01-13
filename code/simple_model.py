@@ -653,33 +653,29 @@ def printObjectiveResults(
     ini, fromGridVars, toGridVars, gridPrices, dieselGeneratorsVars, dieselStatusVars
 ):
     print(
-        "MINIMIZE_COST goal: {}".format(
-            calcMinCostObjective(
-                ini,
-                fromGridVars,
-                toGridVars,
-                gridPrices,
-                dieselGeneratorsVars,
-                dieselStatusVars,
-            ).getValue()
-        )
+        "MINIMIZE_COST goal: %.2f"
+        % calcMinCostObjective(
+            ini,
+            fromGridVars,
+            toGridVars,
+            gridPrices,
+            dieselGeneratorsVars,
+            dieselStatusVars,
+        ).getValue()
     )
     print(
-        "GREEN_HOUSE goal: {}".format(
-            calcGreenhouseObjective(ini, fromGridVars, dieselGeneratorsVars).getValue()
-        )
+        "GREEN_HOUSE goal: %.1f"
+        % calcGreenhouseObjective(ini, fromGridVars, dieselGeneratorsVars).getValue()
     )
     print(
-        "GREEN_HOUSE_QUADRATIC goal: {}".format(
-            calcGreenhouseQuadraticObjective(
-                ini, fromGridVars, dieselGeneratorsVars
-            ).getValue()
-        )
+        "GREEN_HOUSE_QUADRATIC goal: %.1f"
+        % calcGreenhouseQuadraticObjective(
+            ini, fromGridVars, dieselGeneratorsVars
+        ).getValue()
     )
     print(
-        "GRID_INDEPENDENCE goal: {}".format(
-            calcGridIndependenceObjective(ini, fromGridVars, toGridVars).getValue()
-        )
+        "GRID_INDEPENDENCE goal: %.1f"
+        % calcGridIndependenceObjective(ini, fromGridVars, toGridVars).getValue()
     )
 
 
