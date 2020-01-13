@@ -52,16 +52,18 @@ class PecanstreetTest(unittest.TestCase):
         self.start = datetime(2018, 11, 21, 16, 0, 0)
         self.end = datetime(2018, 11, 21, 19, 0, 0)
         self.dataFile = (
-            "./sample/austin_15minute_data_sample.csv"  # (local_15min), localminute
+            # "./sample/austin_15minute_data_sample.csv"
+            "./data/austin/15minute_data.csv"
         )
         self.dataid = 661
-        self.timeindex = "local_15min"
+        self.timeHeader = "local_15min"  # "local_15min" or "localminute"
         self.column = "grid"
 
     def testGetLoadsData(self):
         stepsize = timedelta(minutes=15)
         loads = getPecanstreetData(
             self.dataFile,
+            self.timeHeader,
             self.dataid,
             self.column,
             constructTimeStamps(self.start, self.end, stepsize),
@@ -75,6 +77,7 @@ class PecanstreetTest(unittest.TestCase):
         stepsize = timedelta(hours=2)
         loads = getPecanstreetData(
             self.dataFile,
+            self.timeHeader,
             self.dataid,
             self.column,
             constructTimeStamps(self.start, self.end, stepsize),
@@ -87,6 +90,7 @@ class PecanstreetTest(unittest.TestCase):
         stepsize = timedelta(minutes=1)
         loads = getPecanstreetData(
             self.dataFile,
+            self.timeHeader,
             self.dataid,
             self.column,
             constructTimeStamps(self.start, self.end, stepsize),

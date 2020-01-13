@@ -9,7 +9,14 @@ from shutil import copyfile
 
 from util import constructTimeStamps, getStepsize, getTimeIndexRange
 
-from data import getNinja, getNinjaPvApi, getNinjaWindApi, getPriceData, getLoadsData
+from data import (
+    getNinja,
+    getNinjaPvApi,
+    getNinjaWindApi,
+    getPriceData,
+    getLoadsData,
+    getPecanstreetData,
+)
 from plotting import plotting
 
 import gurobipy as gp
@@ -87,6 +94,8 @@ class Configure:
         self.pvFile = config["PV"]["file"]
         self.windFile = config["WIND"]["file"]
         self.loadsFile = config["LOADS"]["file"]
+        self.timeHeader = config["DATA_PS"]["timeHeader"]
+        self.dataid = config["DATA_PS"]["dataid"]
         self.costFileGrid = config["COST"]["file_grid"]
         self.constantPrice = float(config["COST"]["constant_price"])
         self.co2Grid = float(config["CO2"]["grid_CO2"])
@@ -423,7 +432,15 @@ def setUpFixedLoads(model, ini):
         len(ini.timestamps), 1, lb=0.0, vtype=GRB.CONTINUOUS, name="fixedLoads"
     )
 
-    loadValues = getLoadsData(ini.loadsFile, ini.timestamps)
+    # loadValues = getLoadsData(ini.loadsFile, ini.timestamps)
+    loadValues = getPecanstreetData(
+        ini.loadsFile,
+        ini.timeHeader,
+        ini.dataid,
+        "grid",
+        ini.timestamps,
+        timedelta(days=365 * 5 + 1),
+    )
     assert len(loadValues) == len(ini.timestamps)
     model.addConstrs(
         (fixedLoadVars[i, 0] == loadValues[i] for i in range(len(ini.timestamps))),
