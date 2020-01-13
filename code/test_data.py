@@ -51,20 +51,26 @@ class PecanstreetTest(unittest.TestCase):
     def setUp(self):
         self.start = datetime(2018, 11, 21, 16, 0, 0)
         self.end = datetime(2018, 11, 21, 19, 0, 0)
+        # self.start = datetime(2014, 1, 2, 16, 0, 0)
+        # self.end = datetime(2014, 1, 2, 19, 0, 0)
+        self.offset = 0  # 4 * 365 + 1  # 4 years difference
         self.dataFile = (
-            "./sample/austin_15minute_data_sample.csv"  # (local_15min), localminute
+            # "./sample/austin_15minute_data_sample.csv"
+            "./data/austin/15minute_data.csv"
         )
         self.dataid = 661
-        self.timeindex = "local_15min"
+        self.timeHeader = "local_15min"  # "local_15min" or "localminute"
         self.column = "grid"
 
     def testGetLoadsData(self):
         stepsize = timedelta(minutes=15)
         loads = getPecanstreetData(
             self.dataFile,
+            self.timeHeader,
             self.dataid,
             self.column,
             constructTimeStamps(self.start, self.end, stepsize),
+            timedelta(days=self.offset),
         )
         self.assertEqual(
             len(constructTimeStamps(self.start, self.end, stepsize)), len(loads)
@@ -75,24 +81,28 @@ class PecanstreetTest(unittest.TestCase):
         stepsize = timedelta(hours=2)
         loads = getPecanstreetData(
             self.dataFile,
+            self.timeHeader,
             self.dataid,
             self.column,
             constructTimeStamps(self.start, self.end, stepsize),
+            timedelta(days=self.offset),
         )
         self.assertEqual(len(loads), 2)
-        self.assertAlmostEqual(loads[0], 1.064125)
-        self.assertAlmostEqual(loads[1], 1.206375)
+        self.assertAlmostEqual(loads[0], 1.071375)  # 1.064125)
+        self.assertAlmostEqual(loads[1], 1.199000)  # 1.206375)
 
     def testGetLoadsDataOversample(self):
         stepsize = timedelta(minutes=1)
         loads = getPecanstreetData(
             self.dataFile,
+            self.timeHeader,
             self.dataid,
             self.column,
             constructTimeStamps(self.start, self.end, stepsize),
+            timedelta(days=self.offset),
         )
         self.assertEqual(len(loads), 3 * 60 + 1)
-        self.assertEqual(loads[0], 0.833)
+        self.assertAlmostEqual(loads[0], 0.909)  # 0.833 )
         for index in range(14):
             self.assertEqual(loads[index], loads[index + 1])
 
