@@ -210,7 +210,7 @@ class RenewNinja:
         return metadata, data
 
 
-def resampleLoadsData(data, timestamps):
+def resampleLoadsData(data, timestamps, offset=timedelta(days=0)):
     origStepsize = getStepsize(data.index)
     wantedStepsize = getStepsize(timestamps)
     if origStepsize > wantedStepsize:
@@ -221,8 +221,8 @@ def resampleLoadsData(data, timestamps):
             origStepsize, wantedStepsize, timestamps, data
         )
         data = data.resample(wantedStepsize).mean()
+    data = data.loc[timestamps[0] + offset : timestamps[-1] + offset]
     assert data.shape[1] <= 2
-    data = data.loc[timestamps[0] : timestamps[-1]]
     if data.shape[1] == 2:
         loads = data.iloc[:, 0] + data.iloc[:, 1]
     else:
@@ -245,18 +245,48 @@ def getLoadsData(filePath, timestamps):
         return resampleLoadsData(data, timestamps)
 
 
+def dateparserWithoutUTC(x):
+    d, h = x.split(" ")[0], x.split(" ")[1].split("-")[0]
+    return pd.datetime.strptime(d + " " + h, "20%y-%m-%d %H:%M:%S")
+
+
 def getPecanstreetData(
-    filePath, dataid, column, timestamps,
+    filePath, timeHeader, dataid, column, timestamps, offset=timedelta(days=0)
 ):
     with open(filePath, "r", encoding="utf-8") as dataFile:
-        data = pd.read_csv(dataFile, parse_dates=["local_15min"],)
-        data["local_15min"] = data["local_15min"].dt.tz_localize(None)
-        pd.to_datetime(data["local_15min"])
-        data = data.set_index("local_15min")
+        # TODO: read more rows or split dataid into files
+        data = pd.read_csv(
+            dataFile,
+            parse_dates=[timeHeader],
+            date_parser=dateparserWithoutUTC,
+            nrows=10000,
+        )
+        data = data[data["dataid"] == int(dataid)]
+        pd.to_datetime(data[timeHeader])
+        data = data.set_index(timeHeader)
+        data = data.loc[:, [column, "solar"]]
+        stepsize = getStepsize(timestamps)
+        if stepsize < timedelta(minutes=15):
+            stepsize = timedelta(hours=0)
+
+        data = data.loc[
+            timestamps[0]
+            + offset : timestamps[-1]
+            + offset
+            + stepsize  # getStepsize(timestamps)
+        ]
+        return resampleLoadsData(data, timestamps, offset)
+
+
+def splitPecanstreetData(filePath, timeHeader):
+    with open(filePath, "r", encoding="utf-8") as dataFile:
+        data = pd.read_csv(dataFile, parse_dates=[timeHeader],)
+        current = 0
+        # TODO add for loop and store into new csv files
+        dataid = data["dataid"][current]
         data = data[data["dataid"] == dataid]
-        data = data.loc[:, [column]]
-        data = data.loc[timestamps[0] : timestamps[-1] + getStepsize(timestamps)]
-        return resampleLoadsData(data, timestamps)
+
+        return data
 
 
 def getPriceData(filePath, timestamps, offset, constantPrice):
