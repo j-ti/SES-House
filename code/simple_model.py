@@ -94,6 +94,7 @@ class Configure:
         self.pvFile = config["PV"]["file"]
         self.windFile = config["WIND"]["file"]
         self.loadsFile = config["LOADS"]["file"]
+        self.dataFile = config["DATA_PS"]["file"]
         self.timeHeader = config["DATA_PS"]["timeHeader"]
         self.dataid = config["DATA_PS"]["dataid"]
         self.costFileGrid = config["COST"]["file_grid"]
@@ -434,7 +435,7 @@ def setUpFixedLoads(model, ini):
 
     # loadValues = getLoadsData(ini.loadsFile, ini.timestamps)
     loadValues = getPecanstreetData(
-        ini.loadsFile,
+        ini.dataFile,
         ini.timeHeader,
         ini.dataid,
         "grid",

@@ -245,22 +245,26 @@ def getLoadsData(filePath, timestamps):
         return resampleLoadsData(data, timestamps)
 
 
+def dateparserWithoutUTC(x):
+    d, h = x.split(" ")[0], x.split(" ")[1].split("-")[0]
+    return pd.datetime.strptime(d + " " + h, "20%y-%m-%d %H:%M:%S")
+
 def getPecanstreetData(
     filePath, timeHeader, dataid, column, timestamps, offset=timedelta(days=0)
 ):
     with open(filePath, "r", encoding="utf-8") as dataFile:
         # TODO: read more rows or split dataid into files
-        data = pd.read_csv(dataFile, parse_dates=[timeHeader], nrows=1000,)
+        data = pd.read_csv(dataFile, parse_dates=[timeHeader], date_parser=dateparserWithoutUTC, nrows=10000,)
         data = data[data["dataid"] == dataid]
-        print(data)
-        data[timeHeader] = data[timeHeader].dt.tz_localize(None) # or ('US/Central')
-        print(data)
-        pd.to_datetime(data[timeHeader], utc=True)
-        #data = data.set_index(timeHeader) # works
-        data = data.loc[:, [column]] # works
+        pd.to_datetime(data[timeHeader])
+        data = data.set_index(timeHeader)
+        data = data.loc[:, [column]]
+        stepsize = getStepsize(timestamps)
+        if stepsize < timedelta(minutes=15):
+            stepsize = timedelta(hours=0)
 
         data = data.loc[
-            timestamps[0] + offset : timestamps[-1] + offset + getStepsize(timestamps)
+            timestamps[0] + offset : timestamps[-1] + offset + stepsize #getStepsize(timestamps)
         ]
         return resampleLoadsData(data, timestamps)
 
