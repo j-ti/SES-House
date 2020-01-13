@@ -246,17 +246,35 @@ def getLoadsData(filePath, timestamps):
 
 
 def getPecanstreetData(
-    filePath, dataid, column, timestamps,
+    filePath, timeHeader, dataid, column, timestamps, offset=timedelta(days=0)
 ):
     with open(filePath, "r", encoding="utf-8") as dataFile:
-        data = pd.read_csv(dataFile, parse_dates=["local_15min"],)
-        data["local_15min"] = data["local_15min"].dt.tz_localize(None)
-        pd.to_datetime(data["local_15min"])
-        data = data.set_index("local_15min")
+        # TODO: read more rows or split dataid into files
+        data = pd.read_csv(dataFile, parse_dates=[timeHeader], nrows=1000,)
         data = data[data["dataid"] == dataid]
-        data = data.loc[:, [column]]
-        data = data.loc[timestamps[0] : timestamps[-1] + getStepsize(timestamps)]
+
+        pd.to_datetime(data[timeHeader], utc=True)
+        print(data)
+        data[timeHeader] = data[timeHeader].dt.tz_localize(None) # or ('US/Central')
+        print(data)
+        data = data.set_index(timeHeader) # works
+        data = data.loc[:, [column]] # works
+
+        data = data.loc[
+            timestamps[0] + offset : timestamps[-1] + offset + getStepsize(timestamps)
+        ]
         return resampleLoadsData(data, timestamps)
+
+
+def splitPecanstreetData(filePath):
+    with open(filePath, "r", encoding="utf-8") as dataFile:
+        data = pd.read_csv(dataFile, parse_dates=[timeHeader],)
+        current = 0
+        # TODO add for loop and store into new csv files
+        dataid = data["dataid"][current]
+        data = data[data["dataid"] == dataid]
+
+        return data
 
 
 def getPriceData(filePath, timestamps, offset, constantPrice):
