@@ -1,3 +1,6 @@
+import pandas as pd
+
+
 def constructTimeStamps(start, end, stepsize):
     times = []
     timeIterator = start
@@ -19,3 +22,17 @@ def getStepsize(timestamps):
 
 def getTimeIndexRange(timestamps, timeA, timeB):
     return list(range(timestamps.index(timeA), timestamps.index(timeB) + 1))
+
+
+def makeShiftTrain(df_base, df, key, look_back, split):
+    for i in range(1, look_back):
+        s = df_base[key][look_back - i:split - i].reset_index(drop=True)
+        df = pd.concat([df, s], axis=1, ignore_index=True)
+    return df
+
+
+def makeShiftTest(df_base, df, key, look_back, split):
+    for i in range(1, look_back):
+        s = df_base[key][split + look_back + i:len(df_base) - look_back + i].reset_index(drop=True)
+        df = pd.concat([df, s], axis=1, ignore_index=True)
+    return df
