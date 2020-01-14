@@ -40,6 +40,5 @@ class Test(unittest.TestCase):
         indexList = getTimeIndexRange(timestamps, timestamps[0], timestamps[7])
         self.assertEqual(indexList, [0, 1, 2, 3, 4, 5, 6, 7])
 
-
 if __name__ == "__main__":
     unittest.main()
