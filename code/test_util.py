@@ -1,5 +1,4 @@
 import unittest
-
 from datetime import datetime, timedelta
 
 from util import constructTimeStamps, getStepsize, getTimeIndexRange
@@ -37,6 +36,7 @@ class Test(unittest.TestCase):
         timestamps = constructTimeStamps(start, end, stepsize)
         indexList = getTimeIndexRange(timestamps, timestamps[0], timestamps[7])
         self.assertEqual(indexList, [0, 1, 2, 3, 4, 5, 6, 7])
+
 
 if __name__ == "__main__":
     unittest.main()
