@@ -33,6 +33,17 @@ Run our Vermont example:
 python code/simple_model.py configs/Vermont.ini
 ```
 
+Run our Forecasting example:
+```
+python code/forecasting.py
+```
+
+Run our Forecasting using the saved model example:
+```
+python code/forecasting.py 1
+```
+
+
 ### Get started
 
 To get started, install anaconda. Therefore follow the installation instruction
