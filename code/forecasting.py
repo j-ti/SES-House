@@ -31,7 +31,7 @@ def dataImport():
     _, df = getNinjaPvApi(
         52.5170, 13.3889, timestamps
     )
-    return df
+    return df, timestamps
 
 
 def buildSet(df, split):
@@ -69,9 +69,23 @@ def evalModel(model, testx, testy):
     return ret
 
 
-def plotPrediction(y, predict_y):
-    plt.plot(y.reset_index(drop=True), label="actual", color="green")
-    plt.plot(predict_y, label="predict", color="orange")
+def plotPrediction(train_y, train_predict_y, test_y, test_predict_y, timestamps):
+    step = int(len(timestamps) / 14)
+    time = [timestamps[i].strftime("%m-%d %H:%M") for i in range(len(timestamps))][
+           ::step
+           ]
+    tick = [i for i in range(len(timestamps))][::step]
+
+    x1 = [i for i in range(len(train_y))]
+    x2 = [i for i in range(len(train_y), len(test_y)+len(train_y))]
+    plt.plot(x1, train_y.reset_index(drop=True), label="actual", color="green")
+    plt.plot(x1, train_predict_y, label="predict", color="orange")
+    plt.plot(x2, test_y.reset_index(drop=True), label="actual", color="blue")
+    plt.plot(x2, test_predict_y, label="predict", color="red")
+    plt.xticks(tick, time, rotation=20)
+    plt.xlabel("Time")
+    plt.ylabel("Power output (kW)")
+    plt.legend()
     plt.show()
 
 
@@ -101,7 +115,7 @@ def loadModel():
 
 def forecasting(load):
     # import data
-    df = dataImport()
+    df, timestamps = dataImport()
     split = int(len(df) * part)
 
     # split train / test
@@ -122,8 +136,8 @@ def forecasting(load):
     predict_test = pd.DataFrame(model.predict(testx))
     predict_train = pd.DataFrame(model.predict(trainx))
 
-    plotPrediction(df_train_label, predict_train)
-    plotPrediction(df_test_label, predict_test)
+    plotPrediction(df_train_label, predict_train, df_test_label, predict_test, timestamps)
+
 
 
 # if argv = 1, then we rebuild the model
