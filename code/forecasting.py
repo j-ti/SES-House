@@ -11,7 +11,7 @@ from keras.layers import LSTM, Dropout, Activation
 from keras.layers.core import Dense
 from keras.models import Sequential
 from util import constructTimeStamps
-from util import makeShiftTest, makeShiftTrain
+from util import makeShiftTest, makeShiftTrain, makeTick
 
 # fixing the random seed to have a better reproducibility
 seed = 3
@@ -70,9 +70,7 @@ def evalModel(model, testx, testy):
 
 
 def plotPrediction(train_y, train_predict_y, test_y, test_predict_y, timestamps):
-    step = int(len(timestamps) / 14)
-    time = [timestamps[i].strftime("%m-%d %H:%M") for i in range(len(timestamps))][::step]
-    tick = [i for i in range(len(timestamps))][::step]
+    time, tick = makeTick(timestamps)
 
     x1 = [i for i in range(len(train_y))]
     x2 = [i for i in range(len(train_y), len(test_y) + len(train_y))]
@@ -88,14 +86,13 @@ def plotPrediction(train_y, train_predict_y, test_y, test_predict_y, timestamps)
 
 
 def plotEcart(train_y, train_predict_y, test_y, test_predict_y, timestamps):
-    step = int(len(timestamps) / 14)
-    time = [timestamps[i].strftime("%m-%d %H:%M") for i in range(len(timestamps))][::step]
-    tick = [i for i in range(len(timestamps))][::step]
+    time, tick = makeTick(timestamps)
 
     x1 = [i for i in range(len(train_y))]
     x2 = [i for i in range(len(train_y), len(test_y) + len(train_y))]
-    y1 = [(train_y[i] - train_predict_y[i]) for i in range (len(train_y))]
-    y2 = [(test_y[i] - test_predict_y[i]) for i in range(len(test_y))]
+    y1 = train_predict_y - train_y
+    y2 = test_predict_y - test_y
+    print(y1.shape)
     plt.plot(x1, y1, label="actual", color="green")
     plt.plot(x2, y2, label="actual", color="blue")
     plt.xticks(tick, time, rotation=20)
@@ -153,7 +150,9 @@ def forecasting(load):
     predict_train = pd.DataFrame(model.predict(trainx))
 
     plotPrediction(df_train_label, predict_train, df_test_label, predict_test, timestamps)
-    plotEcart(np.array(df_train_label), np.array(predict_train), np.array(df_test_label), np.array(predict_test), timestamps)
+    plotEcart(np.array(df_train_label), np.array(predict_train), np.array(df_test_label), np.array(predict_test),
+              timestamps)
+
 
 # if argv = 1, then we rebuild the model
 def main(argv):
