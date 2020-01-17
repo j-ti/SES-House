@@ -58,7 +58,7 @@ def buildModel(trainx, trainy):
     model.add(Dense(1))
     model.add(Activation('tanh'))
     model.add(Activation('relu'))
-    model.compile(loss='mean_squared_error', optimizer='adam', metrics=[metrics.mae, metrics.mape])
+    model.compile(loss='mean_squared_error', optimizer='nadam', metrics=[metrics.mae, metrics.mape, metrics.mse])
 
     # training it
     history = model.fit(trainx, trainy, epochs=20, batch_size=20, verbose=2)
@@ -115,6 +115,11 @@ def plotHistory(history):
     plt.xlabel("Epoch")
     plt.ylabel("Mean absolute percentage error")
     plt.show()
+    plt.plot(history.history['mean_squared_error'])
+    plt.xlabel("Epoch")
+    plt.ylabel("mean_squared_error")
+    plt.show()
+
 
 
 def saveModel(model):
@@ -171,14 +176,14 @@ def forecasting(load):
     plotPrediction(df_train_label, predict_train, df_test_label, predict_test, timestamps)
     plotEcart(np.array(df_train_label), np.array(predict_train), np.array(df_test_label), np.array(predict_test),
               timestamps)
-    print("training\tMSE : {}".format(mean_squared_error(np.array(df_train_label), np.array(predict_train))))
-    print("testing\t\tMSE : {}".format(mean_squared_error(np.array(df_test_label), np.array(predict_test))))
+    print("training\tMSE :\t{}".format(mean_squared_error(np.array(df_train_label), np.array(predict_train))))
+    print("testing\t\tMSE :\t{}".format(mean_squared_error(np.array(df_test_label), np.array(predict_test))))
 
-    print("training\tMAE : {}".format(mean_absolute_error(np.array(df_train_label), np.array(predict_train))))
-    print("testing\t\tMAE : {}".format(mean_absolute_error(np.array(df_test_label), np.array(predict_test))))
+    print("training\tMAE :\t{}".format(mean_absolute_error(np.array(df_train_label), np.array(predict_train))))
+    print("testing\t\tMAE :\t{}".format(mean_absolute_error(np.array(df_test_label), np.array(predict_test))))
 
-    print("training\tMAPE : {} %".format(mean_absolute_percentage_error(np.array(df_train_label), np.array(predict_train))))
-    print("testing\t\tMAPE : {} %".format(mean_absolute_percentage_error(np.array(df_test_label), np.array(predict_test))))
+    print("training\tMAPE :\t{} %".format(mean_absolute_percentage_error(np.array(df_train_label), np.array(predict_train))))
+    print("testing\t\tMAPE :\t{} %".format(mean_absolute_percentage_error(np.array(df_test_label), np.array(predict_test))))
 
 
 # if argv = 1, then we rebuild the model
