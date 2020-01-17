@@ -284,7 +284,7 @@ def getPecanstreetData(
 
 def splitPecanstreetData(filePath, timeHeader):
     with open(filePath, "r", encoding="utf-8") as dataFile:
-        data = pd.read_csv(dataFile, parse_dates=[timeHeader],)
+        data = pd.read_csv(dataFile, parse_dates=[timeHeader])
         current = 0
         # TODO add for loop and store into new csv files
         dataid = data["dataid"][current]
