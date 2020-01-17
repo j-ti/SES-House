@@ -56,7 +56,7 @@ def buildModel(trainx, trainy):
     model.compile(loss='mean_squared_error', optimizer='adam')
 
     # training it
-    model.fit(trainx, trainy, epochs=20, batch_size=50, verbose=2)
+    model.fit(trainx, trainy, epochs=20, batch_size=20, verbose=2)
     saveModel(model)
     return model
 
@@ -83,6 +83,24 @@ def plotPrediction(train_y, train_predict_y, test_y, test_predict_y, timestamps)
     plt.xticks(tick, time, rotation=20)
     plt.xlabel("Time")
     plt.ylabel("Power output (kW)")
+    plt.legend()
+    plt.show()
+
+
+def plotEcart(train_y, train_predict_y, test_y, test_predict_y, timestamps):
+    step = int(len(timestamps) / 14)
+    time = [timestamps[i].strftime("%m-%d %H:%M") for i in range(len(timestamps))][::step]
+    tick = [i for i in range(len(timestamps))][::step]
+
+    x1 = [i for i in range(len(train_y))]
+    x2 = [i for i in range(len(train_y), len(test_y) + len(train_y))]
+    y1 = [(train_y[i] - train_predict_y[i]) for i in range (len(train_y))]
+    y2 = [(test_y[i] - test_predict_y[i]) for i in range(len(test_y))]
+    plt.plot(x1, y1, label="actual", color="green")
+    plt.plot(x2, y2, label="actual", color="blue")
+    plt.xticks(tick, time, rotation=20)
+    plt.xlabel("Time")
+    plt.ylabel("Difference (kW)")
     plt.legend()
     plt.show()
 
@@ -135,12 +153,12 @@ def forecasting(load):
     predict_train = pd.DataFrame(model.predict(trainx))
 
     plotPrediction(df_train_label, predict_train, df_test_label, predict_test, timestamps)
-
+    plotEcart(np.array(df_train_label), np.array(predict_train), np.array(df_test_label), np.array(predict_test), timestamps)
 
 # if argv = 1, then we rebuild the model
 def main(argv):
     load = False
-    if len(argv) > 2:
+    if len(argv) == 2:
         if argv[1] == '1':
             load = True
     global outputFolder
