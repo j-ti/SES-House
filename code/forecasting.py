@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from data import getNinjaPvApi
+from keras import metrics
 from keras.engine.saving import model_from_json
 from keras.layers import LSTM, Dropout, Activation
 from keras.layers.core import Dense
@@ -17,7 +18,7 @@ from util import makeShiftTest, makeShiftTrain, makeTick
 seed = 3
 np.random.seed(seed)
 # param
-look_back = 5  # we have a 5 point history in our input
+look_back = 10  # we have a 5 point history in our input
 part = 0.6  # we train on part of the set
 
 
@@ -31,17 +32,18 @@ def dataImport():
     _, df = getNinjaPvApi(
         52.5170, 13.3889, timestamps
     )
+    df = df["electricity"].reset_index(drop=True)
     return df, timestamps
 
 
 def buildSet(df, split):
-    df_train = df["electricity"][look_back:split].reset_index(drop=True)
-    df_train = makeShiftTrain(df, df_train, "electricity", look_back, split)
-    df_train_label = df["electricity"][look_back + 1:split + 1]
+    df_train = df[look_back:split].reset_index(drop=True)
+    df_train = makeShiftTrain(df, df_train, look_back, split)
+    df_train_label = df[look_back + 1:split + 1]
 
-    df_test = df["electricity"][split + look_back:].reset_index(drop=True)
-    df_test = makeShiftTest(df, df_test, "electricity", look_back, split)
-    df_test_label = df["electricity"][split + look_back:]
+    df_test = df[split + look_back:].reset_index(drop=True)
+    df_test = makeShiftTest(df, df_test, look_back, split)
+    df_test_label = df[split + look_back:]
 
     return df_train, df_train_label, df_test, df_test_label
 
@@ -53,12 +55,13 @@ def buildModel(trainx, trainy):
     model.add(Dropout(0.5))
     model.add(Dense(1))
     model.add(Activation('tanh'))
-    model.compile(loss='mean_squared_error', optimizer='adam')
+    model.add(Activation('relu'))
+    model.compile(loss='mean_squared_error', optimizer='adam', metrics=[metrics.mae, metrics.mape])
 
     # training it
-    model.fit(trainx, trainy, epochs=20, batch_size=20, verbose=2)
+    history = model.fit(trainx, trainy, epochs=20, batch_size=20, verbose=2)
     saveModel(model)
-    return model
+    return model, history
 
 
 # WARNING ! depending on if we load the model or if we build it, the return value of evaluate change
@@ -102,6 +105,17 @@ def plotEcart(train_y, train_predict_y, test_y, test_predict_y, timestamps):
     plt.show()
 
 
+def plotHistory(history):
+    plt.plot(history.history['mean_absolute_error'])
+    plt.xlabel("Epoch")
+    plt.ylabel("Mean absolute error")
+    plt.show()
+    plt.plot(history.history['mean_absolute_percentage_error'])
+    plt.xlabel("Epoch")
+    plt.ylabel("Mean absolute percentage error")
+    plt.show()
+
+
 def saveModel(model):
     model_json = model.to_json()
     with open(outputFolder + "model.json", "w") as json_file:
@@ -138,16 +152,20 @@ def forecasting(load):
     trainx = np.reshape(df_train_arr, (df_train_arr.shape[0], 1, df_train_arr.shape[1]))
     testx = np.reshape(df_test_arr, (df_test_arr.shape[0], 1, df_test_arr.shape[1]))
 
+    history = None
     if load:
         model = loadModel()
     else:
-        model = buildModel(trainx, df_train_label)
+        model, history = buildModel(trainx, df_train_label)
 
     evalModel(model, testx, df_test_label)
 
     # plotting
     predict_test = pd.DataFrame(model.predict(testx))
     predict_train = pd.DataFrame(model.predict(trainx))
+
+    if history is not None:
+        plotHistory(history)
 
     plotPrediction(df_train_label, predict_train, df_test_label, predict_test, timestamps)
     plotEcart(np.array(df_train_label), np.array(predict_train), np.array(df_test_label), np.array(predict_test),
@@ -162,9 +180,9 @@ def main(argv):
             load = True
     global outputFolder
     outputFolder = (
-        "output/"
-        + "modelKeras"
-        + "/"
+            "output/"
+            + "modelKeras"
+            + "/"
     )
     if not os.path.isdir(outputFolder):
         os.makedirs(outputFolder)
