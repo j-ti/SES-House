@@ -1,4 +1,5 @@
 import pandas as pd
+import numpy as np
 
 
 def constructTimeStamps(start, end, stepsize):
@@ -43,3 +44,10 @@ def makeTick(timestamps) :
     time = [timestamps[i].strftime("%m-%d %H:%M") for i in range(len(timestamps))][::step]
     tick = [i for i in range(len(timestamps))][::step]
     return time, tick
+
+
+def mean_absolute_percentage_error(y_true, y_pred):
+    y_true = y_true + np.finfo(float).eps
+    y_pred = y_pred + np.finfo(float).eps
+    return np.mean(np.abs((y_true - y_pred) / y_true)) * 100
+
