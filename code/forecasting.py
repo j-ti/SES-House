@@ -180,9 +180,9 @@ def main(argv):
             load = True
     global outputFolder
     outputFolder = (
-            "output/"
-            + "modelKeras"
-            + "/"
+        "output/"
+        + "modelKeras"
+        + "/"
     )
     if not os.path.isdir(outputFolder):
         os.makedirs(outputFolder)
