@@ -11,10 +11,9 @@ from keras.engine.saving import model_from_json
 from keras.layers import LSTM, Dropout, Activation
 from keras.layers.core import Dense
 from keras.models import Sequential
+from sklearn.metrics import mean_squared_error, mean_absolute_error
 from util import constructTimeStamps, mean_absolute_percentage_error
 from util import makeShiftTest, makeShiftTrain, makeTick
-
-from sklearn.metrics import mean_squared_error, mean_absolute_error
 
 # fixing the random seed to have a better reproducibility
 seed = 3
@@ -121,7 +120,6 @@ def plotHistory(history):
     plt.show()
 
 
-
 def saveModel(model):
     model_json = model.to_json()
     with open(outputFolder + "model.json", "w") as json_file:
@@ -182,8 +180,10 @@ def forecasting(load):
     print("training\tMAE :\t{}".format(mean_absolute_error(np.array(df_train_label), np.array(predict_train))))
     print("testing\t\tMAE :\t{}".format(mean_absolute_error(np.array(df_test_label), np.array(predict_test))))
 
-    print("training\tMAPE :\t{} %".format(mean_absolute_percentage_error(np.array(df_train_label), np.array(predict_train))))
-    print("testing\t\tMAPE :\t{} %".format(mean_absolute_percentage_error(np.array(df_test_label), np.array(predict_test))))
+    print("training\tMAPE :\t{} %".format(
+        mean_absolute_percentage_error(np.array(df_train_label), np.array(predict_train))))
+    print("testing\t\tMAPE :\t{} %".format(
+        mean_absolute_percentage_error(np.array(df_test_label), np.array(predict_test))))
 
 
 # if argv = 1, then we rebuild the model
