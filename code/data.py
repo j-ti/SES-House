@@ -224,13 +224,11 @@ def resampleData(data, timestamps, offset=timedelta(days=0), positive=True):
     data = data.loc[timestamps[0] + offset : timestamps[-1] + offset]
     assert data.shape[1] <= 3
     if data.shape[1] == 3:
-        not_numbers = np.isnan(data)
-        data.iloc[not_numbers] = 0
-        dataOut = data.iloc[:, 0] + data.iloc[:, 1] + data.iloc[:, 2]
+        dataOut = data.sum(axis=1)
     else:
         dataOut = data.iloc[:, 0]
         if positive:
-            dataOut[dataOut <= 0] = 0
+            dataOut.loc[dataOut <= 0] = 0
     for value in dataOut:
         if positive:
             assert value >= 0
