@@ -89,7 +89,7 @@ class PecanstreetTest(unittest.TestCase):
         )
         self.assertEqual(len(loads), 2)
         self.assertAlmostEqual(loads[0], 1.071375)  # 1.064125)
-        self.assertAlmostEqual(loads[1], 1.199000)  # 1.206375)
+        self.assertAlmostEqual(loads[1], 1.22133334)  # 1.206375)
 
     def testGetLoadsDataOversample(self):
         stepsize = timedelta(minutes=1)
