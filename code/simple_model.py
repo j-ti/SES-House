@@ -8,11 +8,7 @@ import sys
 import os
 from shutil import copyfile
 
-from util import (
-    constructTimeStamps,
-    getStepsize,
-    getTimeIndexRangeDaily,
-)
+from util import constructTimeStamps, getStepsize, getTimeIndexRangeDaily
 
 from data import (
     getNinja,
