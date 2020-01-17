@@ -95,8 +95,8 @@ def plotEcart(train_y, train_predict_y, test_y, test_predict_y, timestamps):
 
     x1 = [i for i in range(len(train_y))]
     x2 = [i for i in range(len(train_y), len(test_y) + len(train_y))]
-    y1 = train_predict_y - train_y
-    y2 = test_predict_y - test_y
+    y1 = [train_predict_y[i] - train_y[i] for i in range(len(x1))]
+    y2 = [test_predict_y[i] - test_y[i] for i in range(len(x2))]
     plt.plot(x1, y1, label="actual", color="green")
     plt.plot(x2, y2, label="actual", color="blue")
     plt.xticks(tick, time, rotation=20)
@@ -169,8 +169,8 @@ def forecasting(load):
         plotHistory(history)
 
     plotPrediction(df_train_label, predict_train, df_test_label, predict_test, timestamps)
-    # plotEcart(np.array(df_train_label), np.array(predict_train), np.array(df_test_label), np.array(predict_test),
-    #           timestamps)
+    plotEcart(np.array(df_train_label), np.array(predict_train), np.array(df_test_label), np.array(predict_test),
+              timestamps)
     print("training\tMSE : {}".format(mean_squared_error(np.array(df_train_label), np.array(predict_train))))
     print("testing\t\tMSE : {}".format(mean_squared_error(np.array(df_test_label), np.array(predict_test))))
 
