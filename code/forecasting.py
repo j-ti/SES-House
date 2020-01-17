@@ -11,8 +11,10 @@ from keras.engine.saving import model_from_json
 from keras.layers import LSTM, Dropout, Activation
 from keras.layers.core import Dense
 from keras.models import Sequential
-from util import constructTimeStamps
+from util import constructTimeStamps, mean_absolute_percentage_error
 from util import makeShiftTest, makeShiftTrain, makeTick
+
+from sklearn.metrics import mean_squared_error, mean_absolute_error
 
 # fixing the random seed to have a better reproducibility
 seed = 3
@@ -95,7 +97,6 @@ def plotEcart(train_y, train_predict_y, test_y, test_predict_y, timestamps):
     x2 = [i for i in range(len(train_y), len(test_y) + len(train_y))]
     y1 = train_predict_y - train_y
     y2 = test_predict_y - test_y
-    print(y1.shape)
     plt.plot(x1, y1, label="actual", color="green")
     plt.plot(x2, y2, label="actual", color="blue")
     plt.xticks(tick, time, rotation=20)
@@ -168,8 +169,16 @@ def forecasting(load):
         plotHistory(history)
 
     plotPrediction(df_train_label, predict_train, df_test_label, predict_test, timestamps)
-    plotEcart(np.array(df_train_label), np.array(predict_train), np.array(df_test_label), np.array(predict_test),
-              timestamps)
+    # plotEcart(np.array(df_train_label), np.array(predict_train), np.array(df_test_label), np.array(predict_test),
+    #           timestamps)
+    print("training\tMSE : {}".format(mean_squared_error(np.array(df_train_label), np.array(predict_train))))
+    print("testing\t\tMSE : {}".format(mean_squared_error(np.array(df_test_label), np.array(predict_test))))
+
+    print("training\tMAE : {}".format(mean_absolute_error(np.array(df_train_label), np.array(predict_train))))
+    print("testing\t\tMAE : {}".format(mean_absolute_error(np.array(df_test_label), np.array(predict_test))))
+
+    print("training\tMAPE : {} %".format(mean_absolute_percentage_error(np.array(df_train_label), np.array(predict_train))))
+    print("testing\t\tMAPE : {} %".format(mean_absolute_percentage_error(np.array(df_test_label), np.array(predict_test))))
 
 
 # if argv = 1, then we rebuild the model
