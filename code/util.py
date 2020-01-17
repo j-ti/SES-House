@@ -1,5 +1,5 @@
-import pandas as pd
 import numpy as np
+import pandas as pd
 
 
 def constructTimeStamps(start, end, stepsize):
@@ -38,7 +38,7 @@ def makeShiftTest(df_base, df, look_back, split):
     return df
 
 
-def makeTick(timestamps) :
+def makeTick(timestamps):
     step = int(len(timestamps) / 14)
     time = [timestamps[i].strftime("%m-%d %H:%M") for i in range(len(timestamps))][::step]
     tick = [i for i in range(len(timestamps))][::step]
@@ -49,4 +49,3 @@ def mean_absolute_percentage_error(y_true, y_pred):
     y_true = y_true + np.finfo(float).eps
     y_pred = y_pred + np.finfo(float).eps
     return np.mean(np.abs((y_true - y_pred) / y_true)) * 100
-
