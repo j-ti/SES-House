@@ -69,7 +69,7 @@ def getTimeIndexRangeDaily(timestamps, timeA, timeB):
         )
         dayIterator += timedelta(days=1)
 
-    indexList = np.reshape(indexList, (1, -1,))[0, :].tolist()
+    indexList = np.reshape(indexList, (1, -1))[0, :].tolist()
     return indexList
 
 
