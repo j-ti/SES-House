@@ -210,7 +210,7 @@ class RenewNinja:
         return metadata, data
 
 
-def resampleLoadsData(data, timestamps, offset=timedelta(days=0)):
+def resampleData(data, timestamps, offset=timedelta(days=0), positive=True):
     origStepsize = getStepsize(data.index)
     wantedStepsize = getStepsize(timestamps)
     if origStepsize > wantedStepsize:
@@ -224,12 +224,15 @@ def resampleLoadsData(data, timestamps, offset=timedelta(days=0)):
     data = data.loc[timestamps[0] + offset : timestamps[-1] + offset]
     assert data.shape[1] <= 2
     if data.shape[1] == 2:
-        loads = data.iloc[:, 0] + data.iloc[:, 1]
+        dataOut = data.iloc[:, 0] + data.iloc[:, 1]
     else:
-        loads = data.iloc[:, 0]
-    for value in loads:
-        assert value >= 0
-    return loads
+        dataOut = data.iloc[:, 0]
+        if positive:
+            dataOut[dataOut <= 0] = 0
+    for value in dataOut:
+        if positive:
+            assert value >= 0
+    return dataOut
 
 
 def getLoadsData(filePath, timestamps):
@@ -242,7 +245,7 @@ def getLoadsData(filePath, timestamps):
             decimal=",",
         )
         data = data.loc[timestamps[0] : timestamps[-1] + getStepsize(timestamps)]
-        return resampleLoadsData(data, timestamps)
+        return resampleData(data, timestamps)
 
 
 def dateparserWithoutUTC(x):
@@ -264,18 +267,17 @@ def getPecanstreetData(
         data = data[data["dataid"] == int(dataid)]
         pd.to_datetime(data[timeHeader])
         data = data.set_index(timeHeader)
-        data = data.loc[:, [column, "solar"]]
+        data = data.sort_index()
+        if column == "grid":
+            data = data.loc[:, [column, "solar"]]
+        else:
+            data = data.loc[:, [column]]
         stepsize = getStepsize(timestamps)
         if stepsize < timedelta(minutes=15):
             stepsize = timedelta(hours=0)
 
-        data = data.loc[
-            timestamps[0]
-            + offset : timestamps[-1]
-            + offset
-            + stepsize  # getStepsize(timestamps)
-        ]
-        return resampleLoadsData(data, timestamps, offset)
+        data = data.loc[timestamps[0] + offset : timestamps[-1] + offset + stepsize]
+        return resampleData(data, timestamps, offset)
 
 
 def splitPecanstreetData(filePath, timeHeader):
