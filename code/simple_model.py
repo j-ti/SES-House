@@ -8,7 +8,11 @@ import sys
 import os
 from shutil import copyfile
 
-from util import constructTimeStamps, getStepsize, getTimeIndexRange
+from util import (
+    constructTimeStamps,
+    getStepsize,
+    getTimeIndexRangeDaily,
+)
 
 from data import (
     getNinja,
@@ -59,11 +63,9 @@ class Configure:
         self.P_ev_max = float(config["EV"]["P_ev_max"])
         self.E_ev_max = float(config["EV"]["E_ev_max"])
         self.eta_ev = float(config["EV"]["eta_ev"])
-        self.t_a_ev = datetime.strptime(config["EV"]["t_a_ev"], "20%y-%m-%d %H:%M:%S")
-        self.t_b_ev = datetime.strptime(config["EV"]["t_b_ev"], "20%y-%m-%d %H:%M:%S")
-        self.t_goal_ev = datetime.strptime(
-            config["EV"]["t_goal_ev"], "20%y-%m-%d %H:%M:%S"
-        )
+        self.t_a_ev = datetime.strptime(config["EV"]["t_a_ev"], "%H:%M:%S")
+        self.t_b_ev = datetime.strptime(config["EV"]["t_b_ev"], "%H:%M:%S")
+        self.t_goal_ev = datetime.strptime(config["EV"]["t_goal_ev"], "%H:%M:%S")
 
         # Time frame of optimization
         self.timestamps = constructTimeStamps(
@@ -72,7 +74,8 @@ class Configure:
             datetime.strptime(config["TIME"]["stepsize"], "%H:%M:%S")
             - datetime.strptime("00:00:00", "%H:%M:%S"),
         )
-        self.stepsizeHour = getStepsize(self.timestamps).total_seconds() / 3600
+        self.stepsize = getStepsize(self.timestamps)
+        self.stepsizeHour = self.stepsize.total_seconds() / 3600
 
         # Generators
         self.P_dg_max = float(config["DIESEL"]["P_dg_max"])
@@ -502,14 +505,25 @@ def setUpPV(model, ini):
     )
 
     if ini.loc_flag:
-        print("PV data: use location")
+        print("PV data: use location and query from renewables.ninja API")
         metadata, pvPowerValues = getNinjaPvApi(
             ini.loc_lat, ini.loc_lon, ini.timestamps
         )
         pvPowerValues = pvPowerValues.values
     else:
         print("PV data: use sample files")
-        pvPowerValues = getNinja(ini.pvFile, ini.timestamps)
+        if ini.dataPSPv:
+            print("PV data: use Pecanstreet dataset (dataid: %d)", (ini.dataid))
+            pvPowerValues = getPecanstreetData(
+                ini.dataFile,
+                ini.timeHeader,
+                ini.dataid,
+                "solar",
+                ini.timestamps,
+                timedelta(days=365 * 4 + 1 + 1),
+            )
+        else:
+            pvPowerValues = getNinja(ini.pvFile, ini.timestamps)
     assert len(pvPowerValues) == len(ini.timestamps)
     model.addConstrs(
         (pvVars[i, 0] == pvPowerValues[i] for i in range(len(ini.timestamps))),
@@ -632,7 +646,7 @@ def setUpEv(model, ini):
     model.addConstrs(
         (
             evPowerVars[i, 0] == 0
-            for i in getTimeIndexRange(ini.timestamps, ini.t_a_ev, ini.t_b_ev)[:-1]
+            for i in getTimeIndexRangeDaily(ini.timestamps, ini.t_a_ev, ini.t_b_ev)[:-1]
         ),
         "ev gone",
     )
@@ -641,10 +655,10 @@ def setUpEv(model, ini):
             evEnergyVars[i + 1, 0]
             == evEnergyVars[i, 0]
             - ini.eta_ev * evPowerVars[i, 0] * ini.stepsizeHour  # E in kW per hour
-            for i in getTimeIndexRange(ini.timestamps, ini.timestamps[0], ini.t_a_ev)[
-                :-1
-            ]
-            + getTimeIndexRange(ini.timestamps, ini.t_b_ev, ini.timestamps[-1])
+            for i in getTimeIndexRangeDaily(
+                ini.timestamps, ini.timestamps[0], ini.t_a_ev
+            )[:-1]
+            + getTimeIndexRangeDaily(ini.timestamps, ini.t_b_ev, ini.timestamps[-1])
         ),
         "ev charging",
     )
@@ -652,20 +666,20 @@ def setUpEv(model, ini):
     model.addConstrs(
         (
             evEnergyVars[i, 0] >= 0.7 * ini.E_ev_max
-            for i in range(
-                int((ini.t_goal_ev - ini.timestamps[0]).total_seconds() / 3600),
-                int((ini.t_a_ev - ini.timestamps[0]).total_seconds() / 3600) + 1,
-            )
+            for i in getTimeIndexRangeDaily(ini.timestamps, ini.t_goal_ev, ini.t_a_ev)
         ),
-        "ev init",
+        "ev charging goal",
     )
-    model.addConstr(
-        (evEnergyVars[ini.timestamps.index(ini.t_b_ev), 0] == 0.1 * ini.E_ev_max),
+    model.addConstrs(
+        (
+            evEnergyVars[i, 0] == 0.1 * ini.E_ev_max
+            for i in getTimeIndexRangeDaily(ini.timestamps, ini.t_a_ev, ini.t_b_ev)[1:]
+        ),
         "ev after work",
     )
     model.addConstr(
         (evEnergyVars[len(ini.timestamps), 0] == evEnergyVars[0, 0]),
-        "ev end-of-simulation value",
+        "ev end-start energy are equal",
     )
 
     return evPowerVars
