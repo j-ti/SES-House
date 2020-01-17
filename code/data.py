@@ -222,9 +222,10 @@ def resampleData(data, timestamps, offset=timedelta(days=0), positive=True):
         )
         data = data.resample(wantedStepsize).mean()
     data = data.loc[timestamps[0] + offset : timestamps[-1] + offset]
-    assert data.shape[1] <= 2
-    if data.shape[1] == 2:
-        dataOut = data.iloc[:, 0] + data.iloc[:, 1]
+    assert data.shape[1] <= 3
+    if data.shape[1] == 3:
+        data[np.isnan(data)] = 0
+        dataOut = data.iloc[:, 0] + data.iloc[:, 1] + data.iloc[:, 2]
     else:
         dataOut = data.iloc[:, 0]
         if positive:
@@ -269,7 +270,7 @@ def getPecanstreetData(
         data = data.set_index(timeHeader)
         data = data.sort_index()
         if column == "grid":
-            data = data.loc[:, [column, "solar"]]
+            data = data.loc[:, [column, "solar", "solar2"]]
         else:
             data = data.loc[:, [column]]
         stepsize = getStepsize(timestamps)
