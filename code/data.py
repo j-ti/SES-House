@@ -21,13 +21,18 @@ def getNinja(filePath, timestamps):
         data = pd.read_csv(
             dataFile, parse_dates=["time", "local_time"], index_col="local_time"
         )
-        data = data.loc[timestamps[0] : timestamps[-1]]
+        data = data.loc[timestamps[0] : timestamps[-1] + getStepsize(timestamps)]
         origStepsize = getStepsize(data.index)
         wantedStepsize = getStepsize(timestamps)
         if origStepsize > wantedStepsize:
+            assert (origStepsize / wantedStepsize).is_integer()
             data = data.resample(wantedStepsize).ffill()
         elif origStepsize < wantedStepsize:
+            data = _dropUnfittingValuesAtEndForDownSampling(
+                origStepsize, wantedStepsize, timestamps, data
+            )
             data = data.resample(wantedStepsize).mean()
+        data = data.loc[timestamps[0] : timestamps[-1]]
         return data["electricity"]
 
 
@@ -205,6 +210,31 @@ class RenewNinja:
         return metadata, data
 
 
+def resampleData(data, timestamps, offset=timedelta(days=0), positive=True):
+    origStepsize = getStepsize(data.index)
+    wantedStepsize = getStepsize(timestamps)
+    if origStepsize > wantedStepsize:
+        assert (origStepsize / wantedStepsize).is_integer()
+        data = data.resample(wantedStepsize).ffill()
+    elif origStepsize < wantedStepsize:
+        data = _dropUnfittingValuesAtEndForDownSampling(
+            origStepsize, wantedStepsize, timestamps, data
+        )
+        data = data.resample(wantedStepsize).mean()
+    data = data.loc[timestamps[0] + offset : timestamps[-1] + offset]
+    assert data.shape[1] <= 3
+    if data.shape[1] == 3:
+        dataOut = data.sum(axis=1)
+    else:
+        dataOut = data.iloc[:, 0]
+        if positive:
+            dataOut.loc[dataOut <= 0] = 0
+    for value in dataOut:
+        if positive:
+            assert value >= 0
+    return dataOut
+
+
 def getLoadsData(filePath, timestamps):
     with open(filePath, "r", encoding="utf-8") as dataFile:
         data = pd.read_csv(
@@ -214,21 +244,51 @@ def getLoadsData(filePath, timestamps):
             sep=";",
             decimal=",",
         )
-        data = data.loc[timestamps[0] : timestamps[-1]]
-        origStepsize = getStepsize(data.index)
-        wantedStepsize = getStepsize(timestamps)
-        if origStepsize > wantedStepsize:
-            data = data.resample(wantedStepsize).ffill()
-        elif origStepsize < wantedStepsize:
-            data = data.resample(wantedStepsize).mean()
-        assert data.shape[1] <= 2
-        if data.shape[1] == 2:
-            loads = data.iloc[:, 0] + data.iloc[:, 1]
+        data = data.loc[timestamps[0] : timestamps[-1] + getStepsize(timestamps)]
+        return resampleData(data, timestamps)
+
+
+def dateparserWithoutUTC(x):
+    d, h = x.split(" ")[0], x.split(" ")[1].split("-")[0]
+    return pd.datetime.strptime(d + " " + h, "20%y-%m-%d %H:%M:%S")
+
+
+def getPecanstreetData(
+    filePath, timeHeader, dataid, column, timestamps, offset=timedelta(days=0)
+):
+    with open(filePath, "r", encoding="utf-8") as dataFile:
+        # TODO: read more rows or split dataid into files
+        data = pd.read_csv(
+            dataFile,
+            parse_dates=[timeHeader],
+            date_parser=dateparserWithoutUTC,
+            nrows=10000,
+        )
+        data = data[data["dataid"] == int(dataid)]
+        pd.to_datetime(data[timeHeader])
+        data = data.set_index(timeHeader)
+        data = data.sort_index()
+        if column == "grid":
+            data = data.loc[:, [column, "solar", "solar2"]]
         else:
-            loads = data.iloc[:, 0]
-        for value in loads:
-            assert value >= 0
-        return loads
+            data = data.loc[:, [column]]
+        stepsize = getStepsize(timestamps)
+        if stepsize < timedelta(minutes=15):
+            stepsize = timedelta(hours=0)
+
+        data = data.loc[timestamps[0] + offset : timestamps[-1] + offset + stepsize]
+        return resampleData(data, timestamps, offset)
+
+
+def splitPecanstreetData(filePath, timeHeader):
+    with open(filePath, "r", encoding="utf-8") as dataFile:
+        data = pd.read_csv(dataFile, parse_dates=[timeHeader])
+        current = 0
+        # TODO add for loop and store into new csv files
+        dataid = data["dataid"][current]
+        data = data[data["dataid"] == dataid]
+
+        return data
 
 
 def getPriceData(filePath, timestamps, offset, constantPrice):
@@ -240,7 +300,9 @@ def getPriceData(filePath, timestamps, offset, constantPrice):
             sep=";",
             decimal=",",
         )
-        data = data.loc[timestamps[0] + offset : timestamps[-1] + offset]
+        data = data.loc[
+            timestamps[0] + offset : timestamps[-1] + offset + getStepsize(timestamps)
+        ]
         origStepsize = getStepsize(data.index)
         assert origStepsize == timedelta(hours=1)
         wantedStepsize = getStepsize(timestamps)
@@ -249,9 +311,13 @@ def getPriceData(filePath, timestamps, offset, constantPrice):
             data = data.resample(wantedStepsize).asfreq()
             _applyOppositeOfResampleSum(data, timestamps, origStepsize / wantedStepsize)
         elif origStepsize < wantedStepsize:
+            data = _dropUnfittingValuesAtEndForDownSampling(
+                origStepsize, wantedStepsize, timestamps, data
+            )
             data = data.resample(wantedStepsize).sum()
         assert data.shape[1] <= 2
 
+        data = data.loc[timestamps[0] + offset : timestamps[-1] + offset]
         return data.iloc[:, 0] / FROM_MEGAWATTHOURS_TO_KILOWATTHOURS + constantPrice
 
 
@@ -262,3 +328,18 @@ def _applyOppositeOfResampleSum(data, timestamps, relation):
         else:
             newValue = data.iloc[index, 0] / relation
             data.iloc[index, 0] = newValue
+
+
+def _dropUnfittingValuesAtEndForDownSampling(
+    origStepsize, wantedStepsize, timestamps, data
+):
+    relation = _computeIntRelation(wantedStepsize, origStepsize)
+    if data.size % relation != 0:
+        data = data[: -(data.size % relation)]
+    return data
+
+
+def _computeIntRelation(stepsize1, stepsize2):
+    relation = stepsize1 / stepsize2
+    assert relation.is_integer(), "1 stepsize should be a multiple of the other."
+    return int(relation)
