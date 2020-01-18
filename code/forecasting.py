@@ -58,8 +58,8 @@ def buildModel(trainx, trainy):
     model.add(Dropout(0.5))
     model.add(Dense(1))
     model.add(Activation("tanh"))
-    # model.add(Dense(3))
-    # model.add(Dense(1))
+    model.add(Dense(3))
+    model.add(Dense(1))
     model.add(Activation("relu"))
     model.compile(
         loss="mean_squared_error",
