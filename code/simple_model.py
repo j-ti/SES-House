@@ -3,15 +3,25 @@
 import configparser
 from datetime import datetime, timedelta
 from enum import Enum
+import math
 import sys
 import os
+from shutil import copyfile
 
-from util import constructTimeStamps, getStepsize, getTimeIndexRange
+from util import constructTimeStamps, getStepsize, getTimeIndexRangeDaily
 
-from data import getNinja, getNinjaPvApi, getNinjaWindApi, getPriceData, getLoadsData
+from data import (
+    getNinja,
+    getNinjaPvApi,
+    getNinjaWindApi,
+    getPriceData,
+    getLoadsData,
+    getPecanstreetData,
+)
 from plotting import plotting
 
 import gurobipy as gp
+
 from gurobipy import QuadExpr
 from gurobipy import GRB
 
@@ -49,11 +59,9 @@ class Configure:
         self.P_ev_max = float(config["EV"]["P_ev_max"])
         self.E_ev_max = float(config["EV"]["E_ev_max"])
         self.eta_ev = float(config["EV"]["eta_ev"])
-        self.t_a_ev = datetime.strptime(config["EV"]["t_a_ev"], "20%y-%m-%d %H:%M:%S")
-        self.t_b_ev = datetime.strptime(config["EV"]["t_b_ev"], "20%y-%m-%d %H:%M:%S")
-        self.t_goal_ev = datetime.strptime(
-            config["EV"]["t_goal_ev"], "20%y-%m-%d %H:%M:%S"
-        )
+        self.t_a_ev = datetime.strptime(config["EV"]["t_a_ev"], "%H:%M:%S")
+        self.t_b_ev = datetime.strptime(config["EV"]["t_b_ev"], "%H:%M:%S")
+        self.t_goal_ev = datetime.strptime(config["EV"]["t_goal_ev"], "%H:%M:%S")
 
         # Time frame of optimization
         self.timestamps = constructTimeStamps(
@@ -62,30 +70,52 @@ class Configure:
             datetime.strptime(config["TIME"]["stepsize"], "%H:%M:%S")
             - datetime.strptime("00:00:00", "%H:%M:%S"),
         )
+        self.stepsize = getStepsize(self.timestamps)
+        self.stepsizeHour = self.stepsize.total_seconds() / 3600
 
         # Generators
         self.P_dg_max = float(config["DIESEL"]["P_dg_max"])
+        self.P_dg_min = float(config["DIESEL"]["P_dg_min"])
         self.dieselQuadraticCof = float(config["DIESEL"]["a_dg"])
         self.dieselLinearCof = float(config["DIESEL"]["b_dg"])
         self.dieselConstantCof = float(config["DIESEL"]["c_dg"])
         self.dieselFuelPrice = float(config["DIESEL"]["c_gen"])
         self.startUpCost = float(config["DIESEL"]["StartUpCost"])
-        self.dieselLeastRunHour = int(config["DIESEL"]["LeastRunningTime"])
-        self.startUpHour = int(config["DIESEL"]["StartUpTime"])
-        self.shutDownHour = int(config["DIESEL"]["ShutDownTime"])
-        self.deltaShutDown = (
-            self.P_dg_max
-            / self.shutDownHour
-            * (getStepsize(self.timestamps).total_seconds() / 3600)
+        self.dieselLeastRunHour = datetime.strptime(
+            config["DIESEL"]["LeastRunningTime"], "%H:%M:%S"
+        ).hour
+        self.dieselLeastPauseHour = datetime.strptime(
+            config["DIESEL"]["LeastPauseTime"], "%H:%M:%S"
+        ).hour
+        self.dieselLeastRunTimestepNumber = int(
+            math.ceil(self.dieselLeastRunHour / self.stepsizeHour)
         )
-        self.deltaStartUp = (
-            self.P_dg_max
-            / self.startUpHour
-            * (getStepsize(self.timestamps).total_seconds() / 3600)
+        self.dieselLeastPauseTimestepNumber = int(
+            math.ceil(self.dieselLeastPauseHour / self.stepsizeHour)
         )
+        self.startUpHour = datetime.strptime(
+            config["DIESEL"]["StartUpTime"], "%H:%M:%S"
+        ).hour
+        self.shutDownHour = datetime.strptime(
+            config["DIESEL"]["ShutDownTime"], "%H:%M:%S"
+        ).hour
+        self.shutDownTimestepNumber = int(
+            math.ceil(self.shutDownHour / self.stepsizeHour)
+        )
+        self.startUpTimestepNumber = int(
+            math.ceil(self.startUpHour / self.stepsizeHour)
+        )
+        self.deltaShutDown = self.P_dg_min / self.shutDownHour * self.stepsizeHour
+        self.deltaStartUp = self.P_dg_min / self.startUpHour * self.stepsizeHour
+
         self.pvFile = config["PV"]["file"]
         self.windFile = config["WIND"]["file"]
         self.loadsFile = config["LOADS"]["file"]
+        self.dataFile = config["DATA_PS"]["file"]
+        self.dataPSLoads = "yes" == config["DATA_PS"]["loads"]
+        self.dataPSPv = "yes" == config["DATA_PS"]["pv"]
+        self.timeHeader = config["DATA_PS"]["timeHeader"]
+        self.dataid = config["DATA_PS"]["dataid"]
         self.costFileGrid = config["COST"]["file_grid"]
         self.constantPrice = float(config["COST"]["constant_price"])
         self.co2Grid = float(config["CO2"]["grid_CO2"])
@@ -134,74 +164,117 @@ def runSimpleModel(ini):
     model.write(outputFolder + "/res.sol")
 
     printResults(model, ini)
+    printObjectiveResults(
+        ini,
+        fromGridVars,
+        toGridVars,
+        gridPrices,
+        dieselGeneratorsVars,
+        dieselStatusVars,
+    )
     plotResults(model, ini, gridPrices)
+
+
+def calcGreenhouseObjective(ini, fromGridVars, dieselGeneratorsVars):
+    return ini.co2Diesel * gp.quicksum(
+        dieselGeneratorsVars
+    ) + ini.co2Grid * gp.quicksum(fromGridVars)
+
+
+def calcDieselMinCostObjective(ini, dieselGeneratorsVars, dieselStatusVars):
+    dieselObjExp = QuadExpr()
+    for index in range(len(ini.timestamps)):
+        dieselObjExp.add(
+            dieselGeneratorsVars[index, 0]
+            * dieselGeneratorsVars[index, 0]
+            * ini.dieselQuadraticCof
+            * ini.dieselFuelPrice
+            * ini.stepsizeHour
+        )
+        dieselObjExp.add(
+            dieselGeneratorsVars[index, 0]
+            * ini.dieselLinearCof
+            * ini.dieselFuelPrice
+            * ini.stepsizeHour
+        )
+        dieselObjExp.add(
+            ini.dieselConstantCof
+            * (1 - dieselStatusVars[index, 0])
+            * ini.dieselFuelPrice
+            * ini.stepsizeHour
+        )
+        dieselObjExp.add(
+            ini.startUpCost * dieselStatusVars[index, 2] / ini.startUpTimestepNumber
+        )
+    return dieselObjExp
+
+
+def calcGridMinCostObjective(ini, fromGridVars, toGridVars, prices):
+    return sum(
+        [
+            (fromGridVars[index, 0] - toGridVars[index, 0]) * price
+            for index, price in enumerate(prices)
+        ]
+    )
+
+
+def calcMinCostObjective(
+    ini, fromGridVars, toGridVars, prices, dieselGeneratorsVars, dieselStatusVars
+):
+    dieselObjExp = calcDieselMinCostObjective(
+        ini, dieselGeneratorsVars, dieselStatusVars
+    )
+    return dieselObjExp + calcGridMinCostObjective(
+        ini, fromGridVars, toGridVars, prices
+    )
+
+
+def calcGreenhouseQuadraticObjective(ini, fromGridVars, dieselGeneratorsVars):
+    return ini.co2Diesel * sum(
+        [
+            dieselGeneratorsVars[index, 0] * dieselGeneratorsVars[index, 0]
+            for index in range(len(ini.timestamps))
+        ]
+    ) + ini.co2Grid * sum(
+        [
+            fromGridVars[index, 0] * fromGridVars[index, 0]
+            for index in range(len(ini.timestamps))
+        ]
+    )
+
+
+def calcGridIndependenceObjective(ini, fromGridVars, toGridVars):
+    return gp.quicksum(fromGridVars) + gp.quicksum(toGridVars)
 
 
 def setObjective(
     model, ini, dieselGeneratorsVars, dieselStatusVars, fromGridVars, toGridVars, prices
 ):
     if ini.goal is Goal.MINIMIZE_COST:
-        dieselObjExp = QuadExpr()
-        for index in range(len(ini.timestamps)):
-            dieselObjExp.add(
-                dieselGeneratorsVars[index, 0]
-                * dieselGeneratorsVars[index, 0]
-                * ini.dieselQuadraticCof
-                * ini.dieselFuelPrice
-            )
-            dieselObjExp.add(
-                dieselGeneratorsVars[index, 0]
-                * ini.dieselLinearCof
-                * ini.dieselFuelPrice
-            )
-            dieselObjExp.add(ini.dieselConstantCof)
-            dieselObjExp.add(
-                ini.startUpCost * dieselStatusVars[index, 2] / ini.startUpHour
-            )
-
         model.setObjective(
-            dieselObjExp
-            + sum(
-                [
-                    (fromGridVars[index, 0] - toGridVars[index, 0]) * price
-                    for index, price in enumerate(prices)
-                ]
+            calcMinCostObjective(
+                ini,
+                fromGridVars,
+                toGridVars,
+                prices,
+                dieselGeneratorsVars,
+                dieselStatusVars,
             ),
             GRB.MINIMIZE,
         )
     elif ini.goal is Goal.GREEN_HOUSE:
         model.setObjective(
-            ini.co2Diesel * gp.quicksum(dieselGeneratorsVars)
-            + ini.co2Grid * gp.quicksum(fromGridVars),
+            calcGreenhouseObjective(ini, fromGridVars, dieselGeneratorsVars),
             GRB.MINIMIZE,
         )
     elif ini.goal is Goal.GREEN_HOUSE_QUADRATIC:
         model.setObjective(
-            ini.co2Diesel
-            * sum(
-                [
-                    dieselGeneratorsVars[index, 0] * dieselGeneratorsVars[index, 0]
-                    for index in range(len(ini.timestamps))
-                ]
-            )
-            + ini.co2Grid
-            * sum(
-                [
-                    fromGridVars[index, 0] * fromGridVars[index, 0]
-                    for index in range(len(ini.timestamps))
-                ]
-            ),
+            calcGreenhouseQuadraticObjective(ini, fromGridVars, dieselGeneratorsVars),
             GRB.MINIMIZE,
         )
     elif ini.goal is Goal.GRID_INDEPENDENCE:
         model.setObjective(
-            sum(
-                [
-                    fromGridVars[index, 0] * fromGridVars[index, 0]
-                    for index in range(len(ini.timestamps))
-                ]
-            ),
-            GRB.MINIMIZE,
+            calcGridIndependenceObjective(ini, fromGridVars, toGridVars), GRB.MINIMIZE
         )
 
 
@@ -235,128 +308,188 @@ def setUpDiesel(model, ini):
 
     dieselStatusVars = model.addVars(
         len(ini.timestamps),
-        4,  # the first column: diesel not in work/second: diesel start up, third: diesel shut down/fourth: diesel is working
+        4,  # the first column: diesel is not committed/second: diesel at start up, third: diesel at shut down/fourth: diesel is committed
         vtype=GRB.BINARY,
-        name="dieselStatus",  # startup/shutdown/keep constant
+        name="dieselStatus",
     )
 
     model.addConstrs(
         (dieselStatusVars.sum(i, "*") == 1 for i in range(len(ini.timestamps)))
     )
 
-    for i in range(len(ini.timestamps) - 1):
+    model.addConstrs(
+        (
+            (dieselStatusVars[index, 3] == 1)
+            >> (dieselGeneratorsVars[index, 0] >= ini.P_dg_min)
+            for index in range(len(ini.timestamps))
+        ),
+        "Power generation when diesel generator is turned on",
+    )
+    model.addConstrs(
+        (
+            (dieselStatusVars[index, 0] == 1) >> (dieselGeneratorsVars[index, 0] == 0)
+            for index in range(len(ini.timestamps))
+        ),
+        "No power generation when diesel generator is turned off",
+    )
+
+    for index in range(len(ini.timestamps) - 1):
         model.addConstr(
-            ((dieselStatusVars[i, 3] == 1) >> (dieselGeneratorsVars[i, 0] >= 0)),
-            "Energy consumption when diesel generator is turned on",
-        )
-        model.addConstr(
-            ((dieselStatusVars[i, 0] == 1) >> (dieselGeneratorsVars[i, 0] == 0)),
-            "No energy consumption when diesel generator is turned off",
+            (
+                (dieselStatusVars[index, 1] == 1)
+                >> (
+                    dieselGeneratorsVars[index + 1, 0]
+                    == dieselGeneratorsVars[index, 0] + ini.deltaStartUp
+                )
+            ),
+            "diesel generator power increase during Startup",
         )
         model.addConstr(
             (
-                (dieselStatusVars[i, 1] == 1)
+                (dieselStatusVars[index, 2] == 1)
                 >> (
-                    dieselGeneratorsVars[i + 1, 0]
-                    == dieselGeneratorsVars[i, 0] + ini.deltaStartUp
+                    dieselGeneratorsVars[index + 1, 0]
+                    == dieselGeneratorsVars[index, 0] - ini.deltaShutDown
                 )
             ),
-            "diesel generator power change considering Startup/Shutdown",
+            "diesel generator power decrease during Shutdown",
+        )
+
+        model.addConstr(
+            (
+                (dieselStatusVars[index, 0] == 1)
+                >> (dieselStatusVars[index + 1, 3] == 0)
+            ),
+            "Not Working -> Working IMPOSSIBLE",
         )
         model.addConstr(
             (
-                (dieselStatusVars[i, 2] == 1)
-                >> (
-                    dieselGeneratorsVars[i + 1, 0]
-                    == dieselGeneratorsVars[i, 0] - ini.deltaShutDown
-                )
+                (dieselStatusVars[index, 0] == 1)
+                >> (dieselStatusVars[index + 1, 2] == 0)
             ),
-            "diesel generator power change considering Startup/Shutdown",
+            "Not Working -> Shutdown IMPOSSIBLE",
+        )
+        model.addConstr(
+            (
+                (dieselStatusVars[index, 1] == 1)
+                >> (dieselStatusVars[index + 1, 2] == 0)
+            ),
+            "Startup -> Shutdown IMPOSSIBLE",
+        )
+        model.addConstr(
+            (
+                (dieselStatusVars[index, 1] == 1)
+                >> (dieselStatusVars[index + 1, 0] == 0)
+            ),
+            "Startup -> Not working IMPOSSIBLE",
+        )
+        model.addConstr(
+            (
+                (dieselStatusVars[index, 2] == 1)
+                >> (dieselStatusVars[index + 1, 3] == 0)
+            ),
+            "Shutdown -> working IMPOSSIBLE",
+        )
+        model.addConstr(
+            (
+                (dieselStatusVars[index, 2] == 1)
+                >> (dieselStatusVars[index + 1, 1] == 0)
+            ),
+            "Shutdown -> startup IMPOSSIBLE",
+        )
+        model.addConstr(
+            (
+                (dieselStatusVars[index, 3] == 1)
+                >> (dieselStatusVars[index + 1, 0] == 0)
+            ),
+            "Working -> Not working IMPOSSIBLE",
+        )
+        model.addConstr(
+            (
+                (dieselStatusVars[index, 3] == 1)
+                >> (dieselStatusVars[index + 1, 1] == 0)
+            ),
+            "Working -> Startup IMPOSSIBLE",
         )
 
+    # e. g.: d_min = 5
+    # index:    1 2 3 4 5 6 7 8 9 10 11 12 13
+    # s_3:      0 0 0 0 1 1 1 1 1  0  0  0  0
+    # sum:      1 2 3 4 5 4 3 2 1  0  0  0  0
+    # d*s_3':   0 0 0 0 5 0 0 0 0 -5  0  0  0
     model.addConstrs(
         (
-            (dieselStatusVars[index, 0] == 1) >> (dieselStatusVars[index + 1, 3] == 0)
-            for index in range(len(ini.timestamps) - 1)
+            sum(
+                dieselStatusVars[index2, 3]
+                for index2 in range(index, index + ini.dieselLeastRunTimestepNumber)
+            )
+            >= (ini.dieselLeastRunTimestepNumber)
+            * (dieselStatusVars[index, 3] - dieselStatusVars[index - 1, 3])
+            for index in range(
+                1, len(ini.timestamps) - (ini.dieselLeastRunTimestepNumber)
+            )
         ),
-        "Not Working -> Working IMPOSSIBLE",
+        "Least Running time",
     )
     model.addConstrs(
         (
-            (dieselStatusVars[index, 0] == 1) >> (dieselStatusVars[index + 1, 2] == 0)
-            for index in range(len(ini.timestamps) - 1)
+            sum(
+                dieselStatusVars[index2, 0]
+                for index2 in range(index, index + ini.dieselLeastPauseTimestepNumber)
+            )
+            >= (ini.dieselLeastPauseTimestepNumber)
+            * (dieselStatusVars[index, 0] - dieselStatusVars[index - 1, 0])
+            for index in range(
+                1, len(ini.timestamps) - (ini.dieselLeastPauseTimestepNumber)
+            )
         ),
-        "Not Working -> Shutdown IMPOSSIBLE",
-    )
-    model.addConstrs(
-        (
-            (dieselStatusVars[index, 1] == 1) >> (dieselStatusVars[index + 1, 2] == 0)
-            for index in range(len(ini.timestamps) - 1)
-        ),
-        "Startup -> Shutdown IMPOSSIBLE",
-    )
-    model.addConstrs(
-        (
-            (dieselStatusVars[index, 1] == 1) >> (dieselStatusVars[index + 1, 3] == 0)
-            for index in range(len(ini.timestamps) - 1)
-        ),
-        "Startup -> Not working IMPOSSIBLE",
-    )
-    model.addConstrs(
-        (
-            (dieselStatusVars[index, 2] == 1) >> (dieselStatusVars[index + 1, 3] == 0)
-            for index in range(len(ini.timestamps) - 1)
-        ),
-        "Shutdown -> working IMPOSSIBLE",
-    )
-    model.addConstrs(
-        (
-            (dieselStatusVars[index, 3] == 1) >> (dieselStatusVars[index + 1, 0] == 0)
-            for index in range(len(ini.timestamps) - 1)
-        ),
-        "Working -> Not working IMPOSSIBLE",
-    )
-    model.addConstrs(
-        (
-            (dieselStatusVars[index, 3] == 1) >> (dieselStatusVars[index + 1, 1] == 0)
-            for index in range(len(ini.timestamps) - 1)
-        ),
-        "Working -> Startup IMPOSSIBLE",
+        "Least Pause time",
     )
 
-    # TODO: to be changed, if timestep not equals 1hour
+    # TODO: this constraint should not be necessary, but there is a bug sometimes change faster than ini.deltaShutDown or deltaStartUp
     model.addConstrs(
         (
             (dieselStatusVars[index + 1, 1] == 1)
-            >> (dieselStatusVars[index + 2, 1] == 1 - dieselStatusVars[index, 1])
-            for index in range(len(ini.timestamps) - 2)  # 0 1 1/0 0 0/1 1 0
+            >> (
+                dieselStatusVars[index + ini.startUpTimestepNumber, 1]
+                == 1 - dieselStatusVars[index, 1]
+            )
+            for index in range(
+                len(ini.timestamps) - ini.startUpTimestepNumber
+            )  # 0 1 1/0 0 0/1 1 0
         ),
         "StartUp Constraint",
     )
-
     model.addConstrs(
         (
             (dieselStatusVars[index + 1, 2] == 1)
-            >> (dieselStatusVars[index + 2, 2] == 1 - dieselStatusVars[index, 2])
-            for index in range(len(ini.timestamps) - 2)  # 0 1 1/0 0 0/1 1 0
+            >> (
+                dieselStatusVars[index + ini.shutDownTimestepNumber, 2]
+                == 1 - dieselStatusVars[index, 2]
+            )
+            for index in range(
+                len(ini.timestamps) - ini.shutDownTimestepNumber
+            )  # 0 1 1/0 0 0/1 1 0
         ),
         "ShutDown Constraint",
     )
-
     model.addConstrs(
         (
-            (dieselStatusVars[index + 1, 3] == 1)
-            >> (dieselStatusVars[index + d, 3] == 1 - dieselStatusVars[index, 3])
-            for index in range(len(ini.timestamps) - (ini.dieselLeastRunHour + 1))
-            for d in range(2, ini.dieselLeastRunHour + 1)
+            dieselStatusVars[index, 1] == 0
+            for index in range(
+                len(ini.timestamps)
+                - (ini.dieselLeastRunTimestepNumber + ini.shutDownTimestepNumber),
+                len(ini.timestamps),
+            )
         ),
-        "Least Running Time",
+        "do not startup if not enough time before end of simulation",
     )
     model.addConstr(
-        ((dieselStatusVars[0, 0] == 1)), "Diesel Generator status initialization"
+        ((dieselStatusVars[0, 0] == 1)), "diesel generator is not committed at start"
     )
     model.addConstr(
-        ((dieselGeneratorsVars[0, 0] == 0)), "Diesel Generator power initialization "
+        ((dieselStatusVars[len(ini.timestamps) - 1, 0] == 1)),
+        "Diesel Generator status in the end of simulation",
     )
 
     return dieselGeneratorsVars, dieselStatusVars
@@ -368,14 +501,25 @@ def setUpPV(model, ini):
     )
 
     if ini.loc_flag:
-        print("PV data: use location")
+        print("PV data: use location and query from renewables.ninja API")
         metadata, pvPowerValues = getNinjaPvApi(
             ini.loc_lat, ini.loc_lon, ini.timestamps
         )
         pvPowerValues = pvPowerValues.values
     else:
         print("PV data: use sample files")
-        pvPowerValues = getNinja(ini.pvFile, ini.timestamps)
+        if ini.dataPSPv:
+            print("PV data: use Pecanstreet dataset (dataid: %d)", (ini.dataid))
+            pvPowerValues = getPecanstreetData(
+                ini.dataFile,
+                ini.timeHeader,
+                ini.dataid,
+                "solar",
+                ini.timestamps,
+                timedelta(days=365 * 4 + 1 + 1),
+            )
+        else:
+            pvPowerValues = getNinja(ini.pvFile, ini.timestamps)
     assert len(pvPowerValues) == len(ini.timestamps)
     model.addConstrs(
         (pvVars[i, 0] == pvPowerValues[i] for i in range(len(ini.timestamps))),
@@ -389,8 +533,18 @@ def setUpFixedLoads(model, ini):
     fixedLoadVars = model.addVars(
         len(ini.timestamps), 1, lb=0.0, vtype=GRB.CONTINUOUS, name="fixedLoads"
     )
+    if ini.dataPSLoads:
+        loadValues = getPecanstreetData(
+            ini.dataFile,
+            ini.timeHeader,
+            ini.dataid,
+            "grid",
+            ini.timestamps,
+            timedelta(days=365 * 4 + 1 + 1),
+        )
+    else:
+        loadValues = getLoadsData(ini.loadsFile, ini.timestamps)
 
-    loadValues = getLoadsData(ini.loadsFile, ini.timestamps)
     assert len(loadValues) == len(ini.timestamps)
     model.addConstrs(
         (fixedLoadVars[i, 0] == loadValues[i] for i in range(len(ini.timestamps))),
@@ -448,8 +602,7 @@ def setUpBattery(model, ini):
             == batteryEnergyVars[i, 0]
             - ini.eta_bat
             * batteryPowerVars[i, 0]
-            * getStepsize(ini.timestamps).total_seconds()
-            / 3600  # stepsize: 1 hour
+            * ini.stepsizeHour  # E in kW per hour
             for i in range(len(ini.timestamps))
         ),
         "battery charging",
@@ -489,7 +642,7 @@ def setUpEv(model, ini):
     model.addConstrs(
         (
             evPowerVars[i, 0] == 0
-            for i in getTimeIndexRange(ini.timestamps, ini.t_a_ev, ini.t_b_ev)[:-1]
+            for i in getTimeIndexRangeDaily(ini.timestamps, ini.t_a_ev, ini.t_b_ev)[:-1]
         ),
         "ev gone",
     )
@@ -497,14 +650,11 @@ def setUpEv(model, ini):
         (
             evEnergyVars[i + 1, 0]
             == evEnergyVars[i, 0]
-            - ini.eta_ev
-            * evPowerVars[i, 0]
-            * getStepsize(ini.timestamps).total_seconds()
-            / 3600  # stepsize: 1 hour
-            for i in getTimeIndexRange(ini.timestamps, ini.timestamps[0], ini.t_a_ev)[
-                :-1
-            ]
-            + getTimeIndexRange(ini.timestamps, ini.t_b_ev, ini.timestamps[-1])
+            - ini.eta_ev * evPowerVars[i, 0] * ini.stepsizeHour  # E in kW per hour
+            for i in getTimeIndexRangeDaily(
+                ini.timestamps, ini.timestamps[0], ini.t_a_ev
+            )[:-1]
+            + getTimeIndexRangeDaily(ini.timestamps, ini.t_b_ev, ini.timestamps[-1])
         ),
         "ev charging",
     )
@@ -512,24 +662,53 @@ def setUpEv(model, ini):
     model.addConstrs(
         (
             evEnergyVars[i, 0] >= 0.7 * ini.E_ev_max
-            for i in range(
-                int((ini.t_goal_ev - ini.timestamps[0]).total_seconds() / 3600),
-                int((ini.t_a_ev - ini.timestamps[0]).total_seconds() / 3600) + 1,
-            )
+            for i in getTimeIndexRangeDaily(ini.timestamps, ini.t_goal_ev, ini.t_a_ev)
         ),
-        "ev init",
+        "ev charging goal",
     )
-    model.addConstr(
-        (evEnergyVars[ini.timestamps.index(ini.t_b_ev), 0] == 0.1 * ini.E_ev_max),
+    model.addConstrs(
+        (
+            evEnergyVars[i, 0] == 0.1 * ini.E_ev_max
+            for i in getTimeIndexRangeDaily(ini.timestamps, ini.t_a_ev, ini.t_b_ev)[1:]
+        ),
         "ev after work",
     )
-    # TODO: to be changed, if multiple days are considered
     model.addConstr(
         (evEnergyVars[len(ini.timestamps), 0] == evEnergyVars[0, 0]),
-        "ev end-of-day value",
+        "ev end-start energy are equal",
     )
 
     return evPowerVars
+
+
+def printObjectiveResults(
+    ini, fromGridVars, toGridVars, gridPrices, dieselGeneratorsVars, dieselStatusVars
+):
+    print(
+        "MINIMIZE_COST goal: %.2f"
+        % calcMinCostObjective(
+            ini,
+            fromGridVars,
+            toGridVars,
+            gridPrices,
+            dieselGeneratorsVars,
+            dieselStatusVars,
+        ).getValue()
+    )
+    print(
+        "GREEN_HOUSE goal: %.1f"
+        % calcGreenhouseObjective(ini, fromGridVars, dieselGeneratorsVars).getValue()
+    )
+    print(
+        "GREEN_HOUSE_QUADRATIC goal: %.1f"
+        % calcGreenhouseQuadraticObjective(
+            ini, fromGridVars, dieselGeneratorsVars
+        ).getValue()
+    )
+    print(
+        "GRID_INDEPENDENCE goal: %.1f"
+        % calcGridIndependenceObjective(ini, fromGridVars, toGridVars).getValue()
+    )
 
 
 def printResults(model, ini):
@@ -545,7 +724,11 @@ def plotResults(model, ini, gridPrices):
     for v in model.getVars():
         varN.append(v.varName)
         varX.append(v.x)
-    plotting(varN, varX, gridPrices, outputFolder)
+    plotting(varN, varX, gridPrices, outputFolder, ini.timestamps)
+
+
+def copyConfigFile(filepath, outputFolder):
+    copyfile(filepath, os.path.join(outputFolder, "conf.ini"))
 
 
 def main(argv):
@@ -557,6 +740,7 @@ def main(argv):
     )
     if not os.path.isdir(outputFolder):
         os.makedirs(outputFolder)
+    copyConfigFile(argv[1], outputFolder)
     config = configparser.ConfigParser()
     config.read(argv[1])
     runSimpleModel(Configure(config))

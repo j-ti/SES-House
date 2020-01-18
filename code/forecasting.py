@@ -5,7 +5,7 @@ from datetime import datetime
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from data import getNinjaPvApi
+from data import getNinjaPvApi, getPecanstreetData
 from keras import metrics
 from keras.engine.saving import model_from_json
 from keras.layers import LSTM, Dropout, Activation
@@ -25,26 +25,25 @@ part = 0.6  # we train on part of the set
 
 def dataImport():
     timestamps = constructTimeStamps(
-        datetime.strptime("2014-01-01 00:00:00", "20%y-%m-%d %H:%M:%S"),
-        datetime.strptime("2014-02-01 00:00:00", "20%y-%m-%d %H:%M:%S"),
-        datetime.strptime("01:00:00", "%H:%M:%S") - datetime.strptime("00:00:00", "%H:%M:%S")
+        datetime.strptime("2018-02-01 00:00:00", "20%y-%m-%d %H:%M:%S"),
+        datetime.strptime("2018-03-01 00:00:00", "20%y-%m-%d %H:%M:%S"),
+        datetime.strptime("00:15:00", "%H:%M:%S") - datetime.strptime("00:00:00", "%H:%M:%S")
     )
     # input datas : uncontrolable resource : solar production
-    _, df = getNinjaPvApi(
-        52.5170, 13.3889, timestamps
+    df = getPecanstreetData(
+        "./data/austin/15minute_data.csv", "local_15min", 661, "solar", timestamps
     )
-    df = df["electricity"].reset_index(drop=True)
     return df, timestamps
 
 
 def buildSet(df, split):
     df_train = df[look_back:split].reset_index(drop=True)
     df_train = makeShiftTrain(df, df_train, look_back, split)
-    df_train_label = df[look_back + 1:split + 1]
+    df_train_label = df[look_back + 1 : split + 1]
 
-    df_test = df[split + look_back:].reset_index(drop=True)
+    df_test = df[split + look_back :].reset_index(drop=True)
     df_test = makeShiftTest(df, df_test, look_back, split)
-    df_test_label = df[split + look_back:]
+    df_test_label = df[split + look_back :]
 
     return df_train, df_train_label, df_test, df_test_label
 
@@ -55,9 +54,15 @@ def buildModel(trainx, trainy):
     model.add(LSTM(256, input_shape=(1, look_back)))
     model.add(Dropout(0.5))
     model.add(Dense(1))
-    model.add(Activation('tanh'))
-    model.add(Activation('relu'))
-    model.compile(loss='mean_squared_error', optimizer='nadam', metrics=[metrics.mae, metrics.mape, metrics.mse])
+    model.add(Activation("tanh"))
+    model.add(Dense(3))
+    model.add(Dense(1))
+    model.add(Activation("relu"))
+    model.compile(
+        loss="mean_squared_error",
+        optimizer="adam",
+        metrics=[metrics.mae, metrics.mape, metrics.mse],
+    )
 
     # training it
     history = model.fit(trainx, trainy, epochs=20, batch_size=20, verbose=2)
@@ -106,15 +111,15 @@ def plotEcart(train_y, train_predict_y, test_y, test_predict_y, timestamps):
 
 
 def plotHistory(history):
-    plt.plot(history.history['mean_absolute_error'])
+    plt.plot(history.history["mean_absolute_error"])
     plt.xlabel("Epoch")
     plt.ylabel("Mean absolute error")
     plt.show()
-    plt.plot(history.history['mean_absolute_percentage_error'])
+    plt.plot(history.history["mean_absolute_percentage_error"])
     plt.xlabel("Epoch")
     plt.ylabel("Mean absolute percentage error")
     plt.show()
-    plt.plot(history.history['mean_squared_error'])
+    plt.plot(history.history["mean_squared_error"])
     plt.xlabel("Epoch")
     plt.ylabel("mean_squared_error")
     plt.show()
@@ -131,7 +136,7 @@ def saveModel(model):
 
 def loadModel():
     # load json and create model
-    json_file = open(outputFolder + "model.json", 'r')
+    json_file = open(outputFolder + "model.json", "r")
     loaded_model_json = json_file.read()
     json_file.close()
 
@@ -140,7 +145,9 @@ def loadModel():
     loaded_model.load_weights(outputFolder + "model.h5")
 
     # evaluate loaded model
-    loaded_model.compile(loss='binary_crossentropy', optimizer='rmsprop', metrics=['accuracy'])
+    loaded_model.compile(
+        loss="binary_crossentropy", optimizer="rmsprop", metrics=["accuracy"]
+    )
     return loaded_model
 
 
@@ -171,33 +178,62 @@ def forecasting(load):
     if history is not None:
         plotHistory(history)
 
-    plotPrediction(df_train_label, predict_train, df_test_label, predict_test, timestamps)
-    plotEcart(np.array(df_train_label), np.array(predict_train), np.array(df_test_label), np.array(predict_test),
-              timestamps)
-    print("training\tMSE :\t{}".format(mean_squared_error(np.array(df_train_label), np.array(predict_train))))
-    print("testing\t\tMSE :\t{}".format(mean_squared_error(np.array(df_test_label), np.array(predict_test))))
+    plotPrediction(
+        df_train_label, predict_train, df_test_label, predict_test, timestamps
+    )
+    plotEcart(
+        np.array(df_train_label),
+        np.array(predict_train),
+        np.array(df_test_label),
+        np.array(predict_test),
+        timestamps,
+    )
+    print(
+        "training\tMSE :\t{}".format(
+            mean_squared_error(np.array(df_train_label), np.array(predict_train))
+        )
+    )
+    print(
+        "testing\t\tMSE :\t{}".format(
+            mean_squared_error(np.array(df_test_label), np.array(predict_test))
+        )
+    )
 
-    print("training\tMAE :\t{}".format(mean_absolute_error(np.array(df_train_label), np.array(predict_train))))
-    print("testing\t\tMAE :\t{}".format(mean_absolute_error(np.array(df_test_label), np.array(predict_test))))
+    print(
+        "training\tMAE :\t{}".format(
+            mean_absolute_error(np.array(df_train_label), np.array(predict_train))
+        )
+    )
+    print(
+        "testing\t\tMAE :\t{}".format(
+            mean_absolute_error(np.array(df_test_label), np.array(predict_test))
+        )
+    )
 
-    print("training\tMAPE :\t{} %".format(
-        mean_absolute_percentage_error(np.array(df_train_label), np.array(predict_train))))
-    print("testing\t\tMAPE :\t{} %".format(
-        mean_absolute_percentage_error(np.array(df_test_label), np.array(predict_test))))
+    print(
+        "training\tMAPE :\t{} %".format(
+            mean_absolute_percentage_error(
+                np.array(df_train_label), np.array(predict_train)
+            )
+        )
+    )
+    print(
+        "testing\t\tMAPE :\t{} %".format(
+            mean_absolute_percentage_error(
+                np.array(df_test_label), np.array(predict_test)
+            )
+        )
+    )
 
 
 # if argv = 1, then we rebuild the model
 def main(argv):
     load = False
     if len(argv) == 2:
-        if argv[1] == '1':
+        if argv[1] == "1":
             load = True
     global outputFolder
-    outputFolder = (
-        "output/"
-        + "modelKeras"
-        + "/"
-    )
+    outputFolder = "output/" + "modelKeras" + "/"
     if not os.path.isdir(outputFolder):
         os.makedirs(outputFolder)
     forecasting(load)
