@@ -254,7 +254,13 @@ def dateparserWithoutUTC(x):
 
 
 def getPecanstreetData(
-    filePath, timeHeader, dataid, column, timestamps, offset=timedelta(days=0)
+    filePath,
+    timeHeader,
+    dataid,
+    column,
+    timestamps,
+    offset=timedelta(days=0),
+    nb_rows=10000,
 ):
     with open(filePath, "r", encoding="utf-8") as dataFile:
         # TODO: read more rows or split dataid into files
@@ -262,8 +268,9 @@ def getPecanstreetData(
             dataFile,
             parse_dates=[timeHeader],
             date_parser=dateparserWithoutUTC,
-            nrows=10000,
+            nrows=nb_rows,
         )
+        #
         data = data[data["dataid"] == int(dataid)]
         pd.to_datetime(data[timeHeader])
         data = data.set_index(timeHeader)
