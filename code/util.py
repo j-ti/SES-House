@@ -79,13 +79,6 @@ def getConcatDateTime(date, time):
     )
 
 
-def makeShift(dataSet, look_back):
-    for i in range(1, look_back):
-        s = df_base[look_back - i : split - i].reset_index(drop=True)
-        df = pd.concat([df, s], axis=1, ignore_index=True)
-    return df
-
-
 def makeShiftTrain(df_base, df, look_back, split):
     for i in range(1, look_back):
         s = df_base[look_back - i : split - i].reset_index(drop=True)
@@ -102,11 +95,9 @@ def makeShiftTest(df_base, df, look_back, split):
     return df
 
 
-def makeTick(timestamps):
+def makeTick(timestamps, present="%m-%d %H:%M"):
     step = int(len(timestamps) / 14)
-    time = [timestamps[i].strftime("%m-%d %H:%M") for i in range(len(timestamps))][
-        ::step
-    ]
+    time = [timestamps[i].strftime(present) for i in range(len(timestamps))][::step]
     tick = [i for i in range(len(timestamps))][::step]
     return time, tick
 
