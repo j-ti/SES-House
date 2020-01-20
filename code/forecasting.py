@@ -5,7 +5,7 @@ from datetime import datetime
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from data import getNinjaPvApi, getPecanstreetData
+from data import getPecanstreetData
 from keras import metrics
 from keras.engine.saving import model_from_json
 from keras.layers import LSTM, Dropout, Activation
@@ -42,11 +42,11 @@ def dataImport():
 def buildSet(df, split):
     df_train = df[look_back:split].reset_index(drop=True)
     df_train = makeShiftTrain(df, df_train, look_back, split)
-    df_train_label = df[look_back + 1 : split + 1]
+    df_train_label = df[look_back + 1: split + 1]
 
-    df_test = df[split + look_back :].reset_index(drop=True)
+    df_test = df[split + look_back:].reset_index(drop=True)
     df_test = makeShiftTest(df, df_test, look_back, split)
-    df_test_label = df[split + look_back :]
+    df_test_label = df[split + look_back:]
 
     return df_train, df_train_label, df_test, df_test_label
 
@@ -86,14 +86,26 @@ def plotPrediction(train_y, train_predict_y, test_y, test_predict_y, timestamps)
 
     x1 = [i for i in range(len(train_y))]
     x2 = [i for i in range(len(train_y), len(test_y) + len(train_y))]
-    plt.plot(x1, train_y.reset_index(drop=True), label="actual", color="green")
-    plt.plot(x1, train_predict_y, label="predict", color="orange")
+    plt.plot(x1[:100], train_y.reset_index(drop=True), label="actual", color="green")
+    plt.plot(x1[:100], train_predict_y, label="predict", color="orange")
     plt.plot(x2, test_y.reset_index(drop=True), label="actual", color="blue")
     plt.plot(x2, test_predict_y, label="predict", color="red")
     plt.xticks(tick, time, rotation=20)
     plt.xlabel("Time")
     plt.ylabel("Power output (kW)")
     plt.legend()
+    plt.savefig(outputFolder + "/prediction.png")
+    plt.show()
+
+
+def plot100first(train_y, train_predict_y):
+    x1 = [i for i in range(len(train_y))]
+    plt.plot(x1[:100], train_y.reset_index(drop=True)[:100], label="actual", color="green")
+    plt.plot(x1[:100], train_predict_y[:100], label="predict", color="orange")
+    plt.xlabel("Time")
+    plt.ylabel("Power output (kW)")
+    plt.legend()
+    plt.savefig(outputFolder + "/100first.png")
     plt.show()
 
 
@@ -110,6 +122,19 @@ def plotEcart(train_y, train_predict_y, test_y, test_predict_y, timestamps):
     plt.xlabel("Time")
     plt.ylabel("Difference (kW)")
     plt.legend()
+    plt.savefig(outputFolder + "/difference.png")
+    plt.show()
+
+
+def plotInput(df, timestamps):
+    time, tick = makeTick(timestamps)
+    y = np.array(df)
+    plt.plot(y, label="actual", color="green")
+    plt.xticks(tick, time, rotation=20)
+    plt.xlabel("Time")
+    plt.ylabel("Input datas")
+    plt.legend()
+    plt.savefig(outputFolder + "/input.png")
     plt.show()
 
 
@@ -117,14 +142,17 @@ def plotHistory(history):
     plt.plot(history.history["mean_absolute_error"])
     plt.xlabel("Epoch")
     plt.ylabel("Mean absolute error")
+    plt.savefig(outputFolder + "/MAE.png")
     plt.show()
     plt.plot(history.history["mean_absolute_percentage_error"])
     plt.xlabel("Epoch")
     plt.ylabel("Mean absolute percentage error")
+    plt.savefig(outputFolder + "/MAPE.png")
     plt.show()
     plt.plot(history.history["mean_squared_error"])
     plt.xlabel("Epoch")
     plt.ylabel("mean_squared_error")
+    plt.savefig(outputFolder + "/MSE.png")
     plt.show()
 
 
@@ -154,10 +182,23 @@ def loadModel():
     return loaded_model
 
 
+# first value must be an array with 5 pages
+def forecast(model, nbToPredict, firstValue):
+    pred = []
+    val = firstValue
+    for i in range(nbToPredict):
+        pred.append(model.predict(val))
+        val.pop(0)
+        val.append(pred[-1])
+    return pred
+
+
 def forecasting(load):
     # import data
     df, timestamps = dataImport()
     split = int(len(df) * part)
+
+    plotInput(df, timestamps)
 
     # split train / test
     df_train, df_train_label, df_test, df_test_label = buildSet(df, split)
@@ -184,6 +225,7 @@ def forecasting(load):
     plotPrediction(
         df_train_label, predict_train, df_test_label, predict_test, timestamps
     )
+    plot100first(df_train_label, predict_train)
     plotEcart(
         np.array(df_train_label),
         np.array(predict_train),
