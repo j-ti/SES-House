@@ -260,7 +260,7 @@ def getPecanstreetData(
     column,
     timestamps,
     offset=timedelta(days=0),
-    nb_rows=10000,
+    nb_rows=20000,
 ):
     with open(filePath, "r", encoding="utf-8") as dataFile:
         # TODO: read more rows or split dataid into files
