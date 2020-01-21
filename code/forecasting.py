@@ -29,10 +29,12 @@ def dataImport():
         datetime.strptime("2018-03-01 00:00:00", "20%y-%m-%d %H:%M:%S"),
         datetime.strptime("00:15:00", "%H:%M:%S") - datetime.strptime("00:00:00", "%H:%M:%S")
     )
+
     # input datas : uncontrolable resource : solar production
     df = getPecanstreetData(
-        "./data/austin/15minute_data.csv", "local_15min", 661, "solar", timestamps
+        "./data/15minute_data_austin.csv", "local_15min", 1642, "solar", timestamps
     )
+    print(df)
     # max = df.max()
     # df = df.multiply(1/max)
 
@@ -86,8 +88,8 @@ def plotPrediction(train_y, train_predict_y, test_y, test_predict_y, timestamps)
 
     x1 = [i for i in range(len(train_y))]
     x2 = [i for i in range(len(train_y), len(test_y) + len(train_y))]
-    plt.plot(x1[:100], train_y.reset_index(drop=True), label="actual", color="green")
-    plt.plot(x1[:100], train_predict_y, label="predict", color="orange")
+    plt.plot(x1, train_y.reset_index(drop=True), label="actual", color="green")
+    plt.plot(x1, train_predict_y, label="predict", color="orange")
     plt.plot(x2, test_y.reset_index(drop=True), label="actual", color="blue")
     plt.plot(x2, test_predict_y, label="predict", color="red")
     plt.xticks(tick, time, rotation=20)
@@ -281,6 +283,8 @@ def main(argv):
     outputFolder = "output/" + "modelKeras" + "/"
     if not os.path.isdir(outputFolder):
         os.makedirs(outputFolder)
+
+
     forecasting(load)
 
 
