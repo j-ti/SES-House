@@ -116,6 +116,8 @@ class Configure:
         self.dataPSPv = "yes" == config["DATA_PS"]["pv"]
         self.timeHeader = config["DATA_PS"]["timeHeader"]
         self.dataid = config["DATA_PS"]["dataid"]
+        self.dataStart = datetime.strptime(config["DATA_PS"]["dataStart"], "20%y-%m-%d %H:%M:%S")
+        self.dataDelta = self.dataStart - datetime.strptime(config["TIME"]["start"], "20%y-%m-%d %H:%M:%S")
         self.costFileGrid = config["COST"]["file_grid"]
         self.constantPrice = float(config["COST"]["constant_price"])
         self.co2Grid = float(config["CO2"]["grid_CO2"])
@@ -516,7 +518,7 @@ def setUpPV(model, ini):
                 ini.dataid,
                 "solar",
                 ini.timestamps,
-                timedelta(days=365 * 5 + 1 + 30 * 6),
+                ini.dataDelta,
             )
         else:
             pvPowerValues = getNinja(ini.pvFile, ini.timestamps)
@@ -540,7 +542,7 @@ def setUpFixedLoads(model, ini):
             ini.dataid,
             "grid",
             ini.timestamps,
-            timedelta(days=365 * 5 + 1 + 30 * 6),
+            ini.dataDelta,
         )
     else:
         loadValues = getLoadsData(ini.loadsFile, ini.timestamps)
