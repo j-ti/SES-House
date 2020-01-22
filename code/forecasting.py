@@ -2,8 +2,6 @@ import os
 import sys
 from datetime import datetime
 
-import matplotlib.pyplot as plt
-import numpy as np
 import pandas as pd
 from data import getPecanstreetData
 from keras import metrics
@@ -11,9 +9,10 @@ from keras.engine.saving import model_from_json
 from keras.layers import LSTM, Dropout, Activation
 from keras.layers.core import Dense
 from keras.models import Sequential
+from plot_forecast import *
 from sklearn.metrics import mean_squared_error, mean_absolute_error
 from util import constructTimeStamps, mean_absolute_percentage_error
-from util import makeShiftTest, makeShiftTrain, makeTick
+from util import makeShift
 
 # fixing the random seed to have a better reproducibility
 seed = 3
@@ -31,30 +30,40 @@ def dataImport():
     )
     # input datas : uncontrolable resource : solar production
     df = getPecanstreetData(
-        "./data/austin/15minute_data.csv", "local_15min", 661, "solar", timestamps
+        "./data/15minute_data_austin.csv", "local_15min", 1642, "solar", timestamps
     )
     # max = df.max()
     # df = df.multiply(1/max)
 
-    return df, timestamps
+    return df.values, np.array(timestamps)
 
 
-def buildSet(df, split):
-    df_train = df[look_back:split].reset_index(drop=True)
-    df_train = makeShiftTrain(df, df_train, look_back, split)
-    df_train_label = df[look_back + 1: split + 1]
+def splitData(config, loadsData):
+    diff = loadsData.index[-1] - loadsData.index[0]
+    endTrain = 96 * int(diff.days * config.TRAINPART)
+    endValidation = endTrain + 96 * int(diff.days * config.VALIDATIONPART)
+    return (
+        loadsData[:endTrain],
+        loadsData[endTrain:endValidation],
+        loadsData[endValidation:],
+    )
 
-    df_test = df[split + look_back:].reset_index(drop=True)
-    df_test = makeShiftTest(df, df_test, look_back, split)
-    df_test_label = df[split + look_back:]
 
-    return df_train, df_train_label, df_test, df_test_label
+# we assume that data is either train, test or validation and is shape (nbPts, nbFeatures)
+def buildSet(data, look_back, nbOutput, nbFeatures):
+    X = makeShift(data, look_back, nbFeatures)
+    col = []
+    for i in range(len(data) - look_back):
+        col.append(data[look_back + i: i + look_back + nbOutput])
+    Y = np.array(col)
+    return X, Y
 
 
 # building the model
 def buildModel(trainx, trainy):
     model = Sequential()
-    model.add(LSTM(256, input_shape=(1, look_back)))
+    nbfeatures = 0
+    model.add(LSTM(256, input_shape=(look_back, nbfeatures)))
     model.add(Dropout(0.5))
     model.add(Dense(1))
     model.add(Activation("linear"))
@@ -79,81 +88,6 @@ def evalModel(model, testx, testy):
     ret = model.evaluate(testx, testy, verbose=0)
     print(ret)
     return ret
-
-
-def plotPrediction(train_y, train_predict_y, test_y, test_predict_y, timestamps):
-    time, tick = makeTick(timestamps)
-
-    x1 = [i for i in range(len(train_y))]
-    x2 = [i for i in range(len(train_y), len(test_y) + len(train_y))]
-    plt.plot(x1[:100], train_y.reset_index(drop=True), label="actual", color="green")
-    plt.plot(x1[:100], train_predict_y, label="predict", color="orange")
-    plt.plot(x2, test_y.reset_index(drop=True), label="actual", color="blue")
-    plt.plot(x2, test_predict_y, label="predict", color="red")
-    plt.xticks(tick, time, rotation=20)
-    plt.xlabel("Time")
-    plt.ylabel("Power output (kW)")
-    plt.legend()
-    plt.savefig(outputFolder + "/prediction.png")
-    plt.show()
-
-
-def plot100first(train_y, train_predict_y):
-    x1 = [i for i in range(len(train_y))]
-    plt.plot(x1[:100], train_y.reset_index(drop=True)[:100], label="actual", color="green")
-    plt.plot(x1[:100], train_predict_y[:100], label="predict", color="orange")
-    plt.xlabel("Time")
-    plt.ylabel("Power output (kW)")
-    plt.legend()
-    plt.savefig(outputFolder + "/100first.png")
-    plt.show()
-
-
-def plotEcart(train_y, train_predict_y, test_y, test_predict_y, timestamps):
-    time, tick = makeTick(timestamps)
-
-    x1 = [i for i in range(len(train_y))]
-    x2 = [i for i in range(len(train_y), len(test_y) + len(train_y))]
-    y1 = [train_predict_y[i] - train_y[i] for i in range(len(x1))]
-    y2 = [test_predict_y[i] - test_y[i] for i in range(len(x2))]
-    plt.plot(x1, y1, label="actual", color="green")
-    plt.plot(x2, y2, label="actual", color="blue")
-    plt.xticks(tick, time, rotation=20)
-    plt.xlabel("Time")
-    plt.ylabel("Difference (kW)")
-    plt.legend()
-    plt.savefig(outputFolder + "/difference.png")
-    plt.show()
-
-
-def plotInput(df, timestamps):
-    time, tick = makeTick(timestamps)
-    y = np.array(df)
-    plt.plot(y, label="actual", color="green")
-    plt.xticks(tick, time, rotation=20)
-    plt.xlabel("Time")
-    plt.ylabel("Input datas")
-    plt.legend()
-    plt.savefig(outputFolder + "/input.png")
-    plt.show()
-
-
-def plotHistory(history):
-    plt.plot(history.history["mean_absolute_error"])
-    plt.xlabel("Epoch")
-    plt.ylabel("Mean absolute error")
-    plt.savefig(outputFolder + "/MAE.png")
-    plt.show()
-    plt.plot(history.history["mean_absolute_percentage_error"])
-    plt.xlabel("Epoch")
-    plt.ylabel("Mean absolute percentage error")
-    plt.savefig(outputFolder + "/MAPE.png")
-    plt.show()
-    plt.plot(history.history["mean_squared_error"])
-    plt.xlabel("Epoch")
-    plt.ylabel("mean_squared_error")
-    plt.savefig(outputFolder + "/MSE.png")
-    plt.show()
 
 
 def saveModel(model):
@@ -197,6 +131,8 @@ def forecasting(load):
     # import data
     df, timestamps = dataImport()
     split = int(len(df) * part)
+    df = np.array(df)
+    X, Y = buildSet(df, look_back, nb_out, nb_features)
 
     plotInput(df, timestamps)
 
@@ -204,8 +140,6 @@ def forecasting(load):
     df_train, df_train_label, df_test, df_test_label = buildSet(df, split)
     df_train_arr = np.array(df_train)
     df_test_arr = np.array(df_test)
-    trainx = np.reshape(df_train_arr, (df_train_arr.shape[0], 1, df_train_arr.shape[1]))
-    testx = np.reshape(df_test_arr, (df_test_arr.shape[0], 1, df_test_arr.shape[1]))
 
     history = None
     if load:
