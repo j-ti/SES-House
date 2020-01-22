@@ -1,6 +1,7 @@
+from datetime import timedelta, datetime
+
 import numpy as np
 import pandas as pd
-from datetime import timedelta, datetime
 
 
 def constructTimeStamps(start, end, stepsize):
@@ -79,20 +80,24 @@ def getConcatDateTime(date, time):
     )
 
 
-def makeShiftTrain(df_base, df, look_back, split):
-    for i in range(1, look_back):
-        s = df_base[look_back - i : split - i].reset_index(drop=True)
-        df = pd.concat([df, s], axis=1, ignore_index=True)
-    return df
+def reshape(toReshape):
+    res = np.zeros((toReshape[0].shape[0], toReshape[0].shape[1], len(toReshape)))
+    for i in range(len(toReshape)):
+        res[:, :, i] = toReshape[i]
+    return np.array(res)
 
 
-def makeShiftTest(df_base, df, look_back, split):
-    for i in range(1, look_back):
-        s = df_base[split + look_back + i : len(df_base) - look_back + i].reset_index(
-            drop=True
-        )
-        df = pd.concat([df, s], axis=1, ignore_index=True)
-    return df
+def makeShift(data, look_back, n_vars):
+    res = []
+    for i in range(n_vars):
+        df = pd.DataFrame(data[:, i])
+        cols = []
+        for j in range(look_back, 0, -1):
+            cols.append(df.shift(j))
+        agg = pd.concat(cols, axis=1)
+        agg.dropna(inplace=True)
+        res.append(np.array(agg))
+    return reshape(res)
 
 
 def makeTick(timestamps, present="%m-%d %H:%M"):
