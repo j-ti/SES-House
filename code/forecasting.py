@@ -20,6 +20,9 @@ np.random.seed(seed)
 # param
 look_back = 10  # we have a 5 point history in our input
 part = 0.6  # we train on part of the set
+nbOut = 2
+config = ""
+nbFeatures = 1
 
 
 def dataImport():
@@ -32,8 +35,6 @@ def dataImport():
     df = getPecanstreetData(
         "./data/15minute_data_austin.csv", "local_15min", 1642, "solar", timestamps
     )
-    # max = df.max()
-    # df = df.multiply(1/max)
 
     return df.values, np.array(timestamps)
 
@@ -60,10 +61,9 @@ def buildSet(data, look_back, nbOutput, nbFeatures):
 
 
 # building the model
-def buildModel(trainx, trainy):
+def buildModel(trainX, trainY, valX, valY):
     model = Sequential()
-    nbfeatures = 0
-    model.add(LSTM(256, input_shape=(look_back, nbfeatures)))
+    model.add(LSTM(256, input_shape=(look_back, nbFeatures)))
     model.add(Dropout(0.5))
     model.add(Dense(1))
     model.add(Activation("linear"))
@@ -77,7 +77,7 @@ def buildModel(trainx, trainy):
     )
 
     # training it
-    history = model.fit(trainx, trainy, epochs=20, batch_size=20, verbose=2)
+    history = model.fit(trainX, trainY, epochs=20, batch_size=20, verbose=2, validation_data=[valX, valY])
     saveModel(model)
     return model, history
 
@@ -130,76 +130,76 @@ def forecast(model, nbToPredict, firstValue):
 def forecasting(load):
     # import data
     df, timestamps = dataImport()
-    split = int(len(df) * part)
-    df = np.array(df)
-    X, Y = buildSet(df, look_back, nb_out, nb_features)
+
+    df_train, df_validation, df_test = splitData(config, df)
+
+    # here we have numpy array
+    trainX, trainY = buildSet(df_train, look_back, nbOut, nbFeatures)
+    validationX, validationY = buildSet(df_validation, look_back, nbOut, nbFeatures)
+    testX, testY = buildSet(df_test, look_back, nbOut, nbFeatures)
 
     plotInput(df, timestamps)
-
-    # split train / test
-    df_train, df_train_label, df_test, df_test_label = buildSet(df, split)
-    df_train_arr = np.array(df_train)
-    df_test_arr = np.array(df_test)
 
     history = None
     if load:
         model = loadModel()
     else:
-        model, history = buildModel(trainx, df_train_label)
+        model, history = buildModel(trainX, trainY, validationX, validationY)
 
-    evalModel(model, testx, df_test_label)
+    evalModel(model, testX, testY)
 
     # plotting
-    predict_test = pd.DataFrame(model.predict(testx))
-    predict_train = pd.DataFrame(model.predict(trainx))
+    testPrediction = model.predict(testX)
+    trainPrediction = model.predict(trainX)
 
     if history is not None:
         plotHistory(history)
 
     plotPrediction(
-        df_train_label, predict_train, df_test_label, predict_test, timestamps
+        trainY, trainPrediction, testY, testPrediction, timestamps
     )
-    plot100first(df_train_label, predict_train)
+    plot100first(trainY, trainPrediction)
+    plot100first(testY, testPrediction)
     plotEcart(
-        np.array(df_train_label),
-        np.array(predict_train),
-        np.array(df_test_label),
-        np.array(predict_test),
+        np.array(trainY),
+        np.array(trainPrediction),
+        np.array(testY),
+        np.array(testPrediction),
         timestamps,
     )
     print(
         "training\tMSE :\t{}".format(
-            mean_squared_error(np.array(df_train_label), np.array(predict_train))
+            mean_squared_error(np.array(trainY), np.array(trainPrediction))
         )
     )
     print(
         "testing\t\tMSE :\t{}".format(
-            mean_squared_error(np.array(df_test_label), np.array(predict_test))
+            mean_squared_error(np.array(testY), np.array(testPrediction))
         )
     )
 
     print(
         "training\tMAE :\t{}".format(
-            mean_absolute_error(np.array(df_train_label), np.array(predict_train))
+            mean_absolute_error(np.array(trainY), np.array(trainPrediction))
         )
     )
     print(
         "testing\t\tMAE :\t{}".format(
-            mean_absolute_error(np.array(df_test_label), np.array(predict_test))
+            mean_absolute_error(np.array(testY), np.array(testPrediction))
         )
     )
 
     print(
         "training\tMAPE :\t{} %".format(
             mean_absolute_percentage_error(
-                np.array(df_train_label), np.array(predict_train)
+                np.array(trainY), np.array(trainPrediction)
             )
         )
     )
     print(
         "testing\t\tMAPE :\t{} %".format(
             mean_absolute_percentage_error(
-                np.array(df_test_label), np.array(predict_test)
+                np.array(testY), np.array(testPrediction)
             )
         )
     )
