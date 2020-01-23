@@ -1,7 +1,7 @@
 #!/usr/bin/env python3.7
 
 import configparser
-from datetime import datetime, timedelta
+from datetime import datetime
 from enum import Enum
 import math
 import sys
@@ -116,10 +116,20 @@ class Configure:
         self.dataPSPv = "yes" == config["DATA_PS"]["pv"]
         self.timeHeader = config["DATA_PS"]["timeHeader"]
         self.dataid = config["DATA_PS"]["dataid"]
-        self.dataStart = datetime.strptime(config["DATA_PS"]["dataStart"], "20%y-%m-%d %H:%M:%S")
-        self.dataDelta = self.dataStart - datetime.strptime(config["TIME"]["start"], "20%y-%m-%d %H:%M:%S")
+        self.dataStart = datetime.strptime(
+            config["DATA_PS"]["dataStart"], "20%y-%m-%d %H:%M:%S"
+        )
+        self.dataDelta = self.dataStart - datetime.strptime(
+            config["TIME"]["start"], "20%y-%m-%d %H:%M:%S"
+        )
         self.costFileGrid = config["COST"]["file_grid"]
         self.constantPrice = float(config["COST"]["constant_price"])
+        self.priceDataStart = datetime.strptime(
+            config["COST"]["priceDataStart"], "20%y-%m-%d %H:%M:%S"
+        )
+        self.priceDataDelta = self.dataStart - datetime.strptime(
+            config["TIME"]["start"], "20%y-%m-%d %H:%M:%S"
+        )
         self.co2Grid = float(config["CO2"]["grid_CO2"])
         self.co2Diesel = float(config["CO2"]["diesel_CO2"])
 
@@ -135,7 +145,7 @@ def runSimpleModel(ini):
     dieselGeneratorsVars, dieselStatusVars = setUpDiesel(model, ini)
     fromGridVars, toGridVars = setUpGrid(model, ini)
     gridPrices = getPriceData(
-        ini.costFileGrid, ini.timestamps, timedelta(days=365 * 5 + 1), ini.constantPrice
+        ini.costFileGrid, ini.timestamps, ini.priceDataDelta, ini.constantPrice
     )
 
     model.addConstrs(
