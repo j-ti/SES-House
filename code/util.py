@@ -81,7 +81,7 @@ def getConcatDateTime(date, time):
 
 
 def reshape(toReshape):
-    res = np.zeros((toReshape[0].shape[0], toReshape[0].shape[1], len(toReshape)))
+    res = np.empty((toReshape[0].shape[0], toReshape[0].shape[1], len(toReshape)))
     for i in range(len(toReshape)):
         res[:, :, i] = toReshape[i]
     return np.array(res)
