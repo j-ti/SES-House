@@ -5,7 +5,7 @@ from datetime import datetime
 import numpy as np
 from data import getPecanstreetData
 from forecast_pv_conf import ForecastPvConfig
-from forecasting import splitData, buildSet, evalModel, loadModel, saveModel, train
+from forecasting import splitData, buildSet, evalModel, loadModel, saveModel, train, addMinutes
 from keras import Sequential, metrics
 from keras.layers import LSTM, Dropout, Dense, Activation
 from keras.losses import mean_squared_error, mean_absolute_error, mean_absolute_percentage_error
@@ -29,9 +29,7 @@ def dataImport(config):
         config.DATA_FILE, config.TIME_HEADER, config.DATAID, "solar", timestamps
     )
 
-
-
-    return df, np.array(timestamps)
+    return addMinutes(df), np.array(timestamps)
 
 
 def buildModel(trainX, trainY, valX, valY, config, nbFeatures):
@@ -40,6 +38,7 @@ def buildModel(trainX, trainY, valX, valY, config, nbFeatures):
     model.add(Dropout(config.DROPOUT))
     model.add(Dense(config.DENSE))
     model.add(Activation(config.ACTIVATION_FUNCTION))
+    model.add(Dense(config.OUTPUT_SIZE))
     model.compile(
         loss=config.LOSS_FUNCTION,
         optimizer=config.OPTIMIZE_FUNCTION,
@@ -53,14 +52,9 @@ def buildModel(trainX, trainY, valX, valY, config, nbFeatures):
 
 
 def forecasting(config):
-    # import data
+    # import data, with all the features we want
     df, timestamps = dataImport(config)
-
-    # add features 1, 2, ...
-
     df_train, df_validation, df_test = splitData(config, df)
-
-    # normalize on train
 
     nbFeatures = df_train.shape[1]
 
