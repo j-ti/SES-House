@@ -51,6 +51,7 @@ class Configure:
         self.E_bat_max = float(config["BAT"]["E_bat_max"])
         self.eta_bat = float(config["BAT"]["eta_bat"])
         self.P_bat_max = float(config["BAT"]["P_bat_max"])
+        self.ChargeConvertLoss = float(config["BAT"]["ConvertLoss"])
 
         # EV init
         self.SOC_ev_min = float(config["EV"]["SOC_ev_min"])
@@ -157,6 +158,7 @@ def runSimpleModel(ini):
         dieselStatusVars,
         fromGridVars,
         toGridVars,
+        batteryPowerVars,
         gridPrices,
     )
 
@@ -171,17 +173,12 @@ def runSimpleModel(ini):
         gridPrices,
         dieselGeneratorsVars,
         dieselStatusVars,
+        batteryPowerVars,
     )
     plotResults(model, ini, gridPrices)
 
 
-def calcGreenhouseObjective(ini, fromGridVars, dieselGeneratorsVars):
-    return ini.co2Diesel * gp.quicksum(
-        dieselGeneratorsVars
-    ) + ini.co2Grid * gp.quicksum(fromGridVars)
-
-
-def calcDieselMinCostObjective(ini, dieselGeneratorsVars, dieselStatusVars):
+def calcDieselCost(ini, dieselGeneratorsVars, dieselStatusVars):
     dieselObjExp = QuadExpr()
     for index in range(len(ini.timestamps)):
         dieselObjExp.add(
@@ -209,46 +206,106 @@ def calcDieselMinCostObjective(ini, dieselGeneratorsVars, dieselStatusVars):
     return dieselObjExp
 
 
-def calcGridMinCostObjective(ini, fromGridVars, toGridVars, prices):
+def calcBatChargeLoss(ini, batteryPowerVars):
+    return gp.quicksum(
+        ini.ChargeConvertLoss
+        * (batteryPowerVars[i, 0])
+        * (batteryPowerVars[i, 0])
+        * ini.stepsizeHour
+        for i in range(len(ini.timestamps))
+    )
+
+
+def calcGridCost(ini, fromGridVars, toGridVars, prices):
     return sum(
         [
-            (fromGridVars[index, 0] - toGridVars[index, 0]) * price
+            (fromGridVars[index, 0] - toGridVars[index, 0]) * price * ini.stepsizeHour
             for index, price in enumerate(prices)
         ]
     )
 
 
 def calcMinCostObjective(
-    ini, fromGridVars, toGridVars, prices, dieselGeneratorsVars, dieselStatusVars
+    ini,
+    fromGridVars,
+    toGridVars,
+    prices,
+    dieselGeneratorsVars,
+    dieselStatusVars,
+    batteryPowerVars,
+    type,
 ):
-    dieselObjExp = calcDieselMinCostObjective(
-        ini, dieselGeneratorsVars, dieselStatusVars
-    )
-    return dieselObjExp + calcGridMinCostObjective(
-        ini, fromGridVars, toGridVars, prices
-    )
+
+    dieselObjExp = calcDieselCost(ini, dieselGeneratorsVars, dieselStatusVars)
+    gridCostObjExp = calcGridCost(ini, fromGridVars, toGridVars, prices)
+    batCostObjExp = calcBatChargeLoss(ini, batteryPowerVars)
+    if type == "Virtual":
+        return dieselObjExp + gridCostObjExp + batCostObjExp
+    elif type == "True":
+        return dieselObjExp + gridCostObjExp
 
 
-def calcGreenhouseQuadraticObjective(ini, fromGridVars, dieselGeneratorsVars):
-    return ini.co2Diesel * sum(
+def calcGreenhouseObjective(ini, fromGridVars, dieselGeneratorsVars, batteryPowerVars, type):
+    dieselGreenhouse = ini.co2Diesel * gp.quicksum(dieselGeneratorsVars)
+    gridGreenhouse = ini.co2Grid * gp.quicksum(fromGridVars)
+    if type == "Virtual":
+        return (
+            dieselGreenhouse + gridGreenhouse + calcBatChargeLoss(ini, batteryPowerVars)
+        )
+    elif type == "True":
+        return dieselGreenhouse + gridGreenhouse
+
+
+def calcGreenhouseQuadraticObjective(
+    ini, fromGridVars, dieselGeneratorsVars, batteryPowerVars, type
+):
+    dieselGreenhouseQuadratic = ini.co2Diesel * sum(
         [
             dieselGeneratorsVars[index, 0] * dieselGeneratorsVars[index, 0]
             for index in range(len(ini.timestamps))
         ]
-    ) + ini.co2Grid * sum(
+    )
+
+    gridGreenhouseQuadratic = ini.co2Grid * sum(
         [
             fromGridVars[index, 0] * fromGridVars[index, 0]
             for index in range(len(ini.timestamps))
         ]
     )
+    if type == "Virtual":
+        return (
+            dieselGreenhouseQuadratic
+            + gridGreenhouseQuadratic
+            + calcBatChargeLoss(ini, batteryPowerVars)
+        )
+    elif type == "True":
+        return dieselGreenhouseQuadratic + gridGreenhouseQuadratic
 
 
-def calcGridIndependenceObjective(ini, fromGridVars, toGridVars):
-    return gp.quicksum(fromGridVars) + gp.quicksum(toGridVars)
+def calcGridIndependenceObjective(ini, fromGridVars, toGridVars, batteryPowerVars,type):
+    if type== "Virtual":
+        return (
+            gp.quicksum(fromGridVars)
+            + gp.quicksum(toGridVars)
+            + calcBatChargeLoss(ini, batteryPowerVars)
+        )
+    elif type=="True":
+        return (
+                gp.quicksum(fromGridVars)
+                + gp.quicksum(toGridVars)
+
+        )
 
 
 def setObjective(
-    model, ini, dieselGeneratorsVars, dieselStatusVars, fromGridVars, toGridVars, prices
+    model,
+    ini,
+    dieselGeneratorsVars,
+    dieselStatusVars,
+    fromGridVars,
+    toGridVars,
+    batteryPowerVars,
+    prices,
 ):
     if ini.goal is Goal.MINIMIZE_COST:
         model.setObjective(
@@ -259,22 +316,29 @@ def setObjective(
                 prices,
                 dieselGeneratorsVars,
                 dieselStatusVars,
+                batteryPowerVars,
+                "Virtual"
             ),
             GRB.MINIMIZE,
         )
     elif ini.goal is Goal.GREEN_HOUSE:
         model.setObjective(
-            calcGreenhouseObjective(ini, fromGridVars, dieselGeneratorsVars),
+            calcGreenhouseObjective(ini, fromGridVars, dieselGeneratorsVars, batteryPowerVars,"Virtual"),
             GRB.MINIMIZE,
         )
     elif ini.goal is Goal.GREEN_HOUSE_QUADRATIC:
         model.setObjective(
-            calcGreenhouseQuadraticObjective(ini, fromGridVars, dieselGeneratorsVars),
+            calcGreenhouseQuadraticObjective(
+                ini, fromGridVars, dieselGeneratorsVars, batteryPowerVars,"Virtual"
+            ),
             GRB.MINIMIZE,
         )
     elif ini.goal is Goal.GRID_INDEPENDENCE:
         model.setObjective(
-            calcGridIndependenceObjective(ini, fromGridVars, toGridVars), GRB.MINIMIZE
+            calcGridIndependenceObjective(
+                ini, fromGridVars, toGridVars, batteryPowerVars,"Virtual"
+            ),
+            GRB.MINIMIZE,
         )
 
 
@@ -446,33 +510,8 @@ def setUpDiesel(model, ini):
         "Least Pause time",
     )
 
-    # TODO: this constraint should not be necessary, but there is a bug sometimes change faster than ini.deltaShutDown or deltaStartUp
-    model.addConstrs(
-        (
-            (dieselStatusVars[index + 1, 1] == 1)
-            >> (
-                dieselStatusVars[index + ini.startUpTimestepNumber, 1]
-                == 1 - dieselStatusVars[index, 1]
-            )
-            for index in range(
-                len(ini.timestamps) - ini.startUpTimestepNumber
-            )  # 0 1 1/0 0 0/1 1 0
-        ),
-        "StartUp Constraint",
-    )
-    model.addConstrs(
-        (
-            (dieselStatusVars[index + 1, 2] == 1)
-            >> (
-                dieselStatusVars[index + ini.shutDownTimestepNumber, 2]
-                == 1 - dieselStatusVars[index, 2]
-            )
-            for index in range(
-                len(ini.timestamps) - ini.shutDownTimestepNumber
-            )  # 0 1 1/0 0 0/1 1 0
-        ),
-        "ShutDown Constraint",
-    )
+    # TODO:there is a bug sometimes change faster than ini.deltaShutDown or deltaStartUp
+
     model.addConstrs(
         (
             dieselStatusVars[index, 1] == 0
@@ -682,7 +721,13 @@ def setUpEv(model, ini):
 
 
 def printObjectiveResults(
-    ini, fromGridVars, toGridVars, gridPrices, dieselGeneratorsVars, dieselStatusVars
+    ini,
+    fromGridVars,
+    toGridVars,
+    gridPrices,
+    dieselGeneratorsVars,
+    dieselStatusVars,
+    batteryPowerVars,
 ):
     print(
         "MINIMIZE_COST goal: %.2f"
@@ -693,21 +738,25 @@ def printObjectiveResults(
             gridPrices,
             dieselGeneratorsVars,
             dieselStatusVars,
+            batteryPowerVars,
+            "True",
         ).getValue()
     )
     print(
         "GREEN_HOUSE goal: %.1f"
-        % calcGreenhouseObjective(ini, fromGridVars, dieselGeneratorsVars).getValue()
+        % calcGreenhouseObjective(ini, fromGridVars, dieselGeneratorsVars,batteryPowerVars,"True").getValue()
     )
     print(
         "GREEN_HOUSE_QUADRATIC goal: %.1f"
         % calcGreenhouseQuadraticObjective(
-            ini, fromGridVars, dieselGeneratorsVars
+            ini, fromGridVars, dieselGeneratorsVars, batteryPowerVars,"True"
         ).getValue()
     )
     print(
         "GRID_INDEPENDENCE goal: %.1f"
-        % calcGridIndependenceObjective(ini, fromGridVars, toGridVars).getValue()
+        % calcGridIndependenceObjective(
+            ini, fromGridVars, toGridVars, batteryPowerVars,"True"
+        ).getValue()
     )
 
 
