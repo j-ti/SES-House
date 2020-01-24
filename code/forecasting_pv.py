@@ -69,43 +69,43 @@ def forecasting(config):
         np.array(testPrediction),
         timestamps,
     )
-
-    print(
-        "training\tMSE :\t{}".format(
-            mean_squared_error(np.array(trainY), np.array(trainPrediction))
-        )
-    )
-    print(
-        "testing\t\tMSE :\t{}".format(
-            mean_squared_error(np.array(testY), np.array(testPrediction))
-        )
-    )
-
-    print(
-        "training\tMAE :\t{}".format(
-            mean_absolute_error(np.array(trainY), np.array(trainPrediction))
-        )
-    )
-    print(
-        "testing\t\tMAE :\t{}".format(
-            mean_absolute_error(np.array(testY), np.array(testPrediction))
-        )
-    )
-
-    print(
-        "training\tMAPE :\t{} %".format(
-            mean_absolute_percentage_error(
-                np.array(trainY), np.array(trainPrediction)
+    for i in [1]:
+        print(
+            "training\tMSE :\t{}".format(
+                mean_squared_error(np.array(trainY), np.array(trainPrediction))
             )
         )
-    )
-    print(
-        "testing\t\tMAPE :\t{} %".format(
-            mean_absolute_percentage_error(
-                np.array(testY), np.array(testPrediction)
+        print(
+            "testing\t\tMSE :\t{}".format(
+                mean_squared_error(np.array(testY), np.array(testPrediction))
             )
         )
-    )
+
+        print(
+            "training\tMAE :\t{}".format(
+                mean_absolute_error(np.array(trainY), np.array(trainPrediction))
+            )
+        )
+        print(
+            "testing\t\tMAE :\t{}".format(
+                mean_absolute_error(np.array(testY), np.array(testPrediction))
+            )
+        )
+
+        print(
+            "training\tMAPE :\t{} %".format(
+                mean_absolute_percentage_error(
+                    np.array(trainY), np.array(trainPrediction)
+                )
+            )
+        )
+        print(
+            "testing\t\tMAPE :\t{} %".format(
+                mean_absolute_percentage_error(
+                    np.array(testY), np.array(testPrediction)
+                )
+            )
+        )
 
 
 def main(argv):
