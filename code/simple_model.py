@@ -8,7 +8,7 @@ import sys
 import os
 from shutil import copyfile
 
-from util import constructTimeStamps, getStepsize, getTimeIndexRangeDaily
+from util import constructTimeStamps, getStepsize, getTimeIndexRangeDaily, diffIndexList
 
 from data import (
     getNinja,
@@ -650,23 +650,18 @@ def setUpEv(model, ini):
         vtype=GRB.CONTINUOUS,
         name="evEnergys",
     )
-
-    model.addConstrs(
-        (
-            evPowerVars[i, 0] == 0
-            for i in getTimeIndexRangeDaily(ini.timestamps, ini.t_a_ev, ini.t_b_ev)[:-1]
-        ),
-        "ev gone",
+    evNotChargableIndices = getTimeIndexRangeDaily(
+        ini.timestamps, ini.t_a_ev, ini.t_b_ev, varB=0
     )
+    model.addConstrs((evPowerVars[i, 0] == 0 for i in evNotChargableIndices), "ev gone")
+    allIndices = range(len(ini.timestamps))
+    evChargableIndices = diffIndexList(allIndices, evNotChargableIndices)
     model.addConstrs(
         (
             evEnergyVars[i + 1, 0]
             == evEnergyVars[i, 0]
             - ini.eta_ev * evPowerVars[i, 0] * ini.stepsizeHour  # E in kW per hour
-            for i in getTimeIndexRangeDaily(
-                ini.timestamps, ini.timestamps[0], ini.t_a_ev
-            )[:-1]
-            + getTimeIndexRangeDaily(ini.timestamps, ini.t_b_ev, ini.timestamps[-1])
+            for i in evChargableIndices
         ),
         "ev charging",
     )
@@ -678,17 +673,21 @@ def setUpEv(model, ini):
         ),
         "ev charging goal",
     )
+
+    evEnergyWhileGone = getTimeIndexRangeDaily(
+        ini.timestamps, ini.t_a_ev, ini.t_b_ev, varA=1, varB=1
+    )
     model.addConstrs(
-        (
-            evEnergyVars[i, 0] == 0.1 * ini.E_ev_max
-            for i in getTimeIndexRangeDaily(ini.timestamps, ini.t_a_ev, ini.t_b_ev)[1:]
-        ),
+        (evEnergyVars[i, 0] == 0.1 * ini.E_ev_max for i in evEnergyWhileGone),
         "ev after work",
     )
     model.addConstr(
         (evEnergyVars[len(ini.timestamps), 0] == evEnergyVars[0, 0]),
         "ev end-start energy are equal",
     )
+    # print(evNotChargableIndices)
+    # print(evChargableIndices)
+    # print(evEnergyWhileGone)
 
     return evPowerVars
 
