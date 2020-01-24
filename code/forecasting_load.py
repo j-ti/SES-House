@@ -17,7 +17,7 @@ from sklearn.preprocessing import MinMaxScaler
 from util import constructTimeStamps, mean_absolute_percentage_error
 from util import makeTick
 
-from forecasting import splitData, addMinutes, buildSet, train
+from forecasting import splitData, addMinutes, buildSet, train, saveModel
 from forecast_conf import ForecastConfig
 from forecast_load_conf import ForecastLoadConfig
 
@@ -248,6 +248,7 @@ def main(argv):
 
     model = buildModel(loadConfig, train_x.shape)
     train(loadConfig, model, train_x, train_y, validation_x, validation_y)
+    saveModel(loadConfig, model)
 
 
 if __name__ == "__main__":
