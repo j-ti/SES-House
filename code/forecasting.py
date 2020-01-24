@@ -117,6 +117,18 @@ def loadModel():
     return loaded_model
 
 
+def train(config, model, trainX, trainY, validationX, validationY):
+    history = model.fit(
+        trainX,
+        trainY,
+        epochs=config.EPOCHS,
+        batch_size=config.BATCH_SIZE,
+        validation_data=(validationX, validationY)
+        verbose=2,
+    )
+    return model, history
+
+
 # first value must be an array with 5 pages
 def forecast(model, nbToPredict, firstValue):
     pred = []
