@@ -509,14 +509,14 @@ def setUpPV(model, ini):
     else:
         print("PV data: use sample files")
         if ini.dataPSPv:
-            print("PV data: use Pecanstreet dataset (dataid: %d)", (ini.dataid))
+            print("PV data: use Pecanstreet dataset with dataid:", (ini.dataid))
             pvPowerValues = getPecanstreetData(
                 ini.dataFile,
                 ini.timeHeader,
                 ini.dataid,
                 "solar",
                 ini.timestamps,
-                timedelta(days=365 * 4 + 1 + 1),
+                timedelta(days=365 * 5 + 1 + 30 * 6),
             )
         else:
             pvPowerValues = getNinja(ini.pvFile, ini.timestamps)
@@ -540,7 +540,7 @@ def setUpFixedLoads(model, ini):
             ini.dataid,
             "grid",
             ini.timestamps,
-            timedelta(days=365 * 4 + 1 + 1),
+            timedelta(days=365 * 5 + 1 + 30 * 6),
         )
     else:
         loadValues = getLoadsData(ini.loadsFile, ini.timestamps)

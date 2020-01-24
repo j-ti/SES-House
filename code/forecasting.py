@@ -31,6 +31,7 @@ def dataImport():
         datetime.strptime("2018-03-01 00:00:00", "20%y-%m-%d %H:%M:%S"),
         datetime.strptime("00:15:00", "%H:%M:%S") - datetime.strptime("00:00:00", "%H:%M:%S")
     )
+
     # input datas : uncontrolable resource : solar production
     df = getPecanstreetData(
         "./data/15minute_data_austin.csv", "local_15min", 1642, "solar", timestamps
@@ -114,6 +115,18 @@ def loadModel():
         loss="binary_crossentropy", optimizer="rmsprop", metrics=["accuracy"]
     )
     return loaded_model
+
+
+def train(config, model, trainX, trainY, validationX, validationY):
+    history = model.fit(
+        trainX,
+        trainY,
+        epochs=config.EPOCHS,
+        batch_size=config.BATCH_SIZE,
+        validation_data=(validationX, validationY)
+        verbose=2,
+    )
+    return model, history
 
 
 # first value must be an array with 5 pages
@@ -215,6 +228,8 @@ def main(argv):
     outputFolder = "output/" + "modelKeras" + "/"
     if not os.path.isdir(outputFolder):
         os.makedirs(outputFolder)
+
+
     forecasting(load)
 
 
