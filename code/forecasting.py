@@ -1,5 +1,7 @@
 from datetime import datetime
 
+import pandas as pd
+
 from data import getPecanstreetData
 from keras.engine.saving import model_from_json
 from plot_forecast import *
