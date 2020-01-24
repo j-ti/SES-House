@@ -10,6 +10,7 @@ from keras import Sequential, metrics
 from keras.layers import LSTM, Dropout, Dense, Activation
 from keras.losses import mean_squared_error, mean_absolute_error, mean_absolute_percentage_error
 from plot_forecast import plotHistory, plotPrediction, plot100first, plotEcart, plotInput
+from sklearn.preprocessing import MinMaxScaler
 from util import constructTimeStamps
 
 # fixing the random seed to have a better reproducibility
@@ -56,12 +57,19 @@ def forecasting(config):
     df, timestamps = dataImport(config)
     df_train, df_validation, df_test = splitData(config, df)
 
+    # datas are normalized
+    scaler = MinMaxScaler()
+    scaler.fit(df_train)
+    scaler.transform(df_train)
+    scaler.transform(df_validation)
+    scaler.transform(df_test)
+
     nbFeatures = df_train.shape[1]
 
     # here we have numpy array
-    trainX, trainY = buildSet(df_train, config.LOOK_BACK, config.OUTPUT_SIZE, nbFeatures)
-    validationX, validationY = buildSet(df_validation, config.LOOK_BACK, config.OUTPUT_SIZE, nbFeatures)
-    testX, testY = buildSet(df_test, config.LOOK_BACK, config.OUTPUT_SIZE, nbFeatures)
+    trainX, trainY = buildSet(np.array(df_train), config.LOOK_BACK, config.OUTPUT_SIZE, nbFeatures)
+    validationX, validationY = buildSet(np.array(df_validation), config.LOOK_BACK, config.OUTPUT_SIZE, nbFeatures)
+    testX, testY = buildSet(np.array(df_test), config.LOOK_BACK, config.OUTPUT_SIZE, nbFeatures)
 
     plotInput(df, timestamps)
 
@@ -92,7 +100,6 @@ def forecasting(config):
         np.array(testPrediction),
         timestamps,
     )
-
     # printing error
     for _ in [1]:
         print(
