@@ -13,7 +13,6 @@ class ForecastLoadConfig:
         self.OUTPUT_SIZE = 96
         self.BATCH_SIZE = 30
         self.DROPOUT = 0.1
-        self.DENSE = 1
         self.NEURONS = 8
         self.ACTIVATION_FUNCTION = "relu"
         self.LOSS_FUNCTION = "mean_squared_error"

@@ -17,7 +17,7 @@ from sklearn.preprocessing import MinMaxScaler
 from util import constructTimeStamps, mean_absolute_percentage_error
 from util import makeTick
 
-from forecasting import splitData, addMinutes, buildSet
+from forecasting import splitData, addMinutes, buildSet, train
 from forecast_conf import ForecastConfig
 from forecast_load_conf import ForecastLoadConfig
 
@@ -28,31 +28,18 @@ np.random.seed(ForecastConfig().SEED)
 
 
 # building the model
-def buildModel(state, trainXShape):
+def buildModel(loadConfig, trainXShape):
     model = Sequential()
-    model.add(LSTM(state["neurons"], input_shape=(trainXShape[1], trainXShape[2])))
-    model.add(Dropout(state["dropout"]))
-    model.add(Dense(state["dense"]))
-    model.add(Activation(state["activation_function"]))
+    model.add(LSTM(loadConfig.NEURONS, input_shape=(trainXShape[1], trainXShape[2])))
+    model.add(Dropout(loadConfig.DROPOUT))
+    model.add(Dense(loadConfig.OUTPUT_SIZE))
+    model.add(Activation(loadConfig.ACTIVATION_FUNCTION))
     model.compile(
-        loss=state["loss_function"],
-        optimizer=state["optimize_function"],
+        loss=loadConfig.LOSS_FUNCTION,
+        optimizer=loadConfig.OPTIMIZE_FUNCTION,
         metrics=[metrics.mape, metrics.mae, metrics.mse],
     )
     return model
-
-
-def calcModel(config, trainX, trainY, validationX, validationY):
-    model = buildModel(config, trainX.shape)
-    history = model.fit(
-        trainX,
-        trainY,
-        epochs=config["epochs"],
-        batch_size=config["batch_size"],
-        verbose=2,
-    )
-
-    return (model, history)
 
 
 def getMeanSdDayBaseline(data):
@@ -158,7 +145,6 @@ def meanBaseline(train, test):
 def forecasting(
     config, timestamps, trainX, trainY, validationX, validationY, testX, testY, scaler
 ):
-    modelConfig = INIT_MODEL_CONFIG
     if not config.LOAD:
         model, history = calcModel(
             modelConfig, trainX, trainY, validationX, validationY
@@ -250,18 +236,13 @@ def main(argv):
     validation_part = scaler.transform(validation_part)
     test_part = scaler.transform(test_part)
 
-    train_x, train_y = buildSet(train_part, loadConfig.LOOK_BACK, loadConfig.OUTPUT_SIZE, train_part.shape[2])
-    validation_x, validation_y = buildSet(validation_part, loadConfig.LOOK_BACK, loadConfig.OUTPUT_SIZE, validation_part.shape[2])
-    test_x, test_y = buildSet(test_part, loadConfig.LOOK_BACK, loadConfig.OUTPUT_SIZE, test_part.shape[2])
+    train_x, train_y = buildSet(train_part, loadConfig.LOOK_BACK, loadConfig.OUTPUT_SIZE, train_part.shape[1])
+    validation_x, validation_y = buildSet(validation_part, loadConfig.LOOK_BACK, loadConfig.OUTPUT_SIZE, validation_part.shape[1])
+    time.sleep(1)
+    test_x, test_y = buildSet(test_part, loadConfig.LOOK_BACK, loadConfig.OUTPUT_SIZE, test_part.shape[1])
 
-    # train, val, test = splitData(config, loadsData)
-    # meanBaseline(train.values, test.values)
-    # plotDayBaseline(timestamps[-len(test):], test.values, predictMean(train.values, test.values)[:96])
-    # plotPrediction(test.values[:96], predictMean(train.values, test.values)[:96], "test set 1st day", timestamps[-len(test):(-len(test) + 96)])
-
-    forecasting(
-        config, timestamps, trainX, trainY, validationX, validationY, testX, testY, sclaer
-    )
+    model = buildModel(loadConfig, train_x.shape)
+    train(loadConfig, model, train_x, train_y, validation_x, validation_y)
 
 
 if __name__ == "__main__":
