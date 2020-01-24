@@ -240,11 +240,15 @@ def main(argv):
 
     train_part, validation_part, test_part = splitData(config, input_data)
 
+    train_part = train_part.values
+    validation_part = validation_part.values
+    test_part = test_part.values
+
     scaler = MinMaxScaler()
     scaler.fit(train_part)
-    scaler.transform(train_part)
-    scaler.transform(validation_part)
-    scaler.transform(test_part)
+    train_part = scaler.transform(train_part)
+    validation_part = scaler.transform(validation_part)
+    test_part = scaler.transform(test_part)
 
     train_x, train_y = buildSet(train_part, loadConfig.LOOK_BACK, loadConfig.OUTPUT_SIZE, train_part.shape[2])
     validation_x, validation_y = buildSet(validation_part, loadConfig.LOOK_BACK, loadConfig.OUTPUT_SIZE, validation_part.shape[2])
