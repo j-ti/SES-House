@@ -83,7 +83,7 @@ def train(config, model, trainX, trainY, validationX, validationY):
         validation_data=(validationX, validationY),
         verbose=2,
     )
-    return model, history
+    return history
 
 
 # first value must be an array with 5 pages
