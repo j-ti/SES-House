@@ -246,9 +246,9 @@ def main(argv):
     scaler.transform(validation_part)
     scaler.transform(test_part)
 
-    train_x, train_y = buildSet(train_part, loadConfig.LOOK_BACK, loadConfig.PREDICT, train_part.shape[2]):
-    validation_x, validation_y = buildSet(validation_part, loadConfig.LOOK_BACK, loadConfig.PREDICT, validation_part.shape[2]):
-    test_x, test_y = buildSet(test_part, loadConfig.LOOK_BACK, loadConfig.PREDICT, test_part.shape[2]):
+    train_x, train_y = buildSet(train_part, loadConfig.LOOK_BACK, loadConfig.OUTPUT_SIZE, train_part.shape[2])
+    validation_x, validation_y = buildSet(validation_part, loadConfig.LOOK_BACK, loadConfig.OUTPUT_SIZE, validation_part.shape[2])
+    test_x, test_y = buildSet(test_part, loadConfig.LOOK_BACK, loadConfig.OUTPUT_SIZE, test_part.shape[2])
 
     # train, val, test = splitData(config, loadsData)
     # meanBaseline(train.values, test.values)
