@@ -236,6 +236,20 @@ def main(argv):
         loadConfig.DATA_FILE, loadConfig.TIME_HEADER, loadConfig.DATAID, "grid", timestamps
     )
 
+    input_data = addMinutes(loadsData)
+
+    train_part, validation_part, test_part = splitData(config, input_data)
+
+    scaler = MinMaxScaler()
+    scaler.fit(train_part)
+    scaler.transform(train_part)
+    scaler.transform(validation_part)
+    scaler.transform(test_part)
+
+    train_x, train_y = buildSet(train_part, loadConfig.LOOK_BACK, loadConfig.PREDICT, train_part.shape[2]):
+    validation_x, validation_y = buildSet(validation_part, loadConfig.LOOK_BACK, loadConfig.PREDICT, validation_part.shape[2]):
+    test_x, test_y = buildSet(test_part, loadConfig.LOOK_BACK, loadConfig.PREDICT, test_part.shape[2]):
+
     # train, val, test = splitData(config, loadsData)
     # meanBaseline(train.values, test.values)
     # plotDayBaseline(timestamps[-len(test):], test.values, predictMean(train.values, test.values)[:96])
