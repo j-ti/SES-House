@@ -123,9 +123,9 @@ def train(config, model, trainX, trainY, validationX, validationY):
         trainY,
         epochs=config.EPOCHS,
         batch_size=config.BATCH_SIZE,
-        validation_data=(validationX, validationY)
+        validation_data=(validationX, validationY),
         verbose=2,
-    )
+        )
     return model, history
 
 
