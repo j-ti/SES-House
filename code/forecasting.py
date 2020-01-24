@@ -17,21 +17,6 @@ config = ""
 nbFeatures = 1
 
 
-def dataImport():
-    timestamps = constructTimeStamps(
-        datetime.strptime("2018-02-01 00:00:00", "20%y-%m-%d %H:%M:%S"),
-        datetime.strptime("2018-03-01 00:00:00", "20%y-%m-%d %H:%M:%S"),
-        datetime.strptime("00:15:00", "%H:%M:%S") - datetime.strptime("00:00:00", "%H:%M:%S")
-    )
-
-    # input datas : uncontrolable resource : solar production
-    df = getPecanstreetData(
-        "./data/15minute_data_austin.csv", "local_15min", 1642, "solar", timestamps
-    )
-
-    return df.values, np.array(timestamps)
-
-
 def splitData(config, loadsData):
     diff = loadsData.index[-1] - loadsData.index[0]
     endTrain = 96 * int(diff.days * config.TRAIN_FRACTION)

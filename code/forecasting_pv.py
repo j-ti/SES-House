@@ -1,13 +1,30 @@
 import os
 import sys
+from datetime import datetime
 
 import numpy as np
+from data import getPecanstreetData
 from forecast_pv_conf import ForecastPvConfig
-from forecasting import splitData, buildSet, evalModel, loadModel, dataImport, saveModel, train
+from forecasting import splitData, buildSet, evalModel, loadModel, saveModel, train
 from keras import Sequential, metrics
 from keras.layers import LSTM, Dropout, Dense, Activation
 from keras.losses import mean_squared_error, mean_absolute_error, mean_absolute_percentage_error
 from plot_forecast import plotHistory, plotPrediction, plot100first, plotEcart, plotInput
+from util import constructTimeStamps
+
+
+def dataImport(config):
+    timestamps = constructTimeStamps(
+        datetime.strptime(config.DATE_START, "20%y-%m-%d %H:%M:%S"),
+        datetime.strptime(config.DATE_END, "20%y-%m-%d %H:%M:%S"),
+        datetime.strptime("00:15:00", "%H:%M:%S") - datetime.strptime("00:00:00", "%H:%M:%S")
+    )
+
+    # input datas : uncontrolable resource : solar production
+    df = getPecanstreetData(
+        config.DATA_FILE, config.TIME_HEADER, config.DATAID, "solar", timestamps
+    )
+    return df, np.array(timestamps)
 
 
 def buildModel(trainX, trainY, valX, valY, config, nbFeatures):
@@ -30,7 +47,8 @@ def buildModel(trainX, trainY, valX, valY, config, nbFeatures):
 
 def forecasting(config):
     # import data
-    df, timestamps = dataImport()
+    df, timestamps = dataImport(config)
+
     df_train, df_validation, df_test = splitData(config, df)
 
     nbFeatures = df_train.shape[1]
@@ -69,7 +87,8 @@ def forecasting(config):
         np.array(testPrediction),
         timestamps,
     )
-    for i in [1]:
+    # printing error
+    for _ in [1]:
         print(
             "training\tMSE :\t{}".format(
                 mean_squared_error(np.array(trainY), np.array(trainPrediction))
@@ -111,7 +130,7 @@ def forecasting(config):
 def main(argv):
     config = ForecastPvConfig()
     global outputFolder
-    outputFolder = "output/" + "modelKeras" + "/"
+    outputFolder = config.OUTPUT_FOLDER
     if not os.path.isdir(outputFolder):
         os.makedirs(outputFolder)
 
