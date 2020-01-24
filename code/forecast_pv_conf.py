@@ -4,8 +4,8 @@ class ForecastPvConfig:
         self.TIME_HEADER = "local_15min"
         self.DATAID = 1222
         self.OUTPUT_FOLDER = "./output/forecast/pv/"
-        self.DATE_START = "2018-02-01 00:00:00"
-        self.DATE_END = "2018-03-01 00:00:00"
+        self.DATE_START = "2019-05-01 00:00:00"
+        self.DATE_END = "2019-06-01 00:00:00"
 
         self.LOAD_MODEL = False
         self.MODEL_FILE = "./output/forecast/pv/model.json"
