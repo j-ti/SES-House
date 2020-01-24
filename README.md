@@ -3,13 +3,16 @@
 ## Goal
 Get good result to publish a paper!
 
-## Assignment 3
+## Assignment
 
 Do optimization for the following 3 scenarios:
 * minimize electricity costs while participating in the wholesale market
 * minimize electricity costs without participating in the wholesale market
 * minimize green house gas emissions
 
+## Data
+* ./sample: should contain the sample files for test functions
+* ./data: should contain the dataset files for the forecasting and optimization
 
 ## Programming
 
