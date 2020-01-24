@@ -13,57 +13,18 @@ from keras.layers import LSTM, Dropout, Activation
 from keras.layers.core import Dense
 from keras.models import Sequential
 from sklearn.metrics import mean_squared_error, mean_absolute_error
+from sklearn.preprocessing import MinMaxScaler
 from util import constructTimeStamps, mean_absolute_percentage_error
 from util import makeTick
 
-from forecasting_load_config import Config, INIT_MODEL_CONFIG
+from forecasting import splitData, addMinutes, buildSet
+from forecast_conf import ForecastConfig
+from forecast_load_conf import ForecastLoadConfig
 
 import time
 
-
-def getData(config, timestamps):
-    # input datas : uncontrolable resource : solar production
-    loadsData = getPecanstreetData(
-        config.DATA_FILE, config.TIME_HEADER, config.DATAID, "grid", timestamps
-    )
-    return loadsData
-
-
-def splitData(config, loadsData):
-    diff = loadsData.index[-1] - loadsData.index[0]
-    endTrain = 96 * int(diff.days * config.TRAINPART)
-    endValidation = endTrain + 96 * int(diff.days * config.VALIDATIONPART)
-    return (
-        loadsData[:endTrain],
-        loadsData[endTrain:endValidation],
-        loadsData[endValidation:],
-    )
-
-
-def create_dataset(dataset, look_back):
-    dataX, dataY = (
-        np.empty((len(dataset) - look_back, look_back, 1)),
-        np.empty((len(dataset) - look_back, 1)),
-    )
-    for i in range(len(dataset) - look_back - 1):
-        a = dataset[i : (i + look_back)]
-        # minutes = np.array([(i.hour * 60 + i.minute) / 1440 for i in a.index])
-        # minutes = np.expand_dims(minutes, axis=1)
-        a = a.values
-        a = np.expand_dims(a, axis=1)
-        dataX[i] = a  # np.concatenate((a, minutes), axis=1)
-        dataY[i] = dataset.values[i + look_back]
-    return dataX, dataY
-
-
-def buildSets(config, loadsData):
-    trainPart, validationPart, testPart = splitData(config, loadsData)
-
-    trainX, trainY = create_dataset(trainPart, config.LOOK_BACK)
-    validationX, validationY = create_dataset(validationPart, config.LOOK_BACK)
-    testX, testY = create_dataset(testPart, config.LOOK_BACK)
-
-    return trainX, trainY, validationX, validationY, testX, testY
+set_random_seed(ForecastConfig().SEED)
+np.random.seed(ForecastConfig().SEED)
 
 
 # building the model
@@ -79,119 +40,6 @@ def buildModel(state, trainXShape):
         metrics=[metrics.mape, metrics.mae, metrics.mse],
     )
     return model
-
-
-# WARNING ! depending on if we load the model or if we build it, the return value of evaluate change
-# I still don't know why
-def evalModel(model, x, y):
-    ret = model.evaluate(x, y, verbose=0)
-    return ret
-
-
-def plotPrediction(real, predicted, nameOfSet, timestamps):
-    time, tick = makeTick(timestamps)
-
-    x1 = list(range(len(real)))
-
-    plt.plot(x1, real, label="actual of " + nameOfSet, color="green")
-    plt.plot(x1, predicted, label="predicted of " + nameOfSet, color="orange")
-
-    plt.xticks(tick, time, rotation=20)
-    plt.xlabel("Time")
-    plt.ylabel("Power consumption (kW)")
-    plt.legend()
-    plt.tight_layout()
-    plt.show()
-
-
-def plotEcart(
-    train_y,
-    train_predict_y,
-    validation_y,
-    validation_predict_y,
-    test_y,
-    test_predict_y,
-    timestamps,
-):
-    time, tick = makeTick(timestamps)
-
-    x1 = list(range(len(train_y)))
-    x2 = list(range(len(train_y), len(validation_y) + len(train_y)))
-    x3 = list(
-        range(
-            len(train_y) + len(validation_y),
-            len(test_y) + len(validation_y) + len(train_y),
-        )
-    )
-
-    y1 = [train_predict_y[i] - train_y[i] for i in range(len(x1))]
-    y2 = [validation_predict_y[i] - validation_y[i] for i in range(len(x2))]
-    y3 = [test_predict_y[i] - test_y[i] for i in range(len(x3))]
-
-    plt.plot(x1, y1, label="actual", color="green")
-    plt.plot(x2, y2, label="actual", color="purple")
-    plt.plot(x3, y3, label="actual", color="blue")
-
-    plt.xticks(tick, time, rotation=20)
-    plt.xlabel("Time")
-    plt.ylabel("Difference (kW)")
-    plt.legend()
-    plt.tight_layout()
-    plt.show()
-
-
-def plotHistory(history):
-    plt.plot(history.history["loss"], label="train")
-    # plt.plot(history.history["val_loss"], label="validation")
-    plt.xlabel("Epoch")
-    plt.ylabel("Loss")
-    plt.legend()
-    plt.tight_layout()
-    plt.show()
-    plt.xlabel("Epoch")
-    plt.ylabel("Mean absolute error")
-    plt.plot(history.history["mean_absolute_error"])
-    plt.xlabel("Epoch")
-    plt.ylabel("Mean absolute error")
-    plt.tight_layout()
-    plt.show()
-    plt.plot(history.history["mean_absolute_percentage_error"])
-    plt.xlabel("Epoch")
-    plt.ylabel("Mean absolute percentage error")
-    plt.tight_layout()
-    plt.show()
-    plt.plot(history.history["mean_squared_error"])
-    plt.xlabel("Epoch")
-    plt.ylabel("mean_squared_error")
-    plt.tight_layout()
-    plt.show()
-
-
-def saveModel(config, model):
-    model_json = model.to_json()
-    with open(config.OUTPUT_FOLDER + "model.json", "w") as json_file:
-        json_file.write(model_json)
-    # serialize weights to HDF5
-    model.save_weights(config.OUTPUT_FOLDER + "model.h5")
-
-
-def loadModel(config, modelConfig):
-    # load json and create model
-    json_file = open(config.OUTPUT_FOLDER + "model.json", "r")
-    loaded_model_json = json_file.read()
-    json_file.close()
-
-    loaded_model = model_from_json(loaded_model_json)
-    # load weights into new model
-    loaded_model.load_weights(config.OUTPUT_FOLDER + "model.h5")
-
-    # evaluate loaded model
-    loaded_model.compile(
-        loss=modelConfig["loss_function"],
-        optimizer=modelConfig["optimize_function"],
-        metrics=[metrics.mape, metrics.mae, metrics.mse],
-    )
-    return loaded_model
 
 
 def calcModel(config, trainX, trainY, validationX, validationY):
@@ -308,7 +156,7 @@ def meanBaseline(train, test):
 
 
 def forecasting(
-    config, timestamps, trainX, trainY, validationX, validationY, testX, testY
+    config, timestamps, trainX, trainY, validationX, validationY, testX, testY, scaler
 ):
     modelConfig = INIT_MODEL_CONFIG
     if not config.LOAD:
@@ -325,9 +173,7 @@ def forecasting(
     predict_test = pd.DataFrame(model.predict(testX))
     evalModel(model, testX, testY)
 
-    print(predict_test)
     mse = mean_squared_error(testY, predict_test)
-    print("MSE: ", mse)
     time.sleep(3)
 
     # plotDay(timestamps[-len(testY):], testY, predict_test)
@@ -375,11 +221,10 @@ def forecasting(
     )
 
 
-def main(argv):
-    config = Config()
 
-    set_random_seed(23)
-    np.random.seed(config.SEED)
+def main(argv):
+    config = ForecastConfig()
+    loadConfig = ForecastLoadConfig()
 
     timestamps = constructTimeStamps(
         datetime.strptime(config.BEGIN, "20%y-%m-%d %H:%M:%S"),
@@ -387,10 +232,8 @@ def main(argv):
         datetime.strptime(config.STEPSIZE, "%H:%M:%S")
         - datetime.strptime("00:00:00", "%H:%M:%S"),
     )
-
-    loadsData = getData(config, timestamps)
-    trainX, trainY, validationX, validationY, testX, testY = buildSets(
-        config, loadsData
+    loadsData = getPecanstreetData(
+        loadConfig.DATA_FILE, loadConfig.TIME_HEADER, loadConfig.DATAID, "grid", timestamps
     )
 
     # train, val, test = splitData(config, loadsData)
@@ -399,7 +242,7 @@ def main(argv):
     # plotPrediction(test.values[:96], predictMean(train.values, test.values)[:96], "test set 1st day", timestamps[-len(test):(-len(test) + 96)])
 
     forecasting(
-        config, timestamps, trainX, trainY, validationX, validationY, testX, testY
+        config, timestamps, trainX, trainY, validationX, validationY, testX, testY, sclaer
     )
 
 
