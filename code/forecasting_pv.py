@@ -12,6 +12,10 @@ from keras.losses import mean_squared_error, mean_absolute_error, mean_absolute_
 from plot_forecast import plotHistory, plotPrediction, plot100first, plotEcart, plotInput
 from util import constructTimeStamps
 
+# fixing the random seed to have a better reproducibility
+seed = 3
+np.random.seed(seed)
+
 
 def dataImport(config):
     timestamps = constructTimeStamps(
@@ -20,10 +24,13 @@ def dataImport(config):
         datetime.strptime("00:15:00", "%H:%M:%S") - datetime.strptime("00:00:00", "%H:%M:%S")
     )
 
-    # input datas : uncontrolable resource : solar production
+    # input datas : uncontrollable resource : solar production
     df = getPecanstreetData(
         config.DATA_FILE, config.TIME_HEADER, config.DATAID, "solar", timestamps
     )
+
+
+
     return df, np.array(timestamps)
 
 
@@ -49,7 +56,11 @@ def forecasting(config):
     # import data
     df, timestamps = dataImport(config)
 
+    # add features 1, 2, ...
+
     df_train, df_validation, df_test = splitData(config, df)
+
+    # normalize on train
 
     nbFeatures = df_train.shape[1]
 
@@ -60,9 +71,9 @@ def forecasting(config):
 
     plotInput(df, timestamps)
 
-    history = None
     if config.LOAD_MODEL:
         model = loadModel()
+        history = None
     else:
         model, history = buildModel(trainX, trainY, validationX, validationY, config, nbFeatures)
 
@@ -87,6 +98,7 @@ def forecasting(config):
         np.array(testPrediction),
         timestamps,
     )
+
     # printing error
     for _ in [1]:
         print(

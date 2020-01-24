@@ -8,15 +8,6 @@ from plot_forecast import *
 from util import constructTimeStamps
 
 
-# fixing the random seed to have a better reproducibility
-seed = 3
-np.random.seed(seed)
-# param
-look_back = 10  # we have a 5 point history in our input
-part = 0.6  # we train on part of the set
-nbOut = 2
-config = ""
-nbFeatures = 1
 
 
 def splitData(config, loadsData):
