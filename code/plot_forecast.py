@@ -1,5 +1,5 @@
 import matplotlib.pyplot as plt
-from util import makeTick
+from util import makeTick, getMeanSdDay
 import numpy as np
 
 outputFolder = ""
@@ -18,6 +18,50 @@ def plotPrediction(train_y, train_predict_y, test_y, test_predict_y, timestamps)
     plt.ylabel("Power output (kW)")
     plt.legend()
     plt.savefig(outputFolder + "/prediction.png")
+    plt.show()
+
+
+def plotPrediction(real, predicted, nameOfSet, timestamps):
+    time, tick = makeTick(timestamps)
+
+    x1 = list(range(len(real)))
+
+    plt.plot(x1, real, label="actual of " + nameOfSet, color="green")
+    plt.plot(x1, predicted, label="predicted of " + nameOfSet, color="orange")
+
+    plt.xticks(tick, time, rotation=20)
+    plt.xlabel("Time")
+    plt.ylabel("Power consumption (kW)")
+    plt.legend()
+    plt.tight_layout()
+    plt.show()
+
+
+def plotDay(timestamps, realY, predictY):
+    assert len(realY) == len(predictY)
+    realMeans, realSd = getMeanSdDay(realY)
+    predictedMeans, predictedSd = getMeanSdDay(predictY)
+    x1 = list(range(96))
+
+    plt.plot(x1, realMeans, label="actual", color="green")
+    plt.fill_between(
+        x1, realMeans - realSd * 0.5, realMeans + realSd * 0.5, color="green", alpha=0.5
+    )
+    plt.plot(x1, predictedMeans, label="predict", color="orange")
+    plt.fill_between(
+        x1,
+        predictedMeans - predictedSd * 0.5,
+        predictedMeans + predictedSd * 0.5,
+        color="orange",
+        alpha=0.5,
+    )
+
+    time, tick = makeTick(timestamps[:96], "%H:%M")
+    plt.xticks(tick, time, rotation=20)
+    plt.xlabel("Time of Day")
+    plt.ylabel("Average Power consumption (kW)")
+    plt.legend()
+    plt.tight_layout()
     plt.show()
 
 
@@ -61,19 +105,42 @@ def plotInput(df, timestamps):
     plt.show()
 
 
-def plotHistory(history):
-    plt.plot(history.history["mean_absolute_error"])
+def plotSets(timestamps, train, validation, test):
+    time, tick = makeTick(timestamps)
+
+    x1 = range(len(train))
+    x2 = range(len(train), len(train) + len(validation))
+    x3 = range(len(train) + len(validation), len(timestamps))
+    plt.plot(x1, train, label="train set", color="green")
+    plt.plot(x2, validation, label="validation set", color="blue")
+    plt.plot(x3, test, label="test set", color="red")
+    plt.xticks(tick, time, rotation=20)
+    plt.xlabel("Time")
+    plt.ylabel("Power consumption (kW)")
+    plt.legend()
+    plt.tight_layout()
+    plt.show()
+
+
+def plotHistory(config, history):
+    plt.plot(history.history["mean_absolute_error"], label="train")
+    plt.plot(history.history["val_mean_absolute_error"], label="validation")
     plt.xlabel("Epoch")
     plt.ylabel("Mean absolute error")
-    plt.savefig(outputFolder + "/MAE.png")
+    plt.tight_layout()
+    plt.savefig(config.OUTPUT_FOLDER + "/MAE.png")
     plt.show()
-    plt.plot(history.history["mean_absolute_percentage_error"])
+    plt.plot(history.history["mean_absolute_percentage_error"], label="train")
+    plt.plot(history.history["val_mean_absolute_percentage_error"], label="validation")
     plt.xlabel("Epoch")
     plt.ylabel("Mean absolute percentage error")
-    plt.savefig(outputFolder + "/MAPE.png")
+    plt.tight_layout()
+    plt.savefig(config.OUTPUT_FOLDER + "/MAPE.png")
     plt.show()
-    plt.plot(history.history["mean_squared_error"])
+    plt.plot(history.history["mean_squared_error"], label="train")
+    plt.plot(history.history["val_mean_squared_error"], label="validation")
     plt.xlabel("Epoch")
     plt.ylabel("mean_squared_error")
-    plt.savefig(outputFolder + "/MSE.png")
+    plt.tight_layout()
+    plt.savefig(config.OUTPUT_FOLDER + "/MSE.png")
     plt.show()

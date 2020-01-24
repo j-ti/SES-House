@@ -20,6 +20,7 @@ from util import makeTick
 from forecasting import splitData, addMinutes, buildSet, train, saveModel
 from forecast_conf import ForecastConfig
 from forecast_load_conf import ForecastLoadConfig
+from plot_forecast import plotHistory
 
 import time
 
@@ -64,26 +65,23 @@ def main(argv):
     input_data = addMinutes(loadsData)
     input_data = add_day_of_week(input_data)
 
-    train_part, validation_part, test_part = splitData(config, input_data)
+    train_part, validation_part, _ = splitData(config, input_data)
 
     train_part = train_part.values
     validation_part = validation_part.values
-    test_part = test_part.values
 
     scaler = MinMaxScaler()
     scaler.fit(train_part)
     train_part = scaler.transform(train_part)
     validation_part = scaler.transform(validation_part)
-    test_part = scaler.transform(test_part)
 
     train_x, train_y = buildSet(train_part, loadConfig.LOOK_BACK, loadConfig.OUTPUT_SIZE, train_part.shape[1])
     validation_x, validation_y = buildSet(validation_part, loadConfig.LOOK_BACK, loadConfig.OUTPUT_SIZE, validation_part.shape[1])
-    time.sleep(1)
-    test_x, test_y = buildSet(test_part, loadConfig.LOOK_BACK, loadConfig.OUTPUT_SIZE, test_part.shape[1])
 
     model = buildModel(loadConfig, train_x.shape)
-    train(loadConfig, model, train_x, train_y, validation_x, validation_y)
+    history = train(loadConfig, model, train_x, train_y, validation_x, validation_y)
     saveModel(loadConfig, model)
+    plotHistory(loadConfig, history)
 
 
 if __name__ == "__main__":

@@ -91,3 +91,14 @@ def mean_absolute_percentage_error(y_true, y_pred):
     y_true = y_true + np.finfo(float).eps
     y_pred = y_pred + np.finfo(float).eps
     return np.mean(np.abs((y_true - y_pred) / y_true)) * 100
+
+
+def getMeanSdDay(config, data):
+    nans = np.empty((config.LOOK_BACK, 1))
+    nans[:] = np.nan
+    data = np.concatenate((nans, data), axis=0)
+    data = np.reshape(data, (96, int(len(data) / 96)))
+    means = np.nanmean(data, axis=1)
+    standard_dev = np.nanstd(data, axis=1)
+    return means, standard_dev
+
