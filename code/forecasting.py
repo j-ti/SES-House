@@ -27,6 +27,10 @@ def splitData(config, loadsData):
         loadsData[endValidation:],
     )
 
+def addMinutes(data):
+    minutes = pd.Series([(i.hour * 60 + i.minute) for i in data.index], index=data.index)
+    return pd.concat([data, minutes], axis=1)
+
 
 # we assume that data is either train, test or validation and is shape (nbPts, nbFeatures)
 def buildSet(data, look_back, nbOutput, nbFeatures):
