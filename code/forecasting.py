@@ -42,8 +42,8 @@ def dataImport():
 
 def splitData(config, loadsData):
     diff = loadsData.index[-1] - loadsData.index[0]
-    endTrain = 96 * int(diff.days * config.TRAINPART)
-    endValidation = endTrain + 96 * int(diff.days * config.VALIDATIONPART)
+    endTrain = 96 * int(diff.days * config.TRAIN_FRACTION)
+    endValidation = endTrain + 96 * int(diff.days * config.VALIDATION_FRACTION)
     return (
         loadsData[:endTrain],
         loadsData[endTrain:endValidation],
