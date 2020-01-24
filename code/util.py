@@ -53,7 +53,7 @@ def getTimeIndexRange(timestamps, timeA, timeB):
     return list(range(timestamps.index(timeA), timestamps.index(timeB) + 1))
 
 
-def getTimeIndexRangeDaily(timestamps, timeA, timeB):
+def getTimeIndexRangeDaily(timestamps, timeA, timeB, varA=0, varB=1):
     indexList = []
     start = timestamps[0]
     end = timestamps[-1]
@@ -62,8 +62,8 @@ def getTimeIndexRangeDaily(timestamps, timeA, timeB):
         indexList.append(
             list(
                 range(
-                    timestamps.index(getConcatDateTime(dayIterator, timeA)),
-                    timestamps.index(getConcatDateTime(dayIterator, timeB)) + 1,
+                    timestamps.index(getConcatDateTime(dayIterator, timeA)) + varA,
+                    timestamps.index(getConcatDateTime(dayIterator, timeB)) + varB,
                 )
             )
         )
@@ -71,6 +71,10 @@ def getTimeIndexRangeDaily(timestamps, timeA, timeB):
 
     indexList = np.reshape(indexList, (1, -1))[0, :].tolist()
     return indexList
+
+
+def diffIndexList(timestampsA, timestampsB):
+    return list(set(timestampsA) - set(timestampsB))
 
 
 def getConcatDateTime(date, time):
