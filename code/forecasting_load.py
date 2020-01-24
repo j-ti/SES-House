@@ -207,6 +207,10 @@ def forecasting(
     )
 
 
+def add_day_of_week(data):
+    daysOfWeek = pd.Series([i.weekday() for i in data.index], index=data.index)
+    return pd.concat([data, daysOfWeek], axis=1)
+
 
 def main(argv):
     config = ForecastConfig()
@@ -223,6 +227,7 @@ def main(argv):
     )
 
     input_data = addMinutes(loadsData)
+    input_data = add_day_of_week(input_data)
 
     train_part, validation_part, test_part = splitData(config, input_data)
 
