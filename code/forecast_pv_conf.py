@@ -8,6 +8,7 @@ class ForecastPvConfig:
         self.LOAD_MODEL = False
         self.MODEL_FILE = "./output/forecast/pv/model.json"
 
+        # TODO : for multiple layer of same type : put inside an array
         self.EPOCHS = 30
         self.LOOK_BACK = 15
         self.BATCH_SIZE = 30

@@ -1,17 +1,9 @@
-import os
-import sys
 from datetime import datetime
 
-import pandas as pd
 from data import getPecanstreetData
-from keras import metrics
 from keras.engine.saving import model_from_json
-from keras.layers import LSTM, Dropout, Activation
-from keras.layers.core import Dense
-from keras.models import Sequential
 from plot_forecast import *
-from sklearn.metrics import mean_squared_error, mean_absolute_error
-from util import constructTimeStamps, mean_absolute_percentage_error
+from util import constructTimeStamps
 from util import makeShift
 
 # fixing the random seed to have a better reproducibility
@@ -103,7 +95,7 @@ def train(config, model, trainX, trainY, validationX, validationY):
         batch_size=config.BATCH_SIZE,
         validation_data=(validationX, validationY),
         verbose=2,
-        )
+    )
     return model, history
 
 

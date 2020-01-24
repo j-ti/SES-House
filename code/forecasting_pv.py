@@ -1,27 +1,25 @@
+import os
+import sys
+
+import numpy as np
+from forecast_pv_conf import ForecastPvConfig
 from forecasting import splitData, buildSet, evalModel, loadModel, dataImport, saveModel, train
 from keras import Sequential, metrics
 from keras.layers import LSTM, Dropout, Dense, Activation
-import numpy as np
-import os
-import sys
 from keras.losses import mean_squared_error, mean_absolute_error, mean_absolute_percentage_error
-from forecast_pv_conf import ForecastPvConfig
 from plot_forecast import plotHistory, plotPrediction, plot100first, plotEcart, plotInput
 
 
 def buildModel(trainX, trainY, valX, valY, config, nbFeatures):
     model = Sequential()
-    model.add(LSTM(256, input_shape=(config.LOOK_BACK, nbFeatures)))
-    model.add(Dropout(0.5))
-    model.add(Dense(1))
-    model.add(Activation("linear"))
-    # model.add(Dense(3))
-    # model.add(Dense(1))
-    model.add(Activation("relu"))
+    model.add(LSTM(config.NEURONS, input_shape=(config.LOOK_BACK, nbFeatures)))
+    model.add(Dropout(config.DROPOUT))
+    model.add(Dense(config.DENSE))
+    model.add(Activation(config.ACTIVATION_FUNCTION))
     model.compile(
-        loss="mean_squared_error",
-        optimizer="adam",
-        metrics=[metrics.mae, metrics.mape, metrics.mse],
+        loss=config.LOSS_FUNCTION,
+        optimizer=config.OPTIMIZE_FUNCTION,
+        metrics=[metrics.mape, metrics.mae, metrics.mse],
     )
 
     # training it
@@ -35,7 +33,7 @@ def forecasting(config):
     df, timestamps = dataImport()
     df_train, df_validation, df_test = splitData(config, df)
 
-    nbFeatures = 1
+    nbFeatures = df_train.shape[1]
 
     # here we have numpy array
     trainX, trainY = buildSet(df_train, config.LOOK_BACK, config.OUTPUT_SIZE, nbFeatures)
@@ -48,7 +46,7 @@ def forecasting(config):
     if config.LOAD_MODEL:
         model = loadModel()
     else:
-        model, history = buildModel(trainX, trainY, validationX, validationY)
+        model, history = buildModel(trainX, trainY, validationX, validationY, config, nbFeatures)
 
     evalModel(model, testX, testY)
 
@@ -71,6 +69,7 @@ def forecasting(config):
         np.array(testPrediction),
         timestamps,
     )
+
     print(
         "training\tMSE :\t{}".format(
             mean_squared_error(np.array(trainY), np.array(trainPrediction))
@@ -109,7 +108,6 @@ def forecasting(config):
     )
 
 
-# if argv = 1, then we rebuild the model
 def main(argv):
     config = ForecastPvConfig()
     global outputFolder
