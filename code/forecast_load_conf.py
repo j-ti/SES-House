@@ -10,6 +10,7 @@ class ForecastLoadConfig:
 
         self.EPOCHS = 30
         self.LOOK_BACK = 15
+        self.OUTPUT_SIZE = 96
         self.BATCH_SIZE = 30
         self.DROPOUT = 0.1
         self.DENSE = 1
