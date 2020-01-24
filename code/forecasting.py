@@ -6,7 +6,7 @@ from data import getPecanstreetData
 from keras.engine.saving import model_from_json
 from plot_forecast import *
 from util import constructTimeStamps
-from util import makeShift
+
 
 # fixing the random seed to have a better reproducibility
 seed = 3
@@ -36,12 +36,12 @@ def addMinutes(data):
 
 # we assume that data is either train, test or validation and is shape (nbPts, nbFeatures)
 def buildSet(data, look_back, nbOutput, nbFeatures):
-    X = makeShift(data, look_back, nbFeatures)
-    col = []
-    for i in range(len(data) - look_back):
-        col.append(data[look_back + i: i + look_back + nbOutput])
-    Y = np.array(col)
-    return X, Y
+    x = np.empty((len(data) - look_back - nbOutput, look_back, data.shape[1]))
+    y = np.empty((len(data) - look_back - nbOutput, nbOutput))
+    for i in range(len(data) - look_back - nbOutput):
+        x[i] = data[i: i + look_back, :]
+        y[i] = data[i + look_back: i + look_back + nbOutput, 0]
+    return x, y
 
 
 # WARNING ! depending on if we load the model or if we build it, the return value of evaluate change

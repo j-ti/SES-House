@@ -80,26 +80,6 @@ def getConcatDateTime(date, time):
     )
 
 
-def reshape(toReshape):
-    res = np.empty((toReshape[0].shape[0], toReshape[0].shape[1], len(toReshape)))
-    for i in range(len(toReshape)):
-        res[:, :, i] = toReshape[i]
-    return np.array(res)
-
-
-def makeShift(data, look_back, n_vars):
-    res = []
-    for i in range(n_vars):
-        df = pd.DataFrame(data[:, i])
-        cols = []
-        for j in range(look_back, 0, -1):
-            cols.append(df.shift(j))
-        agg = pd.concat(cols, axis=1)
-        agg.dropna(inplace=True)
-        res.append(np.array(agg))
-    return reshape(res)
-
-
 def makeTick(timestamps, present="%m-%d %H:%M"):
     step = int(len(timestamps) / 14)
     time = [timestamps[i].strftime(present) for i in range(len(timestamps))][::step]
