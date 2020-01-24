@@ -47,18 +47,14 @@ def buildSet(data, look_back, nbOutput, nbFeatures):
 # WARNING ! depending on if we load the model or if we build it, the return value of evaluate change
 # I still don't know why
 def evalModel(model, testx, testy):
-    ret = model.evaluate(testx, testy, verbose=0)
-    print(ret)
-    return ret
+    return model.evaluate(testx, testy, verbose=0)
 
 
-def saveModel(model):
+def saveModel(config, model):
     model_json = model.to_json()
-    with open(outputFolder + "model.json", "w") as json_file:
+    with open(config.OUTPUT_FOLDER + "model.json", "w") as json_file:
         json_file.write(model_json)
-    # serialize weights to HDF5
-    model.save_weights(outputFolder + "model.h5")
-    print("Saved model to disk")
+    model.save_weights(config.OUTPUT_FOLDER + "model.h5")
 
 
 def loadModel():
