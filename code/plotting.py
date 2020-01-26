@@ -143,8 +143,10 @@ def plotting_additive_all_powers(resultsPd, outputFolder, time, tick):
     negResults = -resultsPd[resultsPd < 0]
     resultsPd[resultsPd < 0] = 0
     negResults.fillna(0.0, inplace=True)
-    negResults.columns = [str(col) + 'Neg' for col in negResults.columns]
-    resultsPd[["batPowersNeg","evPowersNeg"]] = negResults[["batPowersNeg","evPowersNeg"]]
+    negResults.columns = [str(col) + "Neg" for col in negResults.columns]
+    resultsPd[["batPowersNeg", "evPowersNeg"]] = negResults[
+        ["batPowersNeg", "evPowersNeg"]
+    ]
     # selection list of series to be plotted as area-plot and in which order
     selArea = [
         "PVPowers",
@@ -159,27 +161,26 @@ def plotting_additive_all_powers(resultsPd, outputFolder, time, tick):
     areaColors = list(map(colorDico.get, selArea))
     areaColors = ["pink" if c is None else c for c in areaColors]
 
-    resultsPd[selArea].plot(kind=kindPlot, linewidth=0, stacked=True, ax=ax, color=areaColors)
+    resultsPd[selArea].plot(
+        kind=kindPlot, linewidth=0, stacked=True, ax=ax, color=areaColors
+    )
 
-    selLine = [
-        "fixedLoads",
-        "batPowersNeg",
-        "evPowersNeg",
-        "toGridPowers",
-    ]
+    selLine = ["fixedLoads", "batPowersNeg", "evPowersNeg", "toGridPowers"]
     lineColors = list(map(colorDico.get, selLine))
     lineColors = ["pink" if c is None else c for c in lineColors]
-    hatch = ["","//","--",".."]
+    hatch = ["", "//", "--", ".."]
 
     additiveOut = resultsPd[selLine].copy()
     additiveOut = additiveOut.cumsum(axis=1)
 
-    additiveOut[selLine[1:]].plot( kind='line', drawstyle=style, linewidth=2, ls="--", ax=ax, color=lineColors[1:])
+    additiveOut[selLine[1:]].plot(
+        kind="line", drawstyle=style, linewidth=2, ls="--", ax=ax, color=lineColors[1:]
+    )
 
-    for i in range(1,len(selLine)):
+    for i in range(1, len(selLine)):
         plt.fill_between(
             range(len(additiveOut)),
-            additiveOut[selLine[i-1]],
+            additiveOut[selLine[i - 1]],
             additiveOut[selLine[i]],
             facecolor="none",
             step=step,
