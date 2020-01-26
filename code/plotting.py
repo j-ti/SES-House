@@ -199,7 +199,7 @@ def plotting_additive_all_powers(resultsPd, outputFolder, time, tick):
     chartBox = ax.get_position()
     ax.set_position([chartBox.x0, chartBox.y0, chartBox.width * 0.75, chartBox.height])
     plt.legend(bbox_to_anchor=(1.5, 0.8), loc="upper right")
-    plt.savefig(outputFolder + "/power-balance.png")
+    plt.savefig(outputFolder + "/power-balance2.png")
     plt.show()
 
 
