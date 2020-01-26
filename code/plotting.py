@@ -188,28 +188,6 @@ def plotting_additive_all_powers(resultsPd, outputFolder, time, tick):
             linewidth=1.0,
         )
 
-    # plt.plot(
-    #     additiveOut[selLine[1]],
-    #     label="Battery Power",
-    #     drawstyle=style,
-    #     ls="--",
-    #     color=colorDico["batPowersNeg"],
-    # )
-    # plt.plot(
-    #     additiveOut[selLine[2]],
-    #     label="EV Power",
-    #     drawstyle=style,
-    #     ls="--",
-    #     color=colorDico["evPowersNeg"],
-    # )
-    # plt.plot(
-    #     additiveOut[selLine[3]],
-    #     label="Grid Power Out",
-    #     drawstyle=style,
-    #     ls="--",
-    #     color=colorDico["toGridPowers"],
-    # )
-
     plt.plot(
         resultsPd["fixedLoads"], label="Loads Power", color=colorDico["fixedLoads"]
     )
