@@ -129,16 +129,7 @@ def plotting_additive_all_powers(resultsPd, outputFolder, time, tick):
     kindPlot = "area"  # 'bar'
     style = "default"  # 'steps-mid'
     step = None  # 'mid'
-    order = [
-        "PVPowers",
-        "windPowers",
-        "batPowers",
-        "evPowers",
-        "dieselGenerators",
-        "fromGridPowers",
-        "fixedLoads",
-        "toGridPowers",
-    ]
+
     # Devide in and out flows (esp. for batteries) and make them all positive
     negResults = -resultsPd[resultsPd < 0]
     resultsPd[resultsPd < 0] = 0
