@@ -4,6 +4,7 @@ import pandas as pd
 
 from data import getPecanstreetData
 from keras.engine.saving import model_from_json
+from keras.callbacks import EarlyStopping
 from plot_forecast import *
 from util import constructTimeStamps
 
@@ -75,12 +76,16 @@ def loadModel():
 
 
 def train(config, model, trainX, trainY, validationX, validationY):
+
+    earlyStopCallback = EarlyStopping(monitor='val_loss', min_delta=config.MIN_DELTA, patience=config.PATIENCE, mode='min', restore_best_weights=True)
+
     history = model.fit(
         trainX,
         trainY,
         epochs=config.EPOCHS,
         batch_size=config.BATCH_SIZE,
         validation_data=(validationX, validationY),
+        callbacks=[earlyStopCallback],
         verbose=2,
     )
     return history
