@@ -29,6 +29,32 @@ import time
 set_random_seed(ForecastConfig().SEED)
 np.random.seed(ForecastConfig().SEED)
 
+def prepareData(config, loadConfig, timestamps):
+    loadsData = getPecanstreetData(
+        loadConfig.DATA_FILE, loadConfig.TIME_HEADER, loadConfig.DATAID, "grid", timestamps
+    )
+
+    input_data = addMinutes(loadsData)
+    input_data = add_day_of_week(input_data)
+
+    train_part, validation_part, test_part = splitData(config, input_data)
+
+    train_part = train_part.values
+    validation_part = validation_part.values
+    test_part = test_part.values
+
+    scaler = MinMaxScaler()
+    scaler.fit(train_part)
+    train_part = scaler.transform(train_part)
+    validation_part = scaler.transform(validation_part)
+    test_part = scaler.transform(test_part)
+
+    train_x, train_y = buildSet(train_part, loadConfig.LOOK_BACK, loadConfig.OUTPUT_SIZE, train_part.shape[1])
+    validation_x, validation_y = buildSet(validation_part, loadConfig.LOOK_BACK, loadConfig.OUTPUT_SIZE, validation_part.shape[1])
+    test_x, test_y = buildSet(validation_part, loadConfig.LOOK_BACK, loadConfig.OUTPUT_SIZE, test_part.shape[1])
+
+    return train_x, train_y, validation_x, validation_y, test_x, test_y
+
 
 # building the model
 def buildModel(loadConfig, trainXShape):
@@ -63,25 +89,8 @@ def main(argv):
         datetime.strptime(config.STEPSIZE, "%H:%M:%S")
         - datetime.strptime("00:00:00", "%H:%M:%S"),
     )
-    loadsData = getPecanstreetData(
-        loadConfig.DATA_FILE, loadConfig.TIME_HEADER, loadConfig.DATAID, "grid", timestamps
-    )
 
-    input_data = addMinutes(loadsData)
-    input_data = add_day_of_week(input_data)
-
-    train_part, validation_part, _ = splitData(config, input_data)
-
-    train_part = train_part.values
-    validation_part = validation_part.values
-
-    scaler = MinMaxScaler()
-    scaler.fit(train_part)
-    train_part = scaler.transform(train_part)
-    validation_part = scaler.transform(validation_part)
-
-    train_x, train_y = buildSet(train_part, loadConfig.LOOK_BACK, loadConfig.OUTPUT_SIZE, train_part.shape[1])
-    validation_x, validation_y = buildSet(validation_part, loadConfig.LOOK_BACK, loadConfig.OUTPUT_SIZE, validation_part.shape[1])
+    train_x, train_y, validation_x, validation_y, _, _ = prepareData(config, loadConfig, timestamps)
 
     model = buildModel(loadConfig, train_x.shape)
     history = train(loadConfig, model, train_x, train_y, validation_x, validation_y)
