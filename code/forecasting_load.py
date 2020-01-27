@@ -54,6 +54,7 @@ def main(argv):
     config = ForecastConfig()
     loadConfig = ForecastLoadConfig()
 
+    copyfile("./code/forecast_conf.py", loadConfig.OUTPUT_FOLDER + "forecast_conf.py")
     copyfile("./code/forecast_load_conf.py", loadConfig.OUTPUT_FOLDER + "forecast_load_conf.py")
 
     timestamps = constructTimeStamps(
