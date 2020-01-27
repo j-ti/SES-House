@@ -69,6 +69,18 @@ class Test(unittest.TestCase):
             ],
         )
 
+    def testTimeIndexRangeDailyVary(self):
+        start = datetime(2014, 1, 2, 0, 0, 0)
+        end = datetime(2014, 1, 4, 23, 0, 0)
+        cutStart = datetime.strptime("10:00:00", "%H:%M:%S")
+        cutEnd = datetime.strptime("13:00:00", "%H:%M:%S")
+        stepsize = timedelta(hours=1)
+        timestamps = constructTimeStamps(start, end, stepsize)
+        indexList = getTimeIndexRangeDaily(timestamps, cutStart, cutEnd, varA=1, varB=0)
+        self.assertEqual(
+            indexList, [11, 12, 24 + 11, 24 + 12, 2 * 24 + 11, 2 * 24 + 12]
+        )
+
     def testConcatDateTime(self):
         date = datetime(2014, 1, 4, 23, 0, 0)
         time = datetime.strptime("12:34:56", "%H:%M:%S")
