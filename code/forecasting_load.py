@@ -29,9 +29,14 @@ import time
 set_random_seed(ForecastConfig().SEED)
 np.random.seed(ForecastConfig().SEED)
 
+
 def prepareData(config, loadConfig, timestamps):
     loadsData = getPecanstreetData(
-        loadConfig.DATA_FILE, loadConfig.TIME_HEADER, loadConfig.DATAID, "grid", timestamps
+        loadConfig.DATA_FILE,
+        loadConfig.TIME_HEADER,
+        loadConfig.DATAID,
+        "grid",
+        timestamps,
     )
 
     input_data = addMinutes(loadsData)
@@ -49,8 +54,12 @@ def prepareData(config, loadConfig, timestamps):
     validation_part = scaler.transform(validation_part)
     test_part = scaler.transform(test_part)
 
-    train_x, train_y = buildSet(train_part, loadConfig.LOOK_BACK, loadConfig.OUTPUT_SIZE)
-    validation_x, validation_y = buildSet(validation_part, loadConfig.LOOK_BACK, loadConfig.OUTPUT_SIZE)
+    train_x, train_y = buildSet(
+        train_part, loadConfig.LOOK_BACK, loadConfig.OUTPUT_SIZE
+    )
+    validation_x, validation_y = buildSet(
+        validation_part, loadConfig.LOOK_BACK, loadConfig.OUTPUT_SIZE
+    )
     test_x, test_y = buildSet(test_part, loadConfig.LOOK_BACK, loadConfig.OUTPUT_SIZE)
 
     return train_x, train_y, validation_x, validation_y, test_x, test_y, scaler
@@ -81,7 +90,10 @@ def main(argv):
     loadConfig = ForecastLoadConfig()
 
     copyfile("./code/forecast_conf.py", loadConfig.OUTPUT_FOLDER + "forecast_conf.py")
-    copyfile("./code/forecast_load_conf.py", loadConfig.OUTPUT_FOLDER + "forecast_load_conf.py")
+    copyfile(
+        "./code/forecast_load_conf.py",
+        loadConfig.OUTPUT_FOLDER + "forecast_load_conf.py",
+    )
 
     timestamps = constructTimeStamps(
         datetime.strptime(config.BEGIN, "20%y-%m-%d %H:%M:%S"),
@@ -90,17 +102,36 @@ def main(argv):
         - datetime.strptime("00:00:00", "%H:%M:%S"),
     )
 
-    train_x, train_y, validation_x, validation_y, _, test_y, scaler = prepareData(config, loadConfig, timestamps)
-    assert len(timestamps) == len(train_y) + len(validation_y) + len(test_y) + loadConfig.LOOK_BACK * 3 + loadConfig.OUTPUT_SIZE * 3
+    train_x, train_y, validation_x, validation_y, _, test_y, scaler = prepareData(
+        config, loadConfig, timestamps
+    )
+    assert (
+        len(timestamps)
+        == len(train_y)
+        + len(validation_y)
+        + len(test_y)
+        + loadConfig.LOOK_BACK * 3
+        + loadConfig.OUTPUT_SIZE * 3
+    )
 
     model = buildModel(loadConfig, train_x.shape)
     history = train(loadConfig, model, train_x, train_y, validation_x, validation_y)
     saveModel(loadConfig, model)
     plotHistory(loadConfig, history)
     validation_begin = len(train_y) + loadConfig.LOOK_BACK + loadConfig.OUTPUT_SIZE
-    validation_timestamps = timestamps[ validation_begin: validation_begin + len(validation_y) + loadConfig.OUTPUT_SIZE + loadConfig.LOOK_BACK]
+    validation_timestamps = timestamps[
+        validation_begin : validation_begin
+        + len(validation_y)
+        + loadConfig.OUTPUT_SIZE
+        + loadConfig.LOOK_BACK
+    ]
     validation_prediction = model.predict(validation_x)
-    plotPredictionPart(validation_y[1,:], validation_prediction[1,:], "1st day of validation set", validation_timestamps[:loadConfig.OUTPUT_SIZE])
+    plotPredictionPart(
+        validation_y[1, :],
+        validation_prediction[1, :],
+        "1st day of validation set",
+        validation_timestamps[: loadConfig.OUTPUT_SIZE],
+    )
 
 
 if __name__ == "__main__":

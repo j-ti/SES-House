@@ -4,6 +4,7 @@ import numpy as np
 
 outputFolder = ""
 
+
 def plotPrediction(train_y, train_predict_y, test_y, test_predict_y, timestamps):
     time, tick = makeTick(timestamps)
 

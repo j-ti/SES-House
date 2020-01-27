@@ -26,7 +26,9 @@ def splitData(config, loadsData):
 
 
 def addMinutes(data):
-    minutes = pd.Series([(i.hour * 60 + i.minute) for i in data.index], index=data.index)
+    minutes = pd.Series(
+        [(i.hour * 60 + i.minute) for i in data.index], index=data.index
+    )
     return pd.concat([data, minutes], axis=1)
 
 
@@ -35,8 +37,8 @@ def buildSet(data, look_back, nbOutput):
     x = np.empty((len(data) - look_back - nbOutput, look_back, data.shape[1]))
     y = np.empty((len(data) - look_back - nbOutput, nbOutput))
     for i in range(len(data) - look_back - nbOutput):
-        x[i] = data[i: i + look_back, :]
-        y[i] = data[i + look_back: i + look_back + nbOutput, 0]
+        x[i] = data[i : i + look_back, :]
+        y[i] = data[i + look_back : i + look_back + nbOutput, 0]
     return x, y
 
 
@@ -72,7 +74,13 @@ def loadModel():
 
 def train(config, model, trainX, trainY, validationX, validationY):
 
-    earlyStopCallback = EarlyStopping(monitor='val_loss', min_delta=config.MIN_DELTA, patience=config.PATIENCE, mode='min', restore_best_weights=True)
+    earlyStopCallback = EarlyStopping(
+        monitor="val_loss",
+        min_delta=config.MIN_DELTA,
+        patience=config.PATIENCE,
+        mode="min",
+        restore_best_weights=True,
+    )
 
     history = model.fit(
         trainX,

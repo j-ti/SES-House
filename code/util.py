@@ -105,4 +105,3 @@ def getMeanSdDay(config, data):
     means = np.nanmean(data, axis=1)
     standard_dev = np.nanstd(data, axis=1)
     return means, standard_dev
-
