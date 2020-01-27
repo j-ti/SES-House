@@ -9,9 +9,9 @@ def plotPrediction(train_y, train_predict_y, test_y, test_predict_y, timestamps)
 
     x1 = [i for i in range(len(train_y))]
     x2 = [i for i in range(len(train_y), len(test_y) + len(train_y))]
-    plt.plot(x1, train_y.reset_index(drop=True), label="actual", color="green")
+    plt.plot(x1, train_y, label="actual", color="green")
     plt.plot(x1, train_predict_y, label="predict", color="orange")
-    plt.plot(x2, test_y.reset_index(drop=True), label="actual", color="blue")
+    plt.plot(x2, test_y, label="actual", color="blue")
     plt.plot(x2, test_predict_y, label="predict", color="red")
     plt.xticks(tick, time, rotation=20)
     plt.xlabel("Time")
@@ -67,7 +67,7 @@ def plotDay(timestamps, realY, predictY):
 
 def plot100first(train_y, train_predict_y):
     x1 = [i for i in range(len(train_y))]
-    plt.plot(x1[:100], train_y.reset_index(drop=True)[:100], label="actual", color="green")
+    plt.plot(x1[:100], train_y[:100], label="actual", color="green")
     plt.plot(x1[:100], train_predict_y[:100], label="predict", color="orange")
     plt.xlabel("Time")
     plt.ylabel("Power output (kW)")
