@@ -1,19 +1,8 @@
 import sys
-from datetime import datetime
-from tensorflow import set_random_seed
-
-from keras.engine.saving import model_from_json
-
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from data import getPecanstreetData
-from keras import metrics
-from keras.layers import LSTM, Dropout, Activation
-from keras.layers.core import Dense
-from keras.models import Sequential
-from sklearn.metrics import mean_squared_error, mean_absolute_error
-from sklearn.preprocessing import MinMaxScaler
 from util import constructTimeStamps, mean_absolute_percentage_error
 from util import makeTick
 
@@ -86,8 +75,8 @@ def meanBaseline(train, test):
     return mse
 
 
-
 def main(argv):
+    pass
 
 
 if __name__ == "__main__":
