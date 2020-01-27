@@ -22,6 +22,8 @@ from forecast_conf import ForecastConfig
 from forecast_load_conf import ForecastLoadConfig
 from plot_forecast import plotHistory
 
+from shutil import copyfile
+
 import time
 
 set_random_seed(ForecastConfig().SEED)
@@ -51,6 +53,8 @@ def add_day_of_week(data):
 def main(argv):
     config = ForecastConfig()
     loadConfig = ForecastLoadConfig()
+
+    copyfile("./code/forecast_load_conf.py", loadConfig.OUTPUT_FOLDER + "forecast_load_conf.py")
 
     timestamps = constructTimeStamps(
         datetime.strptime(config.BEGIN, "20%y-%m-%d %H:%M:%S"),
