@@ -24,13 +24,14 @@ def splitData(config, loadsData):
         loadsData[endValidation:],
     )
 
+
 def addMinutes(data):
     minutes = pd.Series([(i.hour * 60 + i.minute) for i in data.index], index=data.index)
     return pd.concat([data, minutes], axis=1)
 
 
 # we assume that data is either train, test or validation and is shape (nbPts, nbFeatures)
-def buildSet(data, look_back, nbOutput, nbFeatures):
+def buildSet(data, look_back, nbOutput):
     x = np.empty((len(data) - look_back - nbOutput, look_back, data.shape[1]))
     y = np.empty((len(data) - look_back - nbOutput, nbOutput))
     for i in range(len(data) - look_back - nbOutput):

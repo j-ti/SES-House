@@ -21,7 +21,7 @@ def plotPrediction(train_y, train_predict_y, test_y, test_predict_y, timestamps)
     plt.show()
 
 
-def plotPrediction(real, predicted, nameOfSet, timestamps):
+def plotPredictionPart(real, predicted, nameOfSet, timestamps):
     time, tick = makeTick(timestamps)
 
     x1 = list(range(len(real)))
