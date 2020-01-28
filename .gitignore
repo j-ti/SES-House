@@ -127,6 +127,4 @@ dmypy.json
 .pyre/
 
 # output folder
-/output/
-/data/
 /sample/
