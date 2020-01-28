@@ -15,8 +15,6 @@ colorDico = {
     "toGridPowers": "cadetblue",
     "dieselGenerators": "dimgray",
     "gridPrice": "goldenrod",
-
-
 }
 
 
@@ -57,14 +55,14 @@ def plotting(varName, varVal, gridPrices, outputFolder, timestamps):
 
 # Plotting PV power, wind power and fixed loads power.
 def plotting_powers(dico, outputFolder, time, tick):
-    plt.style.use('bmh')
+    plt.style.use("bmh")
     plt.plot(dico["PVPowers"], label="pv", color=colorDico["PVPowers"])
     plt.plot(dico["windPowers"], label="wind", color=colorDico["windPowers"])
     plt.plot(dico["fixedLoads"], label="Loads Power", color=colorDico["fixedLoads"])
     plt.xticks(tick, time, rotation=20)
     plt.xlabel("Time")
     plt.ylabel("Output power - kW")
-    plt.legend(loc="upper left",ncol=3)
+    plt.legend(loc="upper left", ncol=3)
     plt.savefig(outputFolder + "/pv_wind-power.png")
     plt.show()
 
@@ -73,7 +71,7 @@ def plotting_powers(dico, outputFolder, time, tick):
 def plotting_energys(dico, outputFolder, time, tick):
     plt.plot(dico["batEnergys"], label="Battery Energy", color=colorDico["batEnergys"])
     plt.plot(dico["evEnergys"], label="EV Energy", color=colorDico["evEnergys"])
-    plt.legend(loc="upper left", ncol=2,prop={"size": 8})
+    plt.legend(loc="upper left", ncol=2, prop={"size": 8})
     plt.xticks(tick, time, rotation=20)
     plt.xlabel("Time")
     plt.ylabel("Energy (kWh)")
@@ -102,7 +100,7 @@ def plotting_all_powers(dico, outputFolder, time, tick):
     plt.xticks(tick, time, rotation=20)
     plt.xlabel("Time")
     plt.ylabel("Power (kW)")
-    plt.legend(loc="upper left",ncol=2)
+    plt.legend(loc="upper left", ncol=2)
     plt.savefig(outputFolder + "/power-balance.png")
     plt.show()
 
@@ -128,8 +126,8 @@ def plotting_in_out_price(dico, outputFolder, gridPrices, time, tick):
     ax1.set_xlabel("Time")
     ax1.set_ylabel("Price - $ / kWh")
     ax2.set_ylabel("Power (kW)")
-    ax1.legend(loc="upper center",ncol=1)
-    ax2.legend(loc="upper left",ncol=1)
+    ax1.legend(loc="upper center", ncol=1)
+    ax2.legend(loc="upper left", ncol=1)
     plt.savefig(outputFolder + "grid_in-out_price.png")
     plt.show()
 

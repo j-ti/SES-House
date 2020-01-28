@@ -325,7 +325,9 @@ def getPriceData(filePath, timestamps, offset, constantPrice):
         assert data.shape[1] <= 2
 
         data = data.loc[timestamps[0] + offset : timestamps[-1] + offset]
-        return data.iloc[:, 0] / FROM_MEGAWATTHOURS_TO_KILOWATTHOURS + constantPrice/(origStepsize/wantedStepsize)
+        return data.iloc[:, 0] / FROM_MEGAWATTHOURS_TO_KILOWATTHOURS + constantPrice / (
+            origStepsize / wantedStepsize
+        )
 
 
 def _applyOppositeOfResampleSum(data, timestamps, relation):

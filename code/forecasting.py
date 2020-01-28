@@ -27,7 +27,8 @@ def dataImport():
     timestamps = constructTimeStamps(
         datetime.strptime("2018-02-01 00:00:00", "20%y-%m-%d %H:%M:%S"),
         datetime.strptime("2018-03-01 00:00:00", "20%y-%m-%d %H:%M:%S"),
-        datetime.strptime("00:15:00", "%H:%M:%S") - datetime.strptime("00:00:00", "%H:%M:%S")
+        datetime.strptime("00:15:00", "%H:%M:%S")
+        - datetime.strptime("00:00:00", "%H:%M:%S"),
     )
 
     # input datas : uncontrolable resource : solar production
@@ -44,11 +45,11 @@ def dataImport():
 def buildSet(df, split):
     df_train = df[look_back:split].reset_index(drop=True)
     df_train = makeShiftTrain(df, df_train, look_back, split)
-    df_train_label = df[look_back + 1: split + 1]
+    df_train_label = df[look_back + 1 : split + 1]
 
-    df_test = df[split + look_back:].reset_index(drop=True)
+    df_test = df[split + look_back :].reset_index(drop=True)
     df_test = makeShiftTest(df, df_test, look_back, split)
-    df_test_label = df[split + look_back:]
+    df_test_label = df[split + look_back :]
 
     return df_train, df_train_label, df_test, df_test_label
 
@@ -102,7 +103,9 @@ def plotPrediction(train_y, train_predict_y, test_y, test_predict_y, timestamps)
 
 def plot100first(train_y, train_predict_y):
     x1 = [i for i in range(len(train_y))]
-    plt.plot(x1[:100], train_y.reset_index(drop=True)[:100], label="actual", color="green")
+    plt.plot(
+        x1[:100], train_y.reset_index(drop=True)[:100], label="actual", color="green"
+    )
     plt.plot(x1[:100], train_predict_y[:100], label="predict", color="orange")
     plt.xlabel("Time")
     plt.ylabel("Power output (kW)")
@@ -283,7 +286,6 @@ def main(argv):
     outputFolder = "output/" + "modelKeras" + "/"
     if not os.path.isdir(outputFolder):
         os.makedirs(outputFolder)
-
 
     forecasting(load)
 

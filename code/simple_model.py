@@ -532,8 +532,7 @@ def setUpDiesel(model, ini):
     )
 
     model.addConstr(
-        (dieselStatusVars[0, 0] == 1),
-        "diesel generator is not committed at start"
+        (dieselStatusVars[0, 0] == 1), "diesel generator is not committed at start"
     )
     model.addConstr(
         (dieselStatusVars[len(ini.timestamps) - 1, 0] == 1),
