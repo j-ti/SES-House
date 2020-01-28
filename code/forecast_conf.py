@@ -7,4 +7,4 @@ class ForecastConfig:
         self.STEPSIZE = "00:15:00"
 
         self.TRAIN_FRACTION = 0.6
-        self.VALIDATION_FRACTION = (1 - self.TRAINPART) / 2
+        self.VALIDATION_FRACTION = (1 - self.TRAIN_FRACTION) / 2

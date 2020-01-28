@@ -38,19 +38,19 @@ python code/simple_model.py configs/Vermont.ini
 
 Run our Forecasting PV example:
 ```
-python code/forecasting.py
+python code/forecast_pv.py
 ```
 
 Run our Forecasting using the saved model example:
 ```
-python code/forecasting.py 1
+python code/forecast_pv.py 1
 ```
 
 Run our Forecasting Load example:
 ```
-python code/forecasting_load.py
+python code/forecast_load.py
 ```
-Check the `code/forecasting_load.py` to adapt the configuration.
+Check the `code/forecast_load_conf.py` to adapt the configuration.
 
 ### Get started
 
