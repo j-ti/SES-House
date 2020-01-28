@@ -12,6 +12,8 @@ class ForecastLoadConfig:
         self.LOOK_BACK = 15
         self.OUTPUT_SIZE = 96
         self.BATCH_SIZE = 30
+        self.PATIENCE = 5
+        self.MIN_DELTA = 0.0001
         self.DROPOUT = 0.1
         self.NEURONS = 8
         self.ACTIVATION_FUNCTION = "relu"

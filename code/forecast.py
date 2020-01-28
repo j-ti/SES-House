@@ -4,10 +4,9 @@ import pandas as pd
 
 from data import getPecanstreetData
 from keras.engine.saving import model_from_json
+from keras.callbacks import EarlyStopping
 from plot_forecast import *
 from util import constructTimeStamps
-
-
 
 
 def splitData(config, loadsData):
@@ -20,18 +19,21 @@ def splitData(config, loadsData):
         loadsData[endValidation:],
     )
 
+
 def addMinutes(data):
-    minutes = pd.Series([(i.hour * 60 + i.minute) for i in data.index], index=data.index)
+    minutes = pd.Series(
+        [(i.hour * 60 + i.minute) for i in data.index], index=data.index
+    )
     return pd.concat([data, minutes], axis=1)
 
 
 # we assume that data is either train, test or validation and is shape (nbPts, nbFeatures)
-def buildSet(data, look_back, nbOutput, nbFeatures):
+def buildSet(data, look_back, nbOutput):
     x = np.empty((len(data) - look_back - nbOutput, look_back, data.shape[1]))
     y = np.empty((len(data) - look_back - nbOutput, nbOutput))
     for i in range(len(data) - look_back - nbOutput):
-        x[i] = data[i: i + look_back, :]
-        y[i] = data[i + look_back: i + look_back + nbOutput, 0]
+        x[i] = data[i : i + look_back, :]
+        y[i] = data[i + look_back : i + look_back + nbOutput, 0]
     return x, y
 
 
@@ -66,12 +68,22 @@ def loadModel():
 
 
 def train(config, model, trainX, trainY, validationX, validationY):
+
+    earlyStopCallback = EarlyStopping(
+        monitor="val_loss",
+        min_delta=config.MIN_DELTA,
+        patience=config.PATIENCE,
+        mode="min",
+        restore_best_weights=True,
+    )
+
     history = model.fit(
         trainX,
         trainY,
         epochs=config.EPOCHS,
         batch_size=config.BATCH_SIZE,
         validation_data=(validationX, validationY),
+        callbacks=[earlyStopCallback],
         verbose=2,
     )
     return history

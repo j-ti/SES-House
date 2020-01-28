@@ -1,14 +1,14 @@
 #!/usr/bin/env python3.7
 
 import configparser
-from datetime import datetime, timedelta
+from datetime import datetime
 from enum import Enum
 import math
 import sys
 import os
 from shutil import copyfile
 
-from util import constructTimeStamps, getStepsize, getTimeIndexRangeDaily
+from util import constructTimeStamps, getStepsize, getTimeIndexRangeDaily, diffIndexList
 
 from data import (
     getNinja,
@@ -116,8 +116,20 @@ class Configure:
         self.dataPSPv = "yes" == config["DATA_PS"]["pv"]
         self.timeHeader = config["DATA_PS"]["timeHeader"]
         self.dataid = config["DATA_PS"]["dataid"]
+        self.dataStart = datetime.strptime(
+            config["DATA_PS"]["dataStart"], "20%y-%m-%d %H:%M:%S"
+        )
+        self.dataDelta = self.dataStart - datetime.strptime(
+            config["TIME"]["start"], "20%y-%m-%d %H:%M:%S"
+        )
         self.costFileGrid = config["COST"]["file_grid"]
         self.constantPrice = float(config["COST"]["constant_price"])
+        self.priceDataStart = datetime.strptime(
+            config["COST"]["priceDataStart"], "20%y-%m-%d %H:%M:%S"
+        )
+        self.priceDataDelta = self.dataStart - datetime.strptime(
+            config["TIME"]["start"], "20%y-%m-%d %H:%M:%S"
+        )
         self.co2Grid = float(config["CO2"]["grid_CO2"])
         self.co2Diesel = float(config["CO2"]["diesel_CO2"])
 
@@ -133,7 +145,7 @@ def runSimpleModel(ini):
     dieselGeneratorsVars, dieselStatusVars = setUpDiesel(model, ini)
     fromGridVars, toGridVars = setUpGrid(model, ini)
     gridPrices = getPriceData(
-        ini.costFileGrid, ini.timestamps, timedelta(days=365 * 5 + 1), ini.constantPrice
+        ini.costFileGrid, ini.timestamps, ini.priceDataDelta, ini.constantPrice
     )
 
     model.addConstrs(
@@ -516,7 +528,7 @@ def setUpPV(model, ini):
                 ini.dataid,
                 "solar",
                 ini.timestamps,
-                timedelta(days=365 * 5 + 1 + 30 * 6),
+                ini.dataDelta,
             )
         else:
             pvPowerValues = getNinja(ini.pvFile, ini.timestamps)
@@ -540,7 +552,7 @@ def setUpFixedLoads(model, ini):
             ini.dataid,
             "grid",
             ini.timestamps,
-            timedelta(days=365 * 5 + 1 + 30 * 6),
+            ini.dataDelta,
         )
     else:
         loadValues = getLoadsData(ini.loadsFile, ini.timestamps)
@@ -638,23 +650,18 @@ def setUpEv(model, ini):
         vtype=GRB.CONTINUOUS,
         name="evEnergys",
     )
-
-    model.addConstrs(
-        (
-            evPowerVars[i, 0] == 0
-            for i in getTimeIndexRangeDaily(ini.timestamps, ini.t_a_ev, ini.t_b_ev)[:-1]
-        ),
-        "ev gone",
+    evNotChargableIndices = getTimeIndexRangeDaily(
+        ini.timestamps, ini.t_a_ev, ini.t_b_ev, varB=0
     )
+    model.addConstrs((evPowerVars[i, 0] == 0 for i in evNotChargableIndices), "ev gone")
+    allIndices = range(len(ini.timestamps))
+    evChargableIndices = diffIndexList(allIndices, evNotChargableIndices)
     model.addConstrs(
         (
             evEnergyVars[i + 1, 0]
             == evEnergyVars[i, 0]
             - ini.eta_ev * evPowerVars[i, 0] * ini.stepsizeHour  # E in kW per hour
-            for i in getTimeIndexRangeDaily(
-                ini.timestamps, ini.timestamps[0], ini.t_a_ev
-            )[:-1]
-            + getTimeIndexRangeDaily(ini.timestamps, ini.t_b_ev, ini.timestamps[-1])
+            for i in evChargableIndices
         ),
         "ev charging",
     )
@@ -666,17 +673,21 @@ def setUpEv(model, ini):
         ),
         "ev charging goal",
     )
+
+    evEnergyWhileGone = getTimeIndexRangeDaily(
+        ini.timestamps, ini.t_a_ev, ini.t_b_ev, varA=1, varB=1
+    )
     model.addConstrs(
-        (
-            evEnergyVars[i, 0] == 0.1 * ini.E_ev_max
-            for i in getTimeIndexRangeDaily(ini.timestamps, ini.t_a_ev, ini.t_b_ev)[1:]
-        ),
+        (evEnergyVars[i, 0] == 0.1 * ini.E_ev_max for i in evEnergyWhileGone),
         "ev after work",
     )
     model.addConstr(
         (evEnergyVars[len(ini.timestamps), 0] == evEnergyVars[0, 0]),
         "ev end-start energy are equal",
     )
+    # print(evNotChargableIndices)
+    # print(evChargableIndices)
+    # print(evEnergyWhileGone)
 
     return evPowerVars
 
