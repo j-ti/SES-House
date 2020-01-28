@@ -64,12 +64,13 @@ class Configure:
         self.t_goal_ev = datetime.strptime(config["EV"]["t_goal_ev"], "%H:%M:%S")
 
         # Time frame of optimization
-        self.timestamps = constructTimeStamps(
+        self.globalTimestamps = constructTimeStamps(
             datetime.strptime(config["TIME"]["start"], "20%y-%m-%d %H:%M:%S"),
             datetime.strptime(config["TIME"]["end"], "20%y-%m-%d %H:%M:%S"),
             datetime.strptime(config["TIME"]["stepsize"], "%H:%M:%S")
             - datetime.strptime("00:00:00", "%H:%M:%S"),
         )
+        self.timestamps = self.globalTimestamps
         self.stepsize = getStepsize(self.timestamps)
         self.stepsizeHour = self.stepsize.total_seconds() / 3600
 
@@ -137,6 +138,7 @@ class Configure:
 def runSimpleModel(ini):
     model = gp.Model("simple-model")
 
+
     pvVars = setUpPV(model, ini)
     windVars = setUpWind(model, ini)
     batteryPowerVars = setUpBattery(model, ini)
@@ -148,6 +150,7 @@ def runSimpleModel(ini):
         ini.costFileGrid, ini.timestamps, ini.priceDataDelta, ini.constantPrice
     )
 
+    # Powerbalance Constraint
     model.addConstrs(
         (
             fromGridVars.sum(i, "*")
@@ -173,8 +176,8 @@ def runSimpleModel(ini):
     )
 
     model.optimize()
-    model.write(outputFolder + "/res.sol")
 
+    model.write(outputFolder + "/res.sol")
     printResults(model, ini)
     printObjectiveResults(
         ini,
