@@ -6,7 +6,7 @@ from data import getPecanstreetData
 from util import constructTimeStamps, mean_absolute_percentage_error
 from util import makeTick
 
-from forecasting import splitData, addMinutes, buildSet, train, saveModel
+from forecast import splitData, addMinutes, buildSet, train, saveModel
 from forecast_conf import ForecastConfig
 from forecast_load_conf import ForecastLoadConfig
 
