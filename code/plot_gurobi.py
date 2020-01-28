@@ -31,7 +31,7 @@ labelDico = {
 }
 
 
-def plotting(varName, varVal, gridPrices, outputFolder, timestamps):
+def plotting(varName, varVal, gridPrices, outputFolder, ini):
     dico = {
         "PVPowers": [],
         "windPowers": [],
@@ -45,11 +45,11 @@ def plotting(varName, varVal, gridPrices, outputFolder, timestamps):
 
     dicoEnergy = {"batEnergys": [], "evEnergys": []}
 
-    step = int(len(timestamps) / 10)
-    time = [timestamps[i].strftime("%m-%d %H:%M") for i in range(len(timestamps))][
+    step = int(len(ini.timestamps) / 10)
+    time = [ini.timestamps[i].strftime("%m-%d %H:%M") for i in range(len(ini.timestamps))][
         ::step
     ]
-    tick = [i for i in range(len(timestamps))][::step]
+    tick = [i for i in range(len(ini.timestamps))][::step]
 
     for i in range(len(varName)):
         for val in dico.keys():
@@ -64,7 +64,7 @@ def plotting(varName, varVal, gridPrices, outputFolder, timestamps):
     resultsDf = pd.DataFrame.from_dict(dict(dico), orient="columns")
 
     plotting_powers(dico, outputFolder, time, tick)
-    plotting_energys(dicoEnergy, outputFolder, time, tick)
+    plotting_energys(dico, ini.E_bat_max, ini.SOC_bat_min, ini.SOC_bat_max, outputFolder, time, tick)
     plotting_all_powers(dico, outputFolder, time, tick)
     plotting_additive_all_powers(resultsDf, outputFolder, time, tick)
     plotting_in_out_price(dico, outputFolder, gridPrices, time, tick)
@@ -88,10 +88,12 @@ def plotting_powers(dico, outputFolder, time, tick):
 
 
 # Plotting EV and batteries energies
-def plotting_energys(dico, outputFolder, time, tick):
+def plotting_energys(dico, E_bat_max, SOC_bat_min, SOC_bat_max,outputFolder, time, tick):
     plt.plot(dico["batEnergys"], label="Battery Energy", color=colorDico["batEnergys"])
     plt.plot(dico["evEnergys"], label="EV Energy", color=colorDico["evEnergys"])
-    plt.legend(loc="upper left", ncol=2, prop={"size": 8})
+    plt.plot([0,len(dico["batEnergys"])],[E_bat_max,E_bat_max],ls='--',c='turquoise')
+    plt.fill_between([0,len(dico["batEnergys"])],[E_bat_max,E_bat_max],hatch=".",color='turquoise')
+    plt.legend(loc="upper left", ncol=2,prop={"size": 8})
     plt.xticks(tick, time, rotation=20)
     plt.xlabel("Time")
     plt.ylabel("Energy (kWh)")
