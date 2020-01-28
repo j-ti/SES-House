@@ -3,6 +3,7 @@ import sys
 from datetime import datetime
 
 import numpy as np
+import plot_load
 from data import getPecanstreetData
 from forecast_conf import ForecastConfig
 from forecast_pv_conf import ForecastPvConfig
@@ -10,7 +11,8 @@ from forecast import splitData, buildSet, evalModel, loadModel, saveModel, train
 from keras import Sequential, metrics
 from keras.layers import LSTM, Dropout, Dense, Activation
 from keras.losses import mean_squared_error, mean_absolute_error, mean_absolute_percentage_error
-from plot_forecast import plotHistory, plotPrediction, plot100first, plotEcart, plotInput
+from plot_forecast import plotHistory, plotPrediction, plot100first, plotEcart, plotInputDay, plotDay, \
+    plotPredictionPart
 from sklearn.preprocessing import MinMaxScaler
 from util import constructTimeStamps
 
@@ -33,7 +35,6 @@ def buildModel(trainX, trainY, valX, valY, config_pv, nbFeatures):
     model = Sequential()
     model.add(LSTM(config_pv.NEURONS, input_shape=(config_pv.LOOK_BACK, nbFeatures)))
     model.add(Dropout(config_pv.DROPOUT))
-    model.add(Dense(config_pv.DENSE))
     model.add(Activation(config_pv.ACTIVATION_FUNCTION))
     model.add(Dense(config_pv.OUTPUT_SIZE))
     model.compile(
@@ -51,6 +52,7 @@ def buildModel(trainX, trainY, valX, valY, config_pv, nbFeatures):
 def forecasting(config_main, config_pv):
     # import data, with all the features we want
     df, timestamps = dataImport(config_main, config_pv)
+
     df_train, df_validation, df_test = splitData(config_main, df)
 
     # datas are normalized
@@ -67,10 +69,10 @@ def forecasting(config_main, config_pv):
     validationX, validationY = buildSet(np.array(df_validation), config_pv.LOOK_BACK, config_pv.OUTPUT_SIZE)
     testX, testY = buildSet(np.array(df_test), config_pv.LOOK_BACK, config_pv.OUTPUT_SIZE)
 
-    plotInput(df, timestamps)
+    # plotInputDay(timestamps, trainY[:, 0], config_pv)
 
     if config_pv.LOAD_MODEL:
-        model = loadModel()
+        model = loadModel(config_pv)
         history = None
     else:
         model, history = buildModel(trainX, trainY, validationX, validationY, config_pv, nbFeatures)
@@ -80,60 +82,77 @@ def forecasting(config_main, config_pv):
     # plotting
     testPrediction = model.predict(testX)
     trainPrediction = model.predict(trainX)
+    valPrediction = model.predict(validationX)
 
-    if history is not None:
-        plotHistory(config_pv, history)
-
+    # if history is not None:
+    #     plotHistory(config_pv, history)
+    #
     plotPrediction(
         trainY, trainPrediction, testY, testPrediction, timestamps
     )
-    plot100first(trainY, trainPrediction)
-    plot100first(testY, testPrediction)
+    plotPredictionPart(
+        trainY[1, :],
+        trainPrediction[1, :],
+        "1st day of train set",
+        timestamps[: 96],
+    )
+    plotPredictionPart(
+        validationY[1, :],
+        valPrediction[1, :],
+        "1st day of validation set",
+        timestamps[len(trainX):len(trainX) + 96],
+    )
+    plotPredictionPart(
+        testY[1, :],
+        testPrediction[1, :],
+        "1st day of test set",
+        timestamps[len(trainX)+len(validationX): len(trainX)+len(validationX) + 96],
+    )
     plotEcart(
-        np.array(trainY),
-        np.array(trainPrediction),
-        np.array(testY),
-        np.array(testPrediction),
+        np.array(trainY[:, 0]),
+        np.array(trainPrediction[:, 0]),
+        np.array(testY[:, 0]),
+        np.array(testPrediction[:, 0]),
         timestamps,
     )
-    # printing error
-    for _ in [1]:
-        print(
-            "training\tMSE :\t{}".format(
-                mean_squared_error(np.array(trainY), np.array(trainPrediction))
-            )
-        )
-        print(
-            "testing\t\tMSE :\t{}".format(
-                mean_squared_error(np.array(testY), np.array(testPrediction))
-            )
-        )
-
-        print(
-            "training\tMAE :\t{}".format(
-                mean_absolute_error(np.array(trainY), np.array(trainPrediction))
-            )
-        )
-        print(
-            "testing\t\tMAE :\t{}".format(
-                mean_absolute_error(np.array(testY), np.array(testPrediction))
-            )
-        )
-
-        print(
-            "training\tMAPE :\t{} %".format(
-                mean_absolute_percentage_error(
-                    np.array(trainY), np.array(trainPrediction)
-                )
-            )
-        )
-        print(
-            "testing\t\tMAPE :\t{} %".format(
-                mean_absolute_percentage_error(
-                    np.array(testY), np.array(testPrediction)
-                )
-            )
-        )
+    # # printing error
+    # for _ in [1]:
+    #     print(
+    #         "training\tMSE :\t{}".format(
+    #             mean_squared_error(np.array(trainY), np.array(trainPrediction))
+    #         )
+    #     )
+    #     print(
+    #         "testing\t\tMSE :\t{}".format(
+    #             mean_squared_error(np.array(testY), np.array(testPrediction))
+    #         )
+    #     )
+    #
+    #     print(
+    #         "training\tMAE :\t{}".format(
+    #             mean_absolute_error(np.array(trainY), np.array(trainPrediction))
+    #         )
+    #     )
+    #     print(
+    #         "testing\t\tMAE :\t{}".format(
+    #             mean_absolute_error(np.array(testY), np.array(testPrediction))
+    #         )
+    #     )
+    #
+    #     print(
+    #         "training\tMAPE :\t{} %".format(
+    #             mean_absolute_percentage_error(
+    #                 np.array(trainY), np.array(trainPrediction)
+    #             )
+    #         )
+    #     )
+    #     print(
+    #         "testing\t\tMAPE :\t{} %".format(
+    #             mean_absolute_percentage_error(
+    #                 np.array(testY), np.array(testPrediction)
+    #             )
+    #         )
+    #     )
 
 
 def main(argv):

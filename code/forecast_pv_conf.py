@@ -9,9 +9,10 @@ class ForecastPvConfig:
 
         self.LOAD_MODEL = False
         self.MODEL_FILE = "./output/forecast/pv/model.json"
+        self.MODEL_FILE_H5 = "./output/forecast/pv/model.h5"
 
         # TODO : for multiple layer of same type : put inside an array
-        self.EPOCHS = 5
+        self.EPOCHS = 30
         self.LOOK_BACK = 15
         self.BATCH_SIZE = 30
         self.DROPOUT = 0.1
@@ -19,7 +20,7 @@ class ForecastPvConfig:
         self.NEURONS = 128
         self.PATIENCE = 5
         self.MIN_DELTA = 0.0001
-        self.OUTPUT_SIZE = 1
+        self.OUTPUT_SIZE = 96
         self.ACTIVATION_FUNCTION = "relu"
         self.LOSS_FUNCTION = "mean_squared_error"
         self.OPTIMIZE_FUNCTION = "adam"
