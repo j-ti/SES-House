@@ -15,6 +15,8 @@ colorDico = {
     "toGridPowers": "cadetblue",
     "dieselGenerators": "dimgray",
     "gridPrice": "goldenrod",
+
+
 }
 
 
@@ -187,7 +189,7 @@ def plotting_bar_all_powers(dico, outputFolder):
         0, fromGridPow, 0.2, bottom=pvPow + windPow, color=colorDico["fromGridPowers"]
     )
     p4 = plt.bar(
-        0,
+        0.05,
         dieselPow,
         0.1,
         bottom=pvPow + windPow + fromGridPow,

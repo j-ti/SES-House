@@ -93,6 +93,7 @@ class Configure:
         self.dieselLeastPauseTimestepNumber = int(
             math.ceil(self.dieselLeastPauseHour / self.stepsizeHour)
         )
+
         self.startUpHour = datetime.strptime(
             config["DIESEL"]["StartUpTime"], "%H:%M:%S"
         ).hour
@@ -244,7 +245,9 @@ def calcMinCostObjective(
         return dieselObjExp + gridCostObjExp
 
 
-def calcGreenhouseObjective(ini, fromGridVars, dieselGeneratorsVars, batteryPowerVars, type):
+def calcGreenhouseObjective(
+    ini, fromGridVars, dieselGeneratorsVars, batteryPowerVars, type
+):
     dieselGreenhouse = ini.co2Diesel * gp.quicksum(dieselGeneratorsVars)
     gridGreenhouse = ini.co2Grid * gp.quicksum(fromGridVars)
     if type == "Virtual":
@@ -281,19 +284,17 @@ def calcGreenhouseQuadraticObjective(
         return dieselGreenhouseQuadratic + gridGreenhouseQuadratic
 
 
-def calcGridIndependenceObjective(ini, fromGridVars, toGridVars, batteryPowerVars,type):
-    if type== "Virtual":
+def calcGridIndependenceObjective(
+    ini, fromGridVars, toGridVars, batteryPowerVars, type
+):
+    if type == "Virtual":
         return (
             gp.quicksum(fromGridVars)
             + gp.quicksum(toGridVars)
             + calcBatChargeLoss(ini, batteryPowerVars)
         )
-    elif type=="True":
-        return (
-                gp.quicksum(fromGridVars)
-                + gp.quicksum(toGridVars)
-
-        )
+    elif type == "True":
+        return gp.quicksum(fromGridVars) + gp.quicksum(toGridVars)
 
 
 def setObjective(
@@ -316,26 +317,28 @@ def setObjective(
                 dieselGeneratorsVars,
                 dieselStatusVars,
                 batteryPowerVars,
-                "Virtual"
+                "Virtual",
             ),
             GRB.MINIMIZE,
         )
     elif ini.goal is Goal.GREEN_HOUSE:
         model.setObjective(
-            calcGreenhouseObjective(ini, fromGridVars, dieselGeneratorsVars, batteryPowerVars,"Virtual"),
+            calcGreenhouseObjective(
+                ini, fromGridVars, dieselGeneratorsVars, batteryPowerVars, "Virtual"
+            ),
             GRB.MINIMIZE,
         )
     elif ini.goal is Goal.GREEN_HOUSE_QUADRATIC:
         model.setObjective(
             calcGreenhouseQuadraticObjective(
-                ini, fromGridVars, dieselGeneratorsVars, batteryPowerVars,"Virtual"
+                ini, fromGridVars, dieselGeneratorsVars, batteryPowerVars, "Virtual"
             ),
             GRB.MINIMIZE,
         )
     elif ini.goal is Goal.GRID_INDEPENDENCE:
         model.setObjective(
             calcGridIndependenceObjective(
-                ini, fromGridVars, toGridVars, batteryPowerVars,"Virtual"
+                ini, fromGridVars, toGridVars, batteryPowerVars, "Virtual"
             ),
             GRB.MINIMIZE,
         )
@@ -383,23 +386,36 @@ def setUpDiesel(model, ini):
     model.addConstrs(
         (
             (dieselStatusVars[index, 3] == 1)
-            >> (dieselGeneratorsVars[index+1, 0] >= ini.P_dg_min)
-            for index in range(len(ini.timestamps)-1)
+            >> (dieselGeneratorsVars[index + 1, 0] == ini.P_dg_min)
+            for index in range(len(ini.timestamps) - 1)
+        ),
+        "Power generation when diesel generator is turned on",
+    )
+    model.addConstrs(
+        (
+            (dieselStatusVars[index, 3] == 1)
+            >> (dieselGeneratorsVars[index, 0] == ini.P_dg_min)
+            for index in range(len(ini.timestamps))
         ),
         "Power generation when diesel generator is turned on",
     )
 
-
     model.addConstrs(
         (
-            (dieselStatusVars[index, 0] == 1) >> (dieselGeneratorsVars[index+1, 0] == 0)
-            for index in range(len(ini.timestamps)-1)
+            (dieselStatusVars[index, 0] == 1)
+            >> (dieselGeneratorsVars[index + 1, 0] == 0)
+            for index in range(len(ini.timestamps) - 1)
         ),
         "No power generation when diesel generator is turned off",
     )
 
-
-
+    model.addConstrs(
+        (
+            (dieselStatusVars[index, 0] == 1) >> (dieselGeneratorsVars[index, 0] == 0)
+            for index in range(len(ini.timestamps))
+        ),
+        "No power generation when diesel generator is turned off",
+    )
 
     for index in range(len(ini.timestamps) - 1):
         model.addConstr(
@@ -485,16 +501,17 @@ def setUpDiesel(model, ini):
     # s_3:      0 0 0 0 1 1 1 1 1  0  0  0  0
     # sum:      1 2 3 4 5 4 3 2 1  0  0  0  0
     # d*s_3':   0 0 0 0 5 0 0 0 0 -5  0  0  0
+    print(ini.dieselLeastRunTimestepNumber)
     model.addConstrs(
         (
             sum(
                 dieselStatusVars[index2, 3]
                 for index2 in range(index, index + ini.dieselLeastRunTimestepNumber)
             )
-            >= (ini.dieselLeastRunTimestepNumber)
+            >= ini.dieselLeastPauseTimestepNumber
             * (dieselStatusVars[index, 3] - dieselStatusVars[index - 1, 3])
             for index in range(
-                1, len(ini.timestamps) - (ini.dieselLeastRunTimestepNumber)
+                1, len(ini.timestamps) - ini.dieselLeastRunTimestepNumber
             )
         ),
         "Least Running time",
@@ -505,53 +522,23 @@ def setUpDiesel(model, ini):
                 dieselStatusVars[index2, 0]
                 for index2 in range(index, index + ini.dieselLeastPauseTimestepNumber)
             )
-            >= (ini.dieselLeastPauseTimestepNumber)
+            >= ini.dieselLeastPauseTimestepNumber
             * (dieselStatusVars[index, 0] - dieselStatusVars[index - 1, 0])
             for index in range(
-                1, len(ini.timestamps) - (ini.dieselLeastPauseTimestepNumber)
+                1, len(ini.timestamps) - ini.dieselLeastPauseTimestepNumber
             )
         ),
         "Least Pause time",
     )
 
-    model.addConstrs(
-        (
-            sum(
-                dieselStatusVars[index2, 1]
-                for index2 in range(index, index + ini.startUpTimestepNumber)
-            )
-            >= (ini.startUpTimestepNumber)
-            * (dieselStatusVars[index, 1] - dieselStatusVars[index - 1, 1])
-            for index in range(
-            1, len(ini.timestamps) - (ini.startUpTimestepNumber)
-        )
-        ),
-        "Startup hour constraint",
-    )
-
-    model.addConstrs(
-        (
-            sum(
-                dieselStatusVars[index2, 2]
-                for index2 in range(index, index + ini.shutDownTimestepNumber)
-            )
-            >= (ini.shutDownTimestepNumber)
-            * (dieselStatusVars[index, 2] - dieselStatusVars[index - 1, 2])
-            for index in range(
-            1, len(ini.timestamps) - (ini.shutDownTimestepNumber)
-        )
-        ),
-        "Shutdown hour constraint",
-    )
-
     model.addConstr(
-        ((dieselStatusVars[0, 0] == 1)), "diesel generator is not committed at start"
+        (dieselStatusVars[0, 0] == 1),
+        "diesel generator is not committed at start"
     )
     model.addConstr(
-        ((dieselStatusVars[len(ini.timestamps) - 1, 0] == 1)),
+        (dieselStatusVars[len(ini.timestamps) - 1, 0] == 1),
         "Diesel Generator status in the end of simulation",
     )
-
 
     return dieselGeneratorsVars, dieselStatusVars
 
@@ -766,18 +753,20 @@ def printObjectiveResults(
     )
     print(
         "GREEN_HOUSE goal: %.1f"
-        % calcGreenhouseObjective(ini, fromGridVars, dieselGeneratorsVars,batteryPowerVars,"True").getValue()
+        % calcGreenhouseObjective(
+            ini, fromGridVars, dieselGeneratorsVars, batteryPowerVars, "True"
+        ).getValue()
     )
     print(
         "GREEN_HOUSE_QUADRATIC goal: %.1f"
         % calcGreenhouseQuadraticObjective(
-            ini, fromGridVars, dieselGeneratorsVars, batteryPowerVars,"True"
+            ini, fromGridVars, dieselGeneratorsVars, batteryPowerVars, "True"
         ).getValue()
     )
     print(
         "GRID_INDEPENDENCE goal: %.1f"
         % calcGridIndependenceObjective(
-            ini, fromGridVars, toGridVars, batteryPowerVars,"True"
+            ini, fromGridVars, toGridVars, batteryPowerVars, "True"
         ).getValue()
     )
 
