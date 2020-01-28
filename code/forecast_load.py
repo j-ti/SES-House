@@ -13,7 +13,7 @@ from keras.models import Sequential
 from sklearn.preprocessing import MinMaxScaler
 from util import constructTimeStamps
 
-from forecasting import splitData, addMinutes, buildSet, train, saveModel
+from forecast import splitData, addMinutes, buildSet, train, saveModel
 from forecast_conf import ForecastConfig
 from forecast_load_conf import ForecastLoadConfig
 from plot_forecast import plotHistory, plotPredictionPart

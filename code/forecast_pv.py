@@ -5,7 +5,7 @@ from datetime import datetime
 import numpy as np
 from data import getPecanstreetData
 from forecast_pv_conf import ForecastPvConfig
-from forecasting import splitData, buildSet, evalModel, loadModel, saveModel, train
+from forecast import splitData, buildSet, evalModel, loadModel, saveModel, train
 from keras import Sequential, metrics
 from keras.layers import LSTM, Dropout, Dense, Activation
 from keras.losses import mean_squared_error, mean_absolute_error, mean_absolute_percentage_error
