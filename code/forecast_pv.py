@@ -6,7 +6,7 @@ import numpy as np
 from data import getPecanstreetData
 from forecast_conf import ForecastConfig
 from forecast_pv_conf import ForecastPvConfig
-from forecasting import splitData, buildSet, evalModel, loadModel, saveModel, train, addMinutes
+from forecast import splitData, buildSet, evalModel, loadModel, saveModel, train, addMinutes
 from keras import Sequential, metrics
 from keras.layers import LSTM, Dropout, Dense, Activation
 from keras.losses import mean_squared_error, mean_absolute_error, mean_absolute_percentage_error
@@ -43,8 +43,8 @@ def buildModel(trainX, trainY, valX, valY, config_pv, nbFeatures):
     )
 
     # training it
-    model, history = train(config_pv, model, trainX, trainY, valX, valY)
-    saveModel(model)
+    history = train(config_pv, model, trainX, trainY, valX, valY)
+    saveModel(config_pv, model)
     return model, history
 
 
@@ -63,9 +63,9 @@ def forecasting(config_main, config_pv):
     nbFeatures = df_train.shape[1]
 
     # here we have numpy array
-    trainX, trainY = buildSet(np.array(df_train), config_pv.LOOK_BACK, config_pv.OUTPUT_SIZE, nbFeatures)
-    validationX, validationY = buildSet(np.array(df_validation), config_pv.LOOK_BACK, config_pv.OUTPUT_SIZE, nbFeatures)
-    testX, testY = buildSet(np.array(df_test), config_pv.LOOK_BACK, config_pv.OUTPUT_SIZE, nbFeatures)
+    trainX, trainY = buildSet(np.array(df_train), config_pv.LOOK_BACK, config_pv.OUTPUT_SIZE)
+    validationX, validationY = buildSet(np.array(df_validation), config_pv.LOOK_BACK, config_pv.OUTPUT_SIZE)
+    testX, testY = buildSet(np.array(df_test), config_pv.LOOK_BACK, config_pv.OUTPUT_SIZE)
 
     plotInput(df, timestamps)
 
@@ -82,7 +82,7 @@ def forecasting(config_main, config_pv):
     trainPrediction = model.predict(trainX)
 
     if history is not None:
-        plotHistory(history)
+        plotHistory(config_pv, history)
 
     plotPrediction(
         trainY, trainPrediction, testY, testPrediction, timestamps
