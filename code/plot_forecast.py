@@ -5,22 +5,28 @@ import numpy as np
 outputFolder = ""
 
 
-def plotPrediction(train_y, train_predict_y, test_y, test_predict_y, timestamps):
+def plotPrediction(train_y, train_predict_y, test_y, test_predict_y, timestamps, config):
     time, tick = makeTick(timestamps)
 
-    x1 = [i for i in range(len(train_y))]
-    x2 = [i for i in range(len(train_y), len(test_y) + len(train_y))]
+    y1, y1b = [], []
+    for i in range((len(train_predict_y) // config.OUTPUT_SIZE) - 1):
+        y1.extend(train_y[i*config.OUTPUT_SIZE])
+        y1b.extend(train_predict_y[i*config.OUTPUT_SIZE])
 
-    y1 = [np.average(train_y[:i]) for i in range(train_y.shape[0])]
-    y1b = [np.average(train_predict_y[:i]) for i in range(train_predict_y.shape[0])]
-    y2 = [np.average(test_y[:i]) for i in range(test_y.shape[0])]
-    y2b = [np.average(test_predict_y[:i]) for i in range(test_predict_y.shape[0])]
+    y2, y2b = [], []
+    for i in range((len(test_predict_y) // config.OUTPUT_SIZE) - 1):
+        y2.extend(test_y[i*config.OUTPUT_SIZE])
+        y2b.extend(test_predict_y[i*config.OUTPUT_SIZE])
+
+    y1, y1b, y2, y2b = np.array(y1), np.array(y1), np.array(y2), np.array(y2b)
+    x1 = np.array(list(range(len(y1))))
+    x2 = np.array(list(range(len(y2)))) + len(x1)
 
     plt.plot(x1, y1, label="actual", color="green")
     plt.plot(x1, y1b, label="predict", color="orange")
     plt.plot(x2, y2, label="actual", color="blue")
     plt.plot(x2, y2b, label="predict", color="red")
-    plt.xticks(tick, time, rotation=20)
+    # plt.xticks(tick, time, rotation=20)
     plt.xlabel("Time")
     plt.ylabel("Power output (kW)")
     plt.legend()
