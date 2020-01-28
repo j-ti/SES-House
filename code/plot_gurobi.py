@@ -3,19 +3,19 @@ import numpy as np
 import pandas as pd
 
 colorDico = {
-    "PVPowers": "orange",
-    "windPowers": "blue",
-    "batPowers": "green",
-    "batEnergys": "green",
-    "evPowers": "lime",
-    "evEnergys": "lime",
+    "PVPowers": "darkorange",
+    "windPowers": "darkblue",
+    "batPowers": "forestgreen",
+    "batEnergys": "forestgreen",
+    "evPowers": "lightseagreen",
+    "evEnergys": "lightseagreen",
     "batPowersNeg": "forestgreen",
-    "evPowersNeg": "greenyellow",
-    "fixedLoads": "red",
-    "fromGridPowers": "black",
-    "toGridPowers": "cyan",
-    "dieselGenerators": "silver",
-    "gridPrice": "gold",
+    "evPowersNeg": "lightseagreen",
+    "fixedLoads": "brown",
+    "fromGridPowers": "k",
+    "toGridPowers": "cadetblue",
+    "dieselGenerators": "dimgray",
+    "gridPrice": "goldenrod",
 }
 
 labelDico = {
@@ -31,7 +31,7 @@ labelDico = {
 }
 
 
-def plotting(varName, varVal, gridPrices, outputFolder, timestamps):
+def plotting(varName, varVal, gridPrices, outputFolder, ini):
     dico = {
         "PVPowers": [],
         "windPowers": [],
@@ -45,11 +45,11 @@ def plotting(varName, varVal, gridPrices, outputFolder, timestamps):
 
     dicoEnergy = {"batEnergys": [], "evEnergys": []}
 
-    step = int(len(timestamps) / 10)
-    time = [timestamps[i].strftime("%m-%d %H:%M") for i in range(len(timestamps))][
+    step = int(len(ini.timestamps) / 10)
+    time = [ini.timestamps[i].strftime("%m-%d %H:%M") for i in range(len(ini.timestamps))][
         ::step
     ]
-    tick = [i for i in range(len(timestamps))][::step]
+    tick = [i for i in range(len(ini.timestamps))][::step]
 
     for i in range(len(varName)):
         for val in dico.keys():
@@ -64,7 +64,7 @@ def plotting(varName, varVal, gridPrices, outputFolder, timestamps):
     resultsDf = pd.DataFrame.from_dict(dict(dico), orient="columns")
 
     plotting_powers(dico, outputFolder, time, tick)
-    plotting_energys(dicoEnergy, outputFolder, time, tick)
+    plotting_energys(dico, ini.E_bat_max, ini.SOC_bat_min, ini.SOC_bat_max, outputFolder, time, tick)
     plotting_all_powers(dico, outputFolder, time, tick)
     plotting_additive_all_powers(resultsDf, outputFolder, time, tick)
     plotting_in_out_price(dico, outputFolder, gridPrices, time, tick)
@@ -75,22 +75,25 @@ def plotting(varName, varVal, gridPrices, outputFolder, timestamps):
 
 # Plotting PV power, wind power and fixed loads power.
 def plotting_powers(dico, outputFolder, time, tick):
+    plt.style.use("bmh")
     plt.plot(dico["PVPowers"], label="pv", color=colorDico["PVPowers"])
     plt.plot(dico["windPowers"], label="wind", color=colorDico["windPowers"])
     plt.plot(dico["fixedLoads"], label="Loads Power", color=colorDico["fixedLoads"])
     plt.xticks(tick, time, rotation=20)
     plt.xlabel("Time")
     plt.ylabel("Output power - kW")
-    plt.legend(loc="upper left")
+    plt.legend(loc="upper left", ncol=3)
     plt.savefig(outputFolder + "/pv_wind-power.png")
     plt.show()
 
 
 # Plotting EV and batteries energies
-def plotting_energys(dico, outputFolder, time, tick):
+def plotting_energys(dico, E_bat_max, SOC_bat_min, SOC_bat_max,outputFolder, time, tick):
     plt.plot(dico["batEnergys"], label="Battery Energy", color=colorDico["batEnergys"])
     plt.plot(dico["evEnergys"], label="EV Energy", color=colorDico["evEnergys"])
-    plt.legend(loc="upper right", prop={"size": 8})
+    plt.plot([0,len(dico["batEnergys"])],[E_bat_max,E_bat_max],ls='--',c='turquoise')
+    plt.fill_between([0,len(dico["batEnergys"])],[E_bat_max,E_bat_max],hatch=".",color='turquoise')
+    plt.legend(loc="upper left", ncol=2,prop={"size": 8})
     plt.xticks(tick, time, rotation=20)
     plt.xlabel("Time")
     plt.ylabel("Energy (kWh)")
@@ -119,7 +122,7 @@ def plotting_all_powers(dico, outputFolder, time, tick):
     plt.xticks(tick, time, rotation=20)
     plt.xlabel("Time")
     plt.ylabel("Power (kW)")
-    plt.legend(loc="upper right")
+    plt.legend(loc="upper left", ncol=2)
     plt.savefig(outputFolder + "/power-balance.png")
     plt.show()
 
@@ -215,8 +218,8 @@ def plotting_in_out_price(dico, outputFolder, gridPrices, time, tick):
     ax1.set_xlabel("Time")
     ax1.set_ylabel("Price - $ / kWh")
     ax2.set_ylabel("Power (kW)")
-    ax1.legend(loc="upper right")
-    ax2.legend(loc="upper left")
+    ax1.legend(loc="upper center", ncol=1)
+    ax2.legend(loc="upper left", ncol=1)
     plt.savefig(outputFolder + "grid_in-out_price.png")
     plt.show()
 
@@ -276,7 +279,7 @@ def plotting_bar_all_powers(dico, outputFolder):
         0, fromGridPow, 0.2, bottom=pvPow + windPow, color=colorDico["fromGridPowers"]
     )
     p4 = plt.bar(
-        0,
+        0.05,
         dieselPow,
         0.1,
         bottom=pvPow + windPow + fromGridPow,
