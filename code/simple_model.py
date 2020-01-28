@@ -110,8 +110,11 @@ class Configure:
         self.deltaStartUp = self.P_dg_min / self.startUpHour * self.stepsizeHour
 
         self.pvFile = config["PV"]["file"]
+        self.pvScale = float(config["PV"]["scale"])
         self.windFile = config["WIND"]["file"]
+        self.windScale = float(config["WIND"]["scale"])
         self.loadsFile = config["LOADS"]["file"]
+        self.loadsScale = float(config["LOADS"]["scale"])
         self.dataFile = config["DATA_PS"]["file"]
         self.dataPSLoads = "yes" == config["DATA_PS"]["loads"]
         self.dataPSPv = "yes" == config["DATA_PS"]["pv"]
@@ -564,7 +567,7 @@ def setUpPV(model, ini):
         metadata, pvPowerValues = getNinjaPvApi(
             ini.loc_lat, ini.loc_lon, ini.timestamps
         )
-        pvPowerValues = pvPowerValues.values
+        pvPowerValues = pvPowerValues.values * ini.pvScale
     else:
         print("PV data: use sample files")
         if ini.dataPSPv:
@@ -576,9 +579,9 @@ def setUpPV(model, ini):
                 "solar",
                 ini.timestamps,
                 ini.dataDelta,
-            )
+            ) * ini.pvScale
         else:
-            pvPowerValues = getNinja(ini.pvFile, ini.timestamps)
+            pvPowerValues = getNinja(ini.pvFile, ini.timestamps) * ini.pvScale
     assert len(pvPowerValues) == len(ini.timestamps)
     model.addConstrs(
         (pvVars[i, 0] == pvPowerValues[i] for i in range(len(ini.timestamps))),
@@ -600,9 +603,9 @@ def setUpFixedLoads(model, ini):
             "grid",
             ini.timestamps,
             ini.dataDelta,
-        )
+        ) * ini.loadsScale
     else:
-        loadValues = getLoadsData(ini.loadsFile, ini.timestamps)
+        loadValues = getLoadsData(ini.loadsFile, ini.timestamps) * ini.loadsScale
 
     assert len(loadValues) == len(ini.timestamps)
     model.addConstrs(
@@ -623,10 +626,10 @@ def setUpWind(model, ini):
         metadata, windPowerValues = getNinjaWindApi(
             ini.loc_lat, ini.loc_lon, ini.timestamps
         )
-        windPowerValues = windPowerValues.values
+        windPowerValues = windPowerValues.values * ini.windScale
     else:
         print("Wind data: use sample files")
-        windPowerValues = getNinja(ini.windFile, ini.timestamps)
+        windPowerValues = getNinja(ini.windFile, ini.timestamps) * ini.windScale
 
     assert len(windPowerValues) == len(ini.timestamps)
     model.addConstrs(

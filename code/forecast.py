@@ -1,6 +1,10 @@
 import pandas as pd
 from keras.callbacks import EarlyStopping
 from keras.engine.saving import model_from_json
+from keras.models import Sequential
+from keras.layers import LSTM, Dropout, Activation
+from keras import metrics
+from keras.layers.core import Dense
 from plot_forecast import *
 
 
@@ -30,6 +34,34 @@ def buildSet(data, look_back, nbOutput):
         x[i] = data[i: i + look_back, :]
         y[i] = data[i + look_back: i + look_back + nbOutput, 0]
     return x, y
+
+
+def buildModel(config, trainXShape):
+    model = Sequential()
+
+    model.add(
+        LSTM(
+            config.NEURONS[0],
+            return_sequences=len(config.NEURONS) != 1,
+            input_shape=(trainXShape[1], trainXShape[2]),
+        )
+    )
+
+    for neuron in config.NEURONS[1:-1]:
+        model.add(LSTM(config.NEURONS, return_sequences=True))
+
+    if len(config.NEURONS) > 1:
+        model.add(LSTM(config.NEURONS[-1]))
+
+    model.add(Dropout(config.DROPOUT))
+    model.add(Dense(config.OUTPUT_SIZE))
+    model.add(Activation(config.ACTIVATION_FUNCTION))
+    model.compile(
+        loss=config.LOSS_FUNCTION,
+        optimizer=config.OPTIMIZE_FUNCTION,
+        metrics=[metrics.mape, metrics.mae, metrics.mse],
+    )
+    return model
 
 
 # WARNING ! depending on if we load the model or if we build it, the return value of evaluate change
