@@ -64,7 +64,7 @@ def plotting(varName, varVal, gridPrices, outputFolder, ini):
     resultsDf = pd.DataFrame.from_dict(dict(dico), orient="columns")
 
     plotting_powers(dico, outputFolder, time, tick)
-    plotting_energys(dico, ini.E_bat_max, ini.SOC_bat_min, ini.SOC_bat_max, outputFolder, time, tick)
+    plotting_energys(dicoEnergy, ini.E_bat_max, ini.SOC_bat_min, ini.SOC_bat_max, outputFolder, time, tick)
     plotting_all_powers(dico, outputFolder, time, tick)
     plotting_additive_all_powers(resultsDf, outputFolder, time, tick)
     plotting_in_out_price(dico, outputFolder, gridPrices, time, tick)
