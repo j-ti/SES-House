@@ -63,10 +63,12 @@ def plotting(varName, varVal, gridPrices, outputFolder, ini):
 
     resultsDf = pd.DataFrame.from_dict(dict(dico), orient="columns")
 
+    plt.style.use("bmh")
     plotting_powers(dico, outputFolder, time, tick)
     plotting_energys(dicoEnergy, ini.E_bat_max, ini.SOC_bat_min, ini.SOC_bat_max, outputFolder, time, tick)
     plotting_all_powers(dico, outputFolder, time, tick)
     plotting_additive_all_powers(resultsDf, outputFolder, time, tick)
+    plotting_additive_all_powers_sym(resultsDf, outputFolder, time, tick)
     plotting_in_out_price(dico, outputFolder, gridPrices, time, tick)
     plotting_pie_gen_pow(dico, outputFolder)
     plotting_bar_in_out(dico, outputFolder)
@@ -75,7 +77,7 @@ def plotting(varName, varVal, gridPrices, outputFolder, ini):
 
 # Plotting PV power, wind power and fixed loads power.
 def plotting_powers(dico, outputFolder, time, tick):
-    plt.style.use("bmh")
+
     plt.plot(dico["PVPowers"], label="pv", color=colorDico["PVPowers"])
     plt.plot(dico["windPowers"], label="wind", color=colorDico["windPowers"])
     plt.plot(dico["fixedLoads"], label="Loads Power", color=colorDico["fixedLoads"])
@@ -134,14 +136,13 @@ def plotting_additive_all_powers(resultsPd, outputFolder, time, tick):
     step = None  # 'mid'
 
     # Devide in and out flows (esp. for batteries) and make them all positive
-    negResults = -resultsPd[resultsPd < 0]
-    resultsPd[resultsPd < 0] = 0
-    negResults.fillna(0.0, inplace=True)
+    negResults, resultsPd = resultsPd.clip(upper=0)*(-1), resultsPd.clip(lower=0)
     negResults.columns = [str(col) + "Neg" for col in negResults.columns]
     resultsPd[["batPowersNeg", "evPowersNeg"]] = negResults[
         ["batPowersNeg", "evPowersNeg"]
     ]
     # selection list of series to be plotted as area-plot and in which order
+    selOut = ["fixedLoads", "batPowersNeg", "evPowersNeg", "toGridPowers"]
     selArea = [
         "PVPowers",
         "windPowers",
@@ -150,36 +151,34 @@ def plotting_additive_all_powers(resultsPd, outputFolder, time, tick):
         "dieselGenerators",
         "fromGridPowers",
     ]
-    fig = plt.figure()
-    ax = fig.add_subplot(1, 1, 1)
-    areaColors = list(map(colorDico.get, selArea))
-    areaColors = ["pink" if c is None else c for c in areaColors]
-
-    resultsPd[selArea].plot(
-        kind=kindPlot, linewidth=0, stacked=True, ax=ax, color=areaColors
-    )
-
-    selLine = ["fixedLoads", "batPowersNeg", "evPowersNeg", "toGridPowers"]
-    lineColors = list(map(colorDico.get, selLine))
-    lineColors = ["pink" if c is None else c for c in lineColors]
+    # Colorscheme with selection lists
+    inColors = list(map(colorDico.get, selArea))
+    inColors = ["pink" if c is None else c for c in inColors]
+    outColors = list(map(colorDico.get, selOut))
+    outColors = ["pink" if c is None else c for c in outColors]
     hatch = ["", "//", "--", ".."]
 
-    additiveOut = resultsPd[selLine].copy()
-    additiveOut = additiveOut.cumsum(axis=1)
-
-    additiveOut[selLine[1:]].plot(
-        kind="line", drawstyle=style, linewidth=2, ls="--", ax=ax, color=lineColors[1:]
+    # Plottting
+    fig, ax = plt.subplots()
+    resultsPd[selArea].plot(
+        kind=kindPlot, linewidth=0, stacked=True, ax=ax, color=inColors
     )
 
-    for i in range(1, len(selLine)):
+    additiveOut = resultsPd[selOut].copy()
+    additiveOut = additiveOut.cumsum(axis=1)
+    additiveOut[selOut[1:]].plot(
+        kind="line", drawstyle=style, linewidth=2, ls="--", ax=ax, color=outColors[1:]
+    )
+
+    for i in range(1, len(selOut)):
         plt.fill_between(
             range(len(additiveOut)),
-            additiveOut[selLine[i - 1]],
-            additiveOut[selLine[i]],
+            additiveOut[selOut[i - 1]],
+            additiveOut[selOut[i]],
             facecolor="none",
             step=step,
             hatch=hatch[i],
-            edgecolor=colorDico[selLine[i]],
+            edgecolor=colorDico[selOut[i]],
             linewidth=1.0,
         )
 
@@ -196,6 +195,63 @@ def plotting_additive_all_powers(resultsPd, outputFolder, time, tick):
     plt.savefig(outputFolder + "/power-balance2.png")
     plt.show()
 
+# Area plotting of all the powers from our system (in and out) inside one graph with consumption (loads) as baseline
+def plotting_additive_all_powers_sym(resultsPd, outputFolder, time, tick):
+    kindPlot = "area"  # 'bar'
+    style = "default"  # 'steps-mid'
+    step = None  # 'mid'
+
+    # Devide in and out flows (esp. for batteries)
+    # Selection list for in/out series in plotting order
+    selOut = ["fixedLoads", "batPowersNeg", "evPowersNeg", "toGridPowers"]
+    selIn = [
+        "PVPowers",
+        "windPowers",
+        "batPowers",
+        "evPowers",
+        "dieselGenerators",
+        "fromGridPowers",
+    ]
+    negResults, resultsPd = resultsPd.clip(upper=0), resultsPd.clip(lower=0)
+    negResults.columns = [str(col) + "Neg" for col in negResults.columns]
+    resultsPd[["batPowersNeg", "evPowersNeg"]] = negResults[
+        ["batPowersNeg", "evPowersNeg"]
+    ]
+    # make loads and toGrid values negative
+    resultsPd[['fixedLoads', 'toGridPowers']] *= -1
+
+    # Colorscheme with selection lists
+    inColors = list(map(colorDico.get, selIn))
+    inColors = ["pink" if c is None else c for c in inColors]
+    outColors = list(map(colorDico.get, selOut))
+    outColors = ["pink" if c is None else c for c in outColors]
+    hatch = ["", "//", "--", ".."]
+
+    # Plottting
+    fig, ax = plt.subplots()
+    resultsPd[selIn].plot(
+        kind=kindPlot, linewidth=0, stacked=True, ax=ax, color=inColors
+    )
+
+    plt.plot(
+        - resultsPd["fixedLoads"], label="Loads Power", color=colorDico["fixedLoads"]
+    )
+
+    resultsPd[selOut].plot(
+        kind=kindPlot, stacked=True, linewidth=0, ax=ax, ls="--", color=outColors
+    )
+    [resultsPd[selOut].sum(axis=1).min(), resultsPd[selIn].sum(axis=1).max()]
+    ax.set_ylim([resultsPd[selOut].sum(axis=1).min(), resultsPd[selIn].sum(axis=1).max()])
+
+    # Settings
+    plt.xticks(tick, time, rotation=20)
+    plt.xlabel("Time")
+    plt.ylabel("Power (kW)")
+    chartBox = ax.get_position()
+    ax.set_position([chartBox.x0, chartBox.y0, chartBox.width * 0.75, chartBox.height])
+    plt.legend(bbox_to_anchor=(1.5, 0.8), loc="upper right")
+    plt.savefig(outputFolder + "/power-balance2.png")
+    plt.show()
 
 # Plotting the evolution of the power in and out on the grid and the evolution of prices
 def plotting_in_out_price(dico, outputFolder, gridPrices, time, tick):
