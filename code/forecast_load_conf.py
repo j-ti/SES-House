@@ -15,7 +15,7 @@ class ForecastLoadConfig:
         self.PATIENCE = 5
         self.MIN_DELTA = 0.0001
         self.DROPOUT = 0.1
-        self.NEURONS = 8
+        self.NEURONS = [512]
         self.ACTIVATION_FUNCTION = "relu"
         self.LOSS_FUNCTION = "mean_squared_error"
         self.OPTIMIZE_FUNCTION = "adam"
