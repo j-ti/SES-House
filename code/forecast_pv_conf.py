@@ -7,7 +7,7 @@ class ForecastPvConfig:
         self.DATE_START = "2019-05-01 00:00:00"
         self.DATE_END = "2019-06-01 00:00:00"
 
-        self.LOAD_MODEL = False
+        self.LOAD_MODEL = True
         self.MODEL_FILE = "./output/forecast/pv/model.json"
         self.MODEL_FILE_H5 = "./output/forecast/pv/model.h5"
 

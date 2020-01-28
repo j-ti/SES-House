@@ -1,4 +1,5 @@
 import os
+
 import sys
 from datetime import datetime
 
@@ -88,7 +89,7 @@ def forecasting(config_main, config_pv):
     #     plotHistory(config_pv, history)
     #
     plotPrediction(
-        trainY, trainPrediction, testY, testPrediction, timestamps
+        trainY, trainPrediction, testY, testPrediction, timestamps, config_pv
     )
     plotPredictionPart(
         trainY[1, :],
@@ -168,4 +169,5 @@ def main(argv):
 
 
 if __name__ == "__main__":
+    os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
     main(sys.argv)
