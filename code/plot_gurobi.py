@@ -105,21 +105,23 @@ def plotting_powers(dico, outputFolder, time, tick):
 def plotting_energys(
     dico, E_bat_max, SOC_bat_min, SOC_bat_max, outputFolder, time, tick
 ):
-    plt.plot(dico["batEnergys"], label="Battery Energy", color=colorDico["batEnergys"])
-    plt.plot(dico["evEnergys"], label="EV Energy", color=colorDico["evEnergys"])
-    plt.plot(
-        [0, len(dico["batEnergys"])], [E_bat_max, E_bat_max], ls="--", c="turquoise"
-    )
-    plt.fill_between(
-        [0, len(dico["batEnergys"])],
-        [E_bat_max, E_bat_max],
-        hatch=".",
-        color="turquoise",
-    )
-    plt.legend(loc="upper left", ncol=2, prop={"size": 8})
-    plt.xticks(tick, time, rotation=20)
+
+    fig, ax1 = plt.subplots()
+    ax2 = ax1.twinx()
+    ax1.plot(dico["batEnergys"], label="Battery Energy", color=colorDico["batEnergys"])
+    ax1.plot([0,len(dico["batEnergys"])],[E_bat_max*SOC_bat_max,E_bat_max*SOC_bat_max],ls='--',c='darkgray')
+    ax1.plot([0, len(dico["batEnergys"])], [E_bat_max * SOC_bat_min, E_bat_max * SOC_bat_min], ls='--',c='darkgray')
+    ax2.plot(dico["evEnergys"], label="EV Energy", color=colorDico["evEnergys"])
+    ax1.legend(loc="upper left", ncol=1, prop={"size": 8})
+    ax2.legend(loc="upper center", ncol=1, prop={"size": 8})
+    ax1.tick_params(axis='x', rotation=20)
+    ax1.set_xticks(tick)
+    ax1.set_xticklabels(time)
+    ax1.set_ylabel("Energy (kWh)")
+    ax2.set_yticks([E_bat_max*SOC_bat_max,E_bat_max*SOC_bat_min])
+    ax2.set_yticklabels(["SOC"+str(SOC_bat_max*100)+"%","SOC"+str(SOC_bat_min*100)+"%"])
+
     plt.xlabel("Time")
-    plt.ylabel("Energy (kWh)")
     plt.savefig(outputFolder + "/bat_ev-energy.png")
     plt.show()
 
