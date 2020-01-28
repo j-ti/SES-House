@@ -77,19 +77,19 @@ def saveModel(config, model):
     model.save_weights(config.OUTPUT_FOLDER + "model.h5")
 
 
-def loadModel():
+def loadModel(config):
     # load json and create model
-    json_file = open(outputFolder + "model.json", "r")
+    json_file = open(config.MODEL_FILE, "r")
     loaded_model_json = json_file.read()
     json_file.close()
 
     loaded_model = model_from_json(loaded_model_json)
     # load weights into new model
-    loaded_model.load_weights(outputFolder + "model.h5")
+    loaded_model.load_weights(config.MODEL_FILE_H5)
 
     # evaluate loaded model
     loaded_model.compile(
-        loss="binary_crossentropy", optimizer="rmsprop", metrics=["accuracy"]
+        loss=config.LOSS_FUNCTION, optimizer=config.OPTIMIZE_FUNCTION, metrics=["accuracy"]
     )
     return loaded_model
 

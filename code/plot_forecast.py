@@ -10,10 +10,16 @@ def plotPrediction(train_y, train_predict_y, test_y, test_predict_y, timestamps)
 
     x1 = [i for i in range(len(train_y))]
     x2 = [i for i in range(len(train_y), len(test_y) + len(train_y))]
-    plt.plot(x1, train_y, label="actual", color="green")
-    plt.plot(x1, train_predict_y, label="predict", color="orange")
-    plt.plot(x2, test_y, label="actual", color="blue")
-    plt.plot(x2, test_predict_y, label="predict", color="red")
+
+    y1 = [np.average(train_y[:i]) for i in range(train_y.shape[0])]
+    y1b = [np.average(train_predict_y[:i]) for i in range(train_predict_y.shape[0])]
+    y2 = [np.average(test_y[:i]) for i in range(test_y.shape[0])]
+    y2b = [np.average(test_predict_y[:i]) for i in range(test_predict_y.shape[0])]
+
+    plt.plot(x1, y1, label="actual", color="green")
+    plt.plot(x1, y1b, label="predict", color="orange")
+    plt.plot(x2, y2, label="actual", color="blue")
+    plt.plot(x2, y2b, label="predict", color="red")
     plt.xticks(tick, time, rotation=20)
     plt.xlabel("Time")
     plt.ylabel("Power output (kW)")
@@ -38,10 +44,10 @@ def plotPredictionPart(real, predicted, nameOfSet, timestamps):
     plt.show()
 
 
-def plotDay(timestamps, realY, predictY):
+def plotDay(config, timestamps, realY, predictY):
     assert len(realY) == len(predictY)
-    realMeans, realSd = getMeanSdDay(realY)
-    predictedMeans, predictedSd = getMeanSdDay(predictY)
+    realMeans, realSd = getMeanSdDay(config, realY)
+    predictedMeans, predictedSd = getMeanSdDay(config, predictY)
     x1 = list(range(96))
 
     plt.plot(x1, realMeans, label="actual", color="green")
@@ -94,15 +100,21 @@ def plotEcart(train_y, train_predict_y, test_y, test_predict_y, timestamps):
     plt.show()
 
 
-def plotInput(df, timestamps):
-    time, tick = makeTick(timestamps)
-    y = np.array(df)
-    plt.plot(y, label="actual", color="green")
+def plotInputDay(df, timestamps, config):
+    realMeans, realSd = getMeanSdDay(config,  df)
+    x1 = list(range(96))
+
+    plt.plot(x1, realMeans, label="mean", color="green")
+    plt.fill_between(
+        x1, realMeans - realSd * 0.5, realMeans + realSd * 0.5, color="green", alpha=0.5
+    )
+
+    time, tick = makeTick(timestamps[:96], "%H:%M")
     plt.xticks(tick, time, rotation=20)
-    plt.xlabel("Time")
-    plt.ylabel("Input datas")
+    plt.xlabel("Time of Day")
+    plt.ylabel("Average Power consumption (kW)")
     plt.legend()
-    plt.savefig(outputFolder + "/input.png")
+    plt.tight_layout()
     plt.show()
 
 
