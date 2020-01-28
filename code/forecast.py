@@ -1,17 +1,7 @@
-from datetime import datetime
-
 import pandas as pd
-
-from data import getPecanstreetData
-from keras.engine.saving import model_from_json
 from keras.callbacks import EarlyStopping
+from keras.engine.saving import model_from_json
 from plot_forecast import *
-from util import constructTimeStamps
-
-
-# fixing the random seed to have a better reproducibility
-seed = 3
-np.random.seed(seed)
 
 
 def splitData(config, loadsData):
@@ -37,8 +27,8 @@ def buildSet(data, look_back, nbOutput):
     x = np.empty((len(data) - look_back - nbOutput, look_back, data.shape[1]))
     y = np.empty((len(data) - look_back - nbOutput, nbOutput))
     for i in range(len(data) - look_back - nbOutput):
-        x[i] = data[i : i + look_back, :]
-        y[i] = data[i + look_back : i + look_back + nbOutput, 0]
+        x[i] = data[i: i + look_back, :]
+        y[i] = data[i + look_back: i + look_back + nbOutput, 0]
     return x, y
 
 
@@ -73,7 +63,6 @@ def loadModel():
 
 
 def train(config, model, trainX, trainY, validationX, validationY):
-
     earlyStopCallback = EarlyStopping(
         monitor="val_loss",
         min_delta=config.MIN_DELTA,
