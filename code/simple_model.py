@@ -18,11 +18,8 @@ from data import (
     getPecanstreetData,
 )
 from plot_gurobi import plotting
-
 import gurobipy as gp
-
-from gurobipy import QuadExpr
-from gurobipy import GRB
+from gurobipy import QuadExpr, GRB, abs_
 
 
 outputFolder = ""
@@ -394,6 +391,33 @@ def setUpDiesel(model, ini):
         name="dieselStatus",
     )
 
+    dieselPowerRamp = model.addVars(
+        len(ini.timestamps),
+        1,
+        lb=-ini.deltaShutDown,
+        ub=ini.deltaStartUp,
+        vtype=GRB.CONTINUOUS,
+        name="dieselPowerRamp",
+    )
+
+    dieselStartupRamp = model.addVars(
+        len(ini.timestamps),
+        1,
+        lb=0,
+        ub=ini.deltaStartUp,
+        vtype=GRB.CONTINUOUS,
+        name="dieselStartupRamp",
+    )
+
+    dieselShutdownRamp = model.addVars(
+        len(ini.timestamps),
+        1,
+        lb=0,
+        ub=ini.deltaShutDown,
+        vtype=GRB.CONTINUOUS,
+        name="dieselShutdownRamp",
+    )
+
     model.addConstrs(
         (dieselStatusVars.sum(i, "*") == 1 for i in range(len(ini.timestamps)))
     )
@@ -401,7 +425,7 @@ def setUpDiesel(model, ini):
     model.addConstrs(
         (
             (dieselStatusVars[index, 3] == 1)
-            >> (dieselGeneratorsVars[index + 1, 0] == ini.P_dg_min)
+            >> (dieselGeneratorsVars[index + 1, 0] >= ini.P_dg_min)
             for index in range(len(ini.timestamps) - 1)
         ),
         "Power generation when diesel generator is turned on",
@@ -409,7 +433,7 @@ def setUpDiesel(model, ini):
     model.addConstrs(
         (
             (dieselStatusVars[index, 3] == 1)
-            >> (dieselGeneratorsVars[index, 0] == ini.P_dg_min)
+            >> (dieselGeneratorsVars[index, 0] >= ini.P_dg_min)
             for index in range(len(ini.timestamps))
         ),
         "Power generation when diesel generator is turned on",
@@ -438,7 +462,7 @@ def setUpDiesel(model, ini):
                 (dieselStatusVars[index, 1] == 1)
                 >> (
                     dieselGeneratorsVars[index + 1, 0]
-                    == dieselGeneratorsVars[index, 0] + ini.deltaStartUp
+                    == dieselGeneratorsVars[index, 0] + dieselStartupRamp[index,0]
                 )
             ),
             "diesel generator power increase during Startup",
@@ -448,10 +472,21 @@ def setUpDiesel(model, ini):
                 (dieselStatusVars[index, 2] == 1)
                 >> (
                     dieselGeneratorsVars[index + 1, 0]
-                    == dieselGeneratorsVars[index, 0] - ini.deltaShutDown
+                    == dieselGeneratorsVars[index, 0] - dieselShutdownRamp[index,0]
                 )
             ),
             "diesel generator power decrease during Shutdown",
+        )
+
+        model.addConstr(
+            (
+                (dieselStatusVars[index, 3] == 1)
+                >> (
+                    dieselGeneratorsVars[index + 1, 0]
+                    == dieselGeneratorsVars[index, 0] + dieselPowerRamp[index,0]
+                )
+            ),
+            "ramp limit during fully committed",
         )
 
         model.addConstr(
@@ -549,10 +584,10 @@ def setUpDiesel(model, ini):
     model.addConstr(
         (dieselStatusVars[0, 0] == 1), "diesel generator is not committed at start"
     )
-    model.addConstr(
-        (dieselStatusVars[len(ini.timestamps) - 1, 0] == 1),
-        "Diesel Generator status in the end of simulation",
-    )
+    # model.addConstr(
+    #     (dieselStatusVars[len(ini.timestamps) - 1, 0] == 1),
+    #     "Diesel Generator status in the end of simulation",
+    # )
 
     return dieselGeneratorsVars, dieselStatusVars
 
