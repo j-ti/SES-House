@@ -89,7 +89,7 @@ def forecasting(config_main, config_pv):
     #     plotHistory(config_pv, history)
     #
     plotPrediction(
-        trainY, trainPrediction, testY, testPrediction, timestamps, config_pv
+        trainY, trainPrediction, testY, validationY, valPrediction, testPrediction, timestamps, config_pv
     )
     plotPredictionPart(
         trainY[1, :],
@@ -110,11 +110,14 @@ def forecasting(config_main, config_pv):
         timestamps[len(trainX)+len(validationX): len(trainX)+len(validationX) + 96],
     )
     plotEcart(
-        np.array(trainY[:, 0]),
-        np.array(trainPrediction[:, 0]),
-        np.array(testY[:, 0]),
-        np.array(testPrediction[:, 0]),
+        np.array(trainY),
+        np.array(trainPrediction),
+        np.array(validationY),
+        np.array(valPrediction),
+        np.array(testY),
+        np.array(testPrediction),
         timestamps,
+        config_pv
     )
     # # printing error
     # for _ in [1]:
