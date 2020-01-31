@@ -20,7 +20,7 @@ class ForecastPvConfig:
         self.DENSE = 1
         self.NEURONS = 128
         self.PATIENCE = 5
-        self.MIN_DELTA = 0.0001
+        self.MIN_DELTA = 0.001
         self.OUTPUT_SIZE = 24
         self.ACTIVATION_FUNCTION = "relu"
         self.LOSS_FUNCTION = "mean_squared_error"

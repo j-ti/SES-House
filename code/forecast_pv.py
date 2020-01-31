@@ -16,6 +16,7 @@ from plot_forecast import plotHistory, plotPrediction, plot100first, plotEcart, 
     plotPredictionPart
 from sklearn.preprocessing import MinMaxScaler
 from util import constructTimeStamps
+import matplotlib.pyplot as plt
 
 
 def dataImport(config_main, config_pv):
@@ -81,41 +82,41 @@ def forecasting(config_main, config_pv):
     evalModel(model, testX, testY)
 
     # plotting
-    testPrediction = model.predict(testX)
     trainPrediction = model.predict(trainX)
+    testPrediction = model.predict(testX)
     valPrediction = model.predict(validationX)
 
-    # if history is not None:
-    #     plotHistory(config_pv, history)
-    #
+    if history is not None:
+        plotHistory(config_pv, history)
+
     plotPrediction(
         trainY, trainPrediction, testY, validationY, valPrediction, testPrediction, timestamps, config_pv
     )
     plotPredictionPart(
-        trainY,
-        trainPrediction,
+        trainY[0],
+        trainPrediction[0],
         "1st day of train set",
-        timestamps[: 96],
+        timestamps[: 24],
     )
     plotPredictionPart(
         validationY[0],
         valPrediction[0],
         "1st day of validation set",
-        timestamps[len(trainX):len(trainX) + 96],
+        timestamps[len(trainX):len(trainX) + 24],
     )
     plotPredictionPart(
         testY[0],
         testPrediction[0],
         "1st day of test set",
-        timestamps[len(trainX)+len(validationX): len(trainX)+len(validationX) + 96],
+        timestamps[len(trainX)+len(validationX): len(trainX)+len(validationX) + 24],
     )
     plotEcart(
-        np.array(trainY),
-        np.array(trainPrediction),
-        np.array(validationY),
-        np.array(valPrediction),
-        np.array(testY),
-        np.array(testPrediction),
+        trainY,
+        trainPrediction,
+        validationY,
+        valPrediction,
+        testY,
+        testPrediction,
         timestamps,
         config_pv
     )
