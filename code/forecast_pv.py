@@ -1,22 +1,17 @@
 import os
-
 import sys
 from datetime import datetime
 
 import numpy as np
-import plot_load
 from data import getPecanstreetData
+from forecast import splitData, buildSet, evalModel, loadModel, saveModel, train, addMinutes, addDayOfYear
 from forecast_conf import ForecastConfig
 from forecast_pv_conf import ForecastPvConfig
-from forecast import splitData, buildSet, evalModel, loadModel, saveModel, train, addMinutes, addDayOfYear
 from keras import Sequential, metrics
 from keras.layers import LSTM, Dropout, Dense, Activation
-from keras.losses import mean_squared_error, mean_absolute_error, mean_absolute_percentage_error
-from plot_forecast import plotHistory, plotPrediction, plot100first, plotEcart, plotInputDay, plotDay, \
-    plotPredictionPart
+from plot_forecast import plotHistory, plotPrediction, plotEcart, plotPredictionPart
 from sklearn.preprocessing import MinMaxScaler
 from util import constructTimeStamps
-import matplotlib.pyplot as plt
 
 
 def dataImport(config_main, config_pv):
@@ -59,6 +54,7 @@ def forecasting(config_main, config_pv):
 
     df_train, df_validation, df_test = splitData(config_main, df, 24)
 
+    # the SettingWithCopyWarning warning is there because df_train is a copy of the original data.
     # we force the date to have a 0 -> 365 range
     valMin = df_train.iloc[0, -1]
     df_train.iloc[0, -1] = 0
@@ -119,7 +115,7 @@ def forecasting(config_main, config_pv):
         testY[0],
         testPrediction[0],
         "1st day of test set",
-        timestamps[len(trainX)+len(validationX): len(trainX)+len(validationX) + 24],
+        timestamps[len(trainX) + len(validationX): len(trainX) + len(validationX) + 24],
     )
     plotEcart(
         trainY,

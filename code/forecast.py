@@ -1,8 +1,9 @@
+from datetime import datetime
+
 import pandas as pd
 from keras.callbacks import EarlyStopping
 from keras.engine.saving import model_from_json
 from plot_forecast import *
-from datetime import date, datetime
 
 
 def splitData(config, loadsData, nbPointPerDay):

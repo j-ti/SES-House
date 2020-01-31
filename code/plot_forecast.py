@@ -1,6 +1,6 @@
 import matplotlib.pyplot as plt
-from util import makeTick, getMeanSdDay
 import numpy as np
+from util import makeTick, getMeanSdDay
 
 outputFolder = ""
 
@@ -11,8 +11,8 @@ def plotPrediction(train_y, train_predict_y, val_y, val_predict_y, test_y, test_
 
     y1, y1b = [], []
     for i in range(min((len(train_predict_y) // config.OUTPUT_SIZE) - 1, config.NB_PLOT)):
-        y1.extend(train_y[i*config.OUTPUT_SIZE])
-        y1b.extend(train_predict_y[i*config.OUTPUT_SIZE])
+        y1.extend(train_y[i * config.OUTPUT_SIZE])
+        y1b.extend(train_predict_y[i * config.OUTPUT_SIZE])
 
     y2, y2b = [], []
     for i in range(min((len(val_predict_y) // config.OUTPUT_SIZE) - 1, config.NB_PLOT)):
@@ -21,14 +21,13 @@ def plotPrediction(train_y, train_predict_y, val_y, val_predict_y, test_y, test_
 
     y3, y3b = [], []
     for i in range(min((len(test_predict_y) // config.OUTPUT_SIZE) - 1, config.NB_PLOT)):
-        y3.extend(test_y[i*config.OUTPUT_SIZE])
-        y3b.extend(test_predict_y[i*config.OUTPUT_SIZE])
+        y3.extend(test_y[i * config.OUTPUT_SIZE])
+        y3b.extend(test_predict_y[i * config.OUTPUT_SIZE])
 
     y1, y1b, y2, y2b, y3, y3b = np.array(y1), np.array(y1), np.array(y2), np.array(y2b), np.array(y3), np.array(y3b)
     x1 = np.array(list(range(len(y1))))
     x2 = np.array(list(range(len(y2)))) + len(x1)
     x3 = np.array(list(range(len(y3)))) + len(x1) + len(x2)
-
 
     plt.plot(x1, y1b, label="predict", color="orange")
     plt.plot(x1, y1, label="actual", color="green")
@@ -137,7 +136,7 @@ def plotEcart(train_y, train_predict_y, val_y, val_predict_y, test_y, test_predi
 
 
 def plotInputDay(df, timestamps, config):
-    realMeans, realSd = getMeanSdDay(config,  df)
+    realMeans, realSd = getMeanSdDay(config, df)
     x1 = list(range(96))
 
     plt.plot(x1, realMeans, label="mean", color="green")
