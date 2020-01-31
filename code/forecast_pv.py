@@ -12,6 +12,8 @@ from keras.layers import LSTM, Dropout, Dense, Activation
 from plot_forecast import plotHistory, plotPrediction, plotEcart, plotPredictionPart, plotEcartMSE
 from sklearn.preprocessing import MinMaxScaler
 from util import constructTimeStamps
+from sklearn.metrics import mean_squared_error
+import matplotlib.pyplot as plt
 
 
 def dataImport(config_main, config_pv):
@@ -80,9 +82,18 @@ def forecasting(config_main, config_pv):
     evalModel(model, testX, testY)
 
     # plotting
-    trainPrediction = model.predict(trainX)
-    testPrediction = model.predict(testX)
-    valPrediction = model.predict(validationX)
+    trainPrediction = model.predict(trainX, batch_size=24)
+    testPrediction = model.predict(testX, batch_size=24)
+    valPrediction = model.predict(validationX, batch_size=24)
+    test1 = model.predict(np.array([testX[i] for i in range(24)]))
+    test2 = model.predict(np.array([testX[50+i] for i in range(24)]))
+
+    print(mean_squared_error(testPrediction[0:24], test1[0:24]))
+    print(mean_squared_error(testPrediction[50:50+24], test2[0:24]))
+    print(testPrediction[0:24][0])
+    print(test1[0:24][0])
+    print(testPrediction[50:50+24][0])
+    print(test2[0:24][0])
 
     if history is not None:
         plotHistory(config_pv, history)

@@ -53,6 +53,8 @@ def buildModel(config, trainXShape):
             config.NEURONS[0],
             return_sequences=len(config.NEURONS) != 1,
             input_shape=(trainXShape[1], trainXShape[2]),
+            batch_size=24,
+            stateful=True
         )
     )
 
@@ -76,8 +78,8 @@ def buildModel(config, trainXShape):
 # WARNING ! depending on if we load the model or if we build it, the return value of evaluate change
 # I still don't know why
 def evalModel(model, testx, testy):
-    return model.evaluate(testx, testy, verbose=0)
-
+    return model.evaluate(testx, testy, verbose=0, batch_size=24)
+    # return None
 
 def saveModel(config, model):
     model_json = model.to_json()
@@ -98,7 +100,7 @@ def loadModel(config):
 
     # evaluate loaded model
     loaded_model.compile(
-        loss=config.LOSS_FUNCTION, optimizer=config.OPTIMIZE_FUNCTION, metrics=["accuracy"]
+        loss=config.LOSS_FUNCTION, optimizer=config.OPTIMIZE_FUNCTION, metrics=["accuracy"],
     )
     return loaded_model
 

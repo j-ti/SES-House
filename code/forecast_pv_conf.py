@@ -16,10 +16,10 @@ class ForecastPvConfig:
         # TODO : for multiple layer of same type : put inside an array
         self.EPOCHS = 30
         self.LOOK_BACK = 24
-        self.BATCH_SIZE = 30
+        self.BATCH_SIZE = 24
         self.DROPOUT = 0.1
         self.DENSE = 1
-        self.NEURONS = [128]
+        self.NEURONS = [160]
         self.PATIENCE = 5
         self.MIN_DELTA = 0.0001
         self.OUTPUT_SIZE = 24
