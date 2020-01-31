@@ -7,7 +7,14 @@ from data import getPecanstreetData
 from util import constructTimeStamps, mean_absolute_percentage_error
 from util import makeTick
 
-from forecast import splitData, addMinutes, buildSet, train, saveModel
+from forecast import (
+    splitData,
+    addMinutes,
+    buildSet,
+    train,
+    saveModel,
+    get_timestamps_per_day,
+)
 from forecast_conf import ForecastConfig
 from forecast_load_conf import ForecastLoadConfig
 
@@ -77,25 +84,20 @@ def meanBaseline(train, test):
 
 
 def one_step_persistence_model(part):
-    part_x = part[0:-1, 0]
-    part_y = part[1:, 0]
-    mse = mean_squared_error(part_x, part_y)
+    predictions = part[0:-1, 0]
+    real = part[1:, 0]
+    mse = mean_squared_error(real, predictions)
     print("1 Step Persistence Model MSE: ", mse)
 
-    plot_x = range(len(part_x))
-    plt.plot(plot_x[0:96], part_y[0:96], label="actual", color="green")
-    plt.plot(
-        plot_x[0:96], part_x[0:96], label="persistence model prediction", color="orange"
-    )
-    plt.xlabel("Time")
-    plt.ylabel("Power (kW)")
-    plt.legend()
-    plt.tight_layout()
-    plt.show()
 
-
-def one_day_persistence_model(part):
-    pass
+def one_day_persistence_model(config, part):
+    predictions = np.empty((len(part) - 2 * config.OUTPUT_SIZE, config.OUTPUT_SIZE))
+    real = np.empty((len(part) - 2 * config.OUTPUT_SIZE, config.OUTPUT_SIZE))
+    for i in range(len(part) - 2 * config.OUTPUT_SIZE):
+        predictions[i] = part[i : i + config.OUTPUT_SIZE, 0]
+        real[i] = part[i + config.OUTPUT_SIZE : i + 2 * config.OUTPUT_SIZE, 0]
+    mse = mean_squared_error(real, predictions)
+    print("1 Day Persistence Model MSE: ", mse)
 
 
 def main(argv):

@@ -10,7 +10,7 @@ from util import constructTimeStamps
 
 from forecast import splitData, addMinutes, buildSet, train, saveModel, buildModel
 from forecast_load import getNormalizedParts
-from forecast_baseline import one_step_persistence_model
+from forecast_baseline import one_step_persistence_model, one_day_persistence_model
 from forecast_conf import ForecastConfig
 from forecast_load_conf import ForecastLoadConfig
 
@@ -36,6 +36,9 @@ def main(argv):
 
     one_step_persistence_model(validation)
     one_step_persistence_model(test)
+
+    one_day_persistence_model(loadConfig, validation)
+    one_day_persistence_model(loadConfig, test)
 
 
 if __name__ == "__main__":

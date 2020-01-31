@@ -9,7 +9,15 @@ from data import getPecanstreetData
 from sklearn.preprocessing import MinMaxScaler
 from util import constructTimeStamps
 
-from forecast import splitData, addMinutes, buildSet, train, saveModel, buildModel, get_split_indexes
+from forecast import (
+    splitData,
+    addMinutes,
+    buildSet,
+    train,
+    saveModel,
+    buildModel,
+    get_split_indexes,
+)
 from forecast_conf import ForecastConfig
 from forecast_load_conf import ForecastLoadConfig
 from plot_forecast import plotHistory, plotPredictionPart
@@ -93,24 +101,23 @@ def main(argv):
         + loadConfig.OUTPUT_SIZE * 3
     )
 
+    end_train, end_validation = get_split_indexes(config)
+    validation_timestamps = config.TIMESTAMPS[end_train:end_validation]
+    validation_y_timestamps = validation_timestamps[
+        loadConfig.LOOK_BACK + loadConfig.OUTPUT_SIZE :
+    ]
+    assert len(validation_y_timestamps) == len(validation_y)
+
     model = buildModel(loadConfig, train_x.shape)
     history = train(loadConfig, model, train_x, train_y, validation_x, validation_y)
     saveModel(loadConfig, model)
     plotHistory(loadConfig, history)
-    validation_begin = len(train_y) + loadConfig.LOOK_BACK + loadConfig.OUTPUT_SIZE
-    validation_timestamps = timestamps[
-        validation_begin
-        + loadConfig.OUTPUT_SIZE : validation_begin
-        + len(validation_y)
-        + loadConfig.LOOK_BACK
-    ]
-    assert len(validation_timestamps) == len(validation_y)
     validation_prediction = model.predict(validation_x)
     plotPredictionPart(
         validation_y[1, :],
         validation_prediction[1, :],
         "1st day of validation set",
-        validation_timestamps[: loadConfig.OUTPUT_SIZE],
+        validation_y_timestamps[: loadConfig.OUTPUT_SIZE],
     )
 
 

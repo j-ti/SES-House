@@ -12,14 +12,19 @@ from plot_forecast import *
 from util import getStepsize
 
 
+def get_timestamps_per_day(config):
+    timestamps_per_day = timedelta(hours=24) / getStepsize(config.TIMESTAMPS)
+    assert timestamps_per_day.is_integer()
+    return int(timestamps_per_day)
+
+
 def get_split_indexes(config):
     diff = config.TIMESTAMPS[-1] - config.TIMESTAMPS[0]
-    timestamps_per_day = timedelta(hours=24) / getStepsize(config.TIMESTAMPS)
-    print(timestamps_per_day)
-    assert timestamps_per_day.is_integer()
-    timestamps_per_day = int(timestamps_per_day)
-    end_train =  timestamps_per_day * int(diff.days * config.TRAIN_FRACTION)
-    end_validation = end_train + timestamps_per_day * int(diff.days * config.VALIDATION_FRACTION)
+    timestamps_per_day = get_timestamps_per_day(config)
+    end_train = timestamps_per_day * int(diff.days * config.TRAIN_FRACTION)
+    end_validation = end_train + timestamps_per_day * int(
+        diff.days * config.VALIDATION_FRACTION
+    )
     return end_train, end_validation
 
 
