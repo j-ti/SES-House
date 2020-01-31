@@ -8,7 +8,7 @@ import plot_load
 from data import getPecanstreetData
 from forecast_conf import ForecastConfig
 from forecast_pv_conf import ForecastPvConfig
-from forecast import splitData, buildSet, evalModel, loadModel, saveModel, train, addMinutes
+from forecast import splitData, buildSet, evalModel, loadModel, saveModel, train, addMinutes, addDayOfYear
 from keras import Sequential, metrics
 from keras.layers import LSTM, Dropout, Dense, Activation
 from keras.losses import mean_squared_error, mean_absolute_error, mean_absolute_percentage_error
@@ -29,8 +29,10 @@ def dataImport(config_main, config_pv):
     df = getPecanstreetData(
         config_pv.DATA_FILE, config_pv.TIME_HEADER, config_pv.DATAID, "solar", timestamps
     )
+    df = addMinutes(df)
+    df = addDayOfYear(df, timestamps)
 
-    return addMinutes(df), np.array(timestamps)
+    return df, np.array(timestamps)
 
 
 def buildModel(trainX, trainY, valX, valY, config_pv, nbFeatures):
@@ -57,9 +59,18 @@ def forecasting(config_main, config_pv):
 
     df_train, df_validation, df_test = splitData(config_main, df, 24)
 
+    # we force the date to have a 0 -> 365 range
+    valMin = df_train.iloc[0, -1]
+    df_train.iloc[0, -1] = 0
+    valMax = df_train.iloc[1, -1]
+    df_train.iloc[1, -1] = 365
     # datas are normalized
     scaler = MinMaxScaler()
     scaler.fit(df_train)
+
+    df_train.iloc[0, -1] = valMin
+    df_train.iloc[1, -1] = valMax
+
     df_train = scaler.transform(df_train)
     df_validation = scaler.transform(df_validation)
     df_test = scaler.transform(df_test)
