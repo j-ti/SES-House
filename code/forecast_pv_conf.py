@@ -9,7 +9,7 @@ class ForecastPvConfig:
         self.STEP_SIZE = "01:00:00"
         self.TIME_PER_DAY = 24
 
-        self.LOAD_MODEL = False
+        self.LOAD_MODEL = True
         self.MODEL_FILE = "./output/forecast/pv/model.json"
         self.MODEL_FILE_H5 = "./output/forecast/pv/model.h5"
 

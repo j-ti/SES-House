@@ -4,38 +4,42 @@ from util import makeTick, getMeanSdDay
 
 outputFolder = ""
 
-
-# TODO : add number of day we want to plot
 def plotPrediction(train_y, train_predict_y, val_y, val_predict_y, test_y, test_predict_y, timestamps, config):
-    time, tick = makeTick(timestamps)
-
     y1, y1b = [], []
+    time = []
+
     for i in range(min((len(train_predict_y) // config.OUTPUT_SIZE) - 1, config.NB_PLOT)):
         y1.extend(train_y[i * config.OUTPUT_SIZE])
         y1b.extend(train_predict_y[i * config.OUTPUT_SIZE])
+        time.append(timestamps[i * config.OUTPUT_SIZE])
 
     y2, y2b = [], []
     for i in range(min((len(val_predict_y) // config.OUTPUT_SIZE) - 1, config.NB_PLOT)):
         y2.extend(val_y[i * config.OUTPUT_SIZE])
         y2b.extend(val_predict_y[i * config.OUTPUT_SIZE])
+        time.append(timestamps[len(train_predict_y) + i * config.OUTPUT_SIZE])
 
     y3, y3b = [], []
     for i in range(min((len(test_predict_y) // config.OUTPUT_SIZE) - 1, config.NB_PLOT)):
         y3.extend(test_y[i * config.OUTPUT_SIZE])
         y3b.extend(test_predict_y[i * config.OUTPUT_SIZE])
+        time.append(timestamps[len(train_predict_y) + len(val_predict_y) + i * config.OUTPUT_SIZE])
 
     y1, y1b, y2, y2b, y3, y3b = np.array(y1), np.array(y1), np.array(y2), np.array(y2b), np.array(y3), np.array(y3b)
+
     x1 = np.array(list(range(len(y1))))
     x2 = np.array(list(range(len(y2)))) + len(x1)
     x3 = np.array(list(range(len(y3)))) + len(x1) + len(x2)
 
-    plt.plot(x1, y1b, label="predict", color="orange")
-    plt.plot(x1, y1, label="actual", color="green")
-    plt.plot(x2, y2, label="actual", color="blue")
-    plt.plot(x2, y2b, label="predict", color="red")
-    plt.plot(x3, y3, label="actual", color="green")
-    plt.plot(x3, y3b, label="predict", color="orange")
-    # plt.xticks(tick, time, rotation=20)
+    time, tick = makeTick(time)
+    tick = [i * config.TIME_PER_DAY for i in tick]
+    plt.plot(x1, y1, label="actual - train", color="green")
+    plt.plot(x1, y1b, label="predict - train", color="orange")
+    plt.plot(x2, y2, label="actual - val", color="blue")
+    plt.plot(x2, y2b, label="predict - val", color="red")
+    plt.plot(x3, y3, label="actual - test", color="green")
+    plt.plot(x3, y3b, label="predict - test", color="orange")
+    plt.xticks(tick, time, rotation=20)
     plt.xlabel("Time")
     plt.ylabel("Power output (kW)")
     plt.legend()
@@ -98,22 +102,25 @@ def plot100first(train_y, train_predict_y):
 
 
 def plotEcart(train_y, train_predict_y, val_y, val_predict_y, test_y, test_predict_y, timestamps, config):
-    time, tick = makeTick(timestamps)
+    time = []
 
     y1, y1b = [], []
     for i in range(min((len(train_predict_y) // config.OUTPUT_SIZE) - 1, config.NB_PLOT)):
         y1.extend(train_y[i * config.OUTPUT_SIZE])
         y1b.extend(train_predict_y[i * config.OUTPUT_SIZE])
+        time.append(timestamps[i * config.OUTPUT_SIZE])
 
     y2, y2b = [], []
     for i in range(min((len(val_predict_y) // config.OUTPUT_SIZE) - 1, config.NB_PLOT)):
         y2.extend(val_y[i * config.OUTPUT_SIZE])
         y2b.extend(val_predict_y[i * config.OUTPUT_SIZE])
+        time.append(timestamps[len(train_predict_y) + i * config.OUTPUT_SIZE])
 
     y3, y3b = [], []
     for i in range(min((len(test_predict_y) // config.OUTPUT_SIZE) - 1, config.NB_PLOT)):
         y3.extend(test_y[i * config.OUTPUT_SIZE])
         y3b.extend(test_predict_y[i * config.OUTPUT_SIZE])
+        time.append(timestamps[len(train_predict_y) + len(val_predict_y) + i * config.OUTPUT_SIZE])
 
     y1, y1b, y2, y2b, y3, y3b = np.array(y1), np.array(y1b), np.array(y2), np.array(y2b), np.array(y3), np.array(y3b)
 
@@ -124,10 +131,14 @@ def plotEcart(train_y, train_predict_y, val_y, val_predict_y, test_y, test_predi
     x1 = np.array(list(range(len(y1))))
     x2 = np.array(list(range(len(y2)))) + len(x1)
     x3 = np.array(list(range(len(y3)))) + len(x1) + len(x2)
+
+    time, tick = makeTick(time)
+    tick = [i * config.TIME_PER_DAY for i in tick]
+
     plt.plot(x1, y1, label="train", color="green")
     plt.plot(x2, y2, label="validation", color="blue")
     plt.plot(x3, y3, label="test", color="orange")
-    # plt.xticks(tick, time, rotation=20)
+    plt.xticks(tick, time, rotation=20)
     plt.xlabel("Time")
     plt.ylabel("Difference (kW)")
     plt.legend()

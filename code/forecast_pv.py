@@ -4,7 +4,7 @@ from datetime import datetime
 
 import numpy as np
 from data import getPecanstreetData
-from forecast import splitData, buildSet, evalModel, loadModel, saveModel, train, addMinutes, addDayOfYear
+from forecast import splitData, buildSet, evalModel, loadModel, saveModel, train, addMinutes, addDayOfYear, buildModel
 from forecast_conf import ForecastConfig
 from forecast_pv_conf import ForecastPvConfig
 from keras import Sequential, metrics
@@ -30,17 +30,8 @@ def dataImport(config_main, config_pv):
     return df, np.array(timestamps)
 
 
-def buildModel(trainX, trainY, valX, valY, config_pv, nbFeatures):
-    model = Sequential()
-    model.add(LSTM(config_pv.NEURONS, input_shape=(config_pv.LOOK_BACK, nbFeatures)))
-    model.add(Dropout(config_pv.DROPOUT))
-    model.add(Activation(config_pv.ACTIVATION_FUNCTION))
-    model.add(Dense(config_pv.OUTPUT_SIZE))
-    model.compile(
-        loss=config_pv.LOSS_FUNCTION,
-        optimizer=config_pv.OPTIMIZE_FUNCTION,
-        metrics=[metrics.mape, metrics.mae, metrics.mse],
-    )
+def buildModelPv(trainX, trainY, valX, valY, config_pv):
+    model = buildModel(config_pv, trainX.shape)
 
     # training it
     history = train(config_pv, model, trainX, trainY, valX, valY)
@@ -84,7 +75,7 @@ def forecasting(config_main, config_pv):
         model = loadModel(config_pv)
         history = None
     else:
-        model, history = buildModel(trainX, trainY, validationX, validationY, config_pv, nbFeatures)
+        model, history = buildModelPv(trainX, trainY, validationX, validationY, config_pv)
 
     evalModel(model, testX, testY)
 
