@@ -30,7 +30,6 @@ def get_split_indexes(config):
 
 def splitData(config, loadsData):
     endTrain, endValidation = get_split_indexes(config)
-
     return (
         loadsData[:endTrain],
         loadsData[endTrain:endValidation],
@@ -63,6 +62,8 @@ def buildSet(data, look_back, nbOutput):
 
 
 def buildModel(config, trainXShape):
+    assert len(config.DROPOUT) == len(config.NEURONS)
+
     model = Sequential()
 
     model.add(
@@ -72,14 +73,16 @@ def buildModel(config, trainXShape):
             input_shape=(trainXShape[1], trainXShape[2]),
         )
     )
+    model.add(Dropout(config.DROPOUT[0]))
 
-    for neuron in config.NEURONS[1:-1]:
-        model.add(LSTM(config.NEURONS, return_sequences=True))
+    for idx in range(1, len(config.NEURONS) - 1):
+        model.add(LSTM(config.NEURONS[idx], return_sequences=True))
+        model.add(Dropout(config.DROPOUT[idx]))
 
     if len(config.NEURONS) > 1:
         model.add(LSTM(config.NEURONS[-1]))
+        model.add(Dropout(config.DROPOUT[-1]))
 
-    model.add(Dropout(config.DROPOUT))
     model.add(Dense(config.OUTPUT_SIZE))
     model.add(Activation(config.ACTIVATION_FUNCTION))
     model.compile(

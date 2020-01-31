@@ -8,14 +8,14 @@ class ForecastLoadConfig:
         self.LOAD_MODEL = False
         self.MODEL_FILE = "./output/forecast/load/model.json"
 
-        self.EPOCHS = 30
+        self.EPOCHS = 100
         self.LOOK_BACK = 15
         self.OUTPUT_SIZE = 24
-        self.BATCH_SIZE = 30
-        self.PATIENCE = 5
-        self.MIN_DELTA = 0.0001
-        self.DROPOUT = 0.1
-        self.NEURONS = [512]
+        self.BATCH_SIZE = 100
+        self.PATIENCE = 15
+        self.MIN_DELTA = 0.00001
+        self.DROPOUT = [0.05, 0.02, 0.001]
+        self.NEURONS = [200, 100, 20]
         self.ACTIVATION_FUNCTION = "relu"
         self.LOSS_FUNCTION = "mean_squared_error"
         self.OPTIMIZE_FUNCTION = "adam"
