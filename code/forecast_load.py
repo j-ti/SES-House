@@ -9,7 +9,7 @@ from data import getPecanstreetData
 from sklearn.preprocessing import MinMaxScaler
 from util import constructTimeStamps
 
-from forecast import splitData, addMinutes, buildSet, train, saveModel, buildModel
+from forecast import splitData, addMinutes, buildSet, train, saveModel, buildModel, get_split_indexes
 from forecast_conf import ForecastConfig
 from forecast_load_conf import ForecastLoadConfig
 from plot_forecast import plotHistory, plotPredictionPart
@@ -29,6 +29,7 @@ def getNormalizedParts(config, loadConfig, timestamps):
         "grid",
         timestamps,
     )
+    assert len(timestamps) == len(loadsData)
 
     input_data = addMinutes(loadsData)
     input_data = add_day_of_week(input_data)
@@ -79,18 +80,12 @@ def main(argv):
         loadConfig.OUTPUT_FOLDER + "forecast_load_conf.py",
     )
 
-    timestamps = constructTimeStamps(
-        datetime.strptime(config.BEGIN, "20%y-%m-%d %H:%M:%S"),
-        datetime.strptime(config.END, "20%y-%m-%d %H:%M:%S"),
-        datetime.strptime(config.STEPSIZE, "%H:%M:%S")
-        - datetime.strptime("00:00:00", "%H:%M:%S"),
+    train_x, train_y, validation_x, validation_y, _, test_y, scaler = prepareData(
+        config, loadConfig, config.TIMESTAMPS
     )
 
-    train_x, train_y, validation_x, validation_y, _, test_y, scaler = prepareData(
-        config, loadConfig, timestamps
-    )
     assert (
-        len(timestamps)
+        len(config.TIMESTAMPS)
         == len(train_y)
         + len(validation_y)
         + len(test_y)

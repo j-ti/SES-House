@@ -52,7 +52,7 @@ def forecasting(config_main, config_pv):
     # import data, with all the features we want
     df, timestamps = dataImport(config_main, config_pv)
 
-    df_train, df_validation, df_test = splitData(config_main, df, config_pv.TIME_PER_DAY)
+    df_train, df_validation, df_test = splitData(config_main, df)
 
     # the SettingWithCopyWarning warning is there because df_train is a copy of the original data.
     # we force the date to have a 0 -> 365 range

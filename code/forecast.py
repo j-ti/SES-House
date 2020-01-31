@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 
 import pandas as pd
 from keras.callbacks import EarlyStopping
@@ -9,11 +9,23 @@ from keras import metrics
 from keras.layers.core import Dense
 from plot_forecast import *
 
+from util import getStepsize
 
-def splitData(config, loadsData, nbPointPerDay):
-    diff = loadsData.index[-1] - loadsData.index[0]
-    endTrain = nbPointPerDay * int(diff.days * config.TRAIN_FRACTION)
-    endValidation = endTrain + nbPointPerDay * int(diff.days * config.VALIDATION_FRACTION)
+
+def get_split_indexes(config):
+    diff = config.TIMESTAMPS[-1] - config.TIMESTAMPS[0]
+    timestamps_per_day = timedelta(hours=24) / getStepsize(config.TIMESTAMPS)
+    print(timestamps_per_day)
+    assert timestamps_per_day.is_integer()
+    timestamps_per_day = int(timestamps_per_day)
+    end_train =  timestamps_per_day * int(diff.days * config.TRAIN_FRACTION)
+    end_validation = end_train + timestamps_per_day * int(diff.days * config.VALIDATION_FRACTION)
+    return end_train, end_validation
+
+
+def splitData(config, loadsData):
+    endTrain, endValidation = get_split_indexes(config)
+
     return (
         loadsData[:endTrain],
         loadsData[endTrain:endValidation],
