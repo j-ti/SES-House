@@ -6,6 +6,7 @@ from keras.layers import LSTM, Dropout, Activation
 from keras import metrics
 from keras.layers.core import Dense
 from plot_forecast import *
+from datetime import date, datetime
 
 
 def splitData(config, loadsData, nbPointPerDay):
@@ -24,6 +25,13 @@ def addMinutes(data):
         [(i.hour * 60 + i.minute) for i in data.index], index=data.index
     )
     return pd.concat([data, minutes], axis=1)
+
+
+def addDayOfYear(data, timestamps):
+    days = pd.Series(
+        [((timestamps[i] - datetime(2019, 1, 1)).days % 365) for i in range(len(timestamps))], index=data.index
+    )
+    return pd.concat([data, days], axis=1)
 
 
 # we assume that data is either train, test or validation and is shape (nbPts, nbFeatures)
