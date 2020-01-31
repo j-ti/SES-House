@@ -220,7 +220,7 @@ def resampleData(data, timestamps, offset=timedelta(days=0), positive=True):
         data = _dropUnfittingValuesAtEndForDownSampling(
             origStepsize, wantedStepsize, timestamps, data
         )
-        data = data.resample(wantedStepsize).mean()
+        data = data.resample(wantedStepsize).first()
     data = data.loc[timestamps[0] + offset : timestamps[-1] + offset]
     assert data.shape[1] <= 3
     if data.shape[1] == 3:
