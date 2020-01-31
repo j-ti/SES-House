@@ -21,7 +21,7 @@ set_random_seed(ForecastConfig().SEED)
 np.random.seed(ForecastConfig().SEED)
 
 
-def prepareData(config, loadConfig, timestamps):
+def getNormalizedParts(config, loadConfig, timestamps):
     loadsData = getPecanstreetData(
         loadConfig.DATA_FILE,
         loadConfig.TIME_HEADER,
@@ -44,6 +44,12 @@ def prepareData(config, loadConfig, timestamps):
     train_part = scaler.transform(train_part)
     validation_part = scaler.transform(validation_part)
     test_part = scaler.transform(test_part)
+
+    return train_part, validation_part, test_part, scaler
+
+
+def prepareData(config, loadConfig, timestamps):
+    train_part, validation_part, test_part, scaler = getNormalizedParts(config, loadConfig, timestamps)
 
     train_x, train_y = buildSet(
         train_part, loadConfig.LOOK_BACK, loadConfig.OUTPUT_SIZE
@@ -101,6 +107,7 @@ def main(argv):
         + len(validation_y)
         + loadConfig.LOOK_BACK
     ]
+    assert len(validation_timestamps) == len(validation_y)
     validation_prediction = model.predict(validation_x)
     plotPredictionPart(
         validation_y[1, :],

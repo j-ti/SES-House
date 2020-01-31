@@ -2,6 +2,7 @@ import sys
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+from sklearn.metrics import mean_squared_error
 from data import getPecanstreetData
 from util import constructTimeStamps, mean_absolute_percentage_error
 from util import makeTick
@@ -73,6 +74,26 @@ def meanBaseline(train, test):
     mse = mean_squared_error(predictions, test)
     print("Baseline MSE: ", mse)
     return mse
+
+
+def one_step_persistence_model(part):
+    part_x = part[0:-1, 0]
+    part_y = part[1:, 0]
+    mse = mean_squared_error(part_x, part_y)
+    print("1 Step Persistence Model MSE: ", mse)
+
+    plot_x = range(len(part_x))
+    plt.plot(plot_x[0:96], part_y[0:96], label="actual", color="green")
+    plt.plot(plot_x[0:96], part_x[0:96], label="persistence model prediction", color="orange")
+    plt.xlabel("Time")
+    plt.ylabel("Power (kW)")
+    plt.legend()
+    plt.tight_layout()
+    plt.show()
+
+
+def one_day_persistence_model(part):
+    pass
 
 
 def main(argv):
