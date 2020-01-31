@@ -1,3 +1,5 @@
+from datetime import datetime
+
 import pandas as pd
 from keras.callbacks import EarlyStopping
 from keras.engine.saving import model_from_json
@@ -6,7 +8,6 @@ from keras.layers import LSTM, Dropout, Activation
 from keras import metrics
 from keras.layers.core import Dense
 from plot_forecast import *
-from datetime import date, datetime
 
 
 def splitData(config, loadsData, nbPointPerDay):
