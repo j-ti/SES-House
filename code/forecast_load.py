@@ -96,9 +96,9 @@ def main(argv):
     plotHistory(loadConfig, history)
     validation_begin = len(train_y) + loadConfig.LOOK_BACK + loadConfig.OUTPUT_SIZE
     validation_timestamps = timestamps[
-        validation_begin : validation_begin
+        validation_begin
+        + loadConfig.OUTPUT_SIZE : validation_begin
         + len(validation_y)
-        + loadConfig.OUTPUT_SIZE
         + loadConfig.LOOK_BACK
     ]
     validation_prediction = model.predict(validation_x)
