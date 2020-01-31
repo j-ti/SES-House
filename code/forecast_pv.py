@@ -52,7 +52,7 @@ def forecasting(config_main, config_pv):
     # import data, with all the features we want
     df, timestamps = dataImport(config_main, config_pv)
 
-    df_train, df_validation, df_test = splitData(config_main, df, 24)
+    df_train, df_validation, df_test = splitData(config_main, df, config_pv.TIME_PER_DAY)
 
     # the SettingWithCopyWarning warning is there because df_train is a copy of the original data.
     # we force the date to have a 0 -> 365 range
@@ -103,19 +103,19 @@ def forecasting(config_main, config_pv):
         trainY[0],
         trainPrediction[0],
         "1st day of train set",
-        timestamps[: 24],
+        timestamps[: config_pv.TIME_PER_DAY],
     )
     plotPredictionPart(
         validationY[0],
         valPrediction[0],
         "1st day of validation set",
-        timestamps[len(trainX):len(trainX) + 24],
+        timestamps[len(trainX):len(trainX) + config_pv.TIME_PER_DAY],
     )
     plotPredictionPart(
         testY[0],
         testPrediction[0],
         "1st day of test set",
-        timestamps[len(trainX) + len(validationX): len(trainX) + len(validationX) + 24],
+        timestamps[len(trainX) + len(validationX): len(trainX) + len(validationX) + config_pv.TIME_PER_DAY],
     )
     plotEcart(
         trainY,
