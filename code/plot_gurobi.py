@@ -197,8 +197,8 @@ def plotting_additive_all_powers(resultsPd, outputFolder, time, tick):
 
 # Area plotting of all the powers from our system (in and out) inside one graph with consumption (loads) as baseline
 def plotting_additive_all_powers_sym(resultsPd, outputFolder, time, tick):
-    kindPlot = "area"  # 'bar'
-    style = "default"  # 'steps-mid'
+    kindPlot = "bar"  # 'bar'
+    style =  'steps-mid'
     step = None  # 'mid'
 
     # Devide in and out flows (esp. for batteries)
@@ -250,7 +250,7 @@ def plotting_additive_all_powers_sym(resultsPd, outputFolder, time, tick):
     chartBox = ax.get_position()
     ax.set_position([chartBox.x0, chartBox.y0, chartBox.width * 0.75, chartBox.height])
     plt.legend(bbox_to_anchor=(1.5, 0.8), loc="upper right")
-    plt.savefig(outputFolder + "/power-balance2.png")
+    plt.savefig(outputFolder + "/power-balance3.png")
     plt.show()
 
 # Plotting the evolution of the power in and out on the grid and the evolution of prices
