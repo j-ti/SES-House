@@ -46,9 +46,9 @@ def plotting(varName, varVal, gridPrices, outputFolder, ini):
     dicoEnergy = {"batEnergys": [], "evEnergys": []}
 
     step = int(len(ini.timestamps) / 10)
-    time = [ini.timestamps[i].strftime("%m-%d %H:%M") for i in range(len(ini.timestamps))][
-        ::step
-    ]
+    time = [
+        ini.timestamps[i].strftime("%m-%d %H:%M") for i in range(len(ini.timestamps))
+    ][::step]
     tick = [i for i in range(len(ini.timestamps))][::step]
 
     for i in range(len(varName)):
@@ -65,7 +65,15 @@ def plotting(varName, varVal, gridPrices, outputFolder, ini):
 
     plt.style.use("bmh")
     plotting_powers(dico, outputFolder, time, tick)
-    plotting_energys(dicoEnergy, ini.E_bat_max, ini.SOC_bat_min, ini.SOC_bat_max, outputFolder, time, tick)
+    plotting_energys(
+        dicoEnergy,
+        ini.E_bat_max,
+        ini.SOC_bat_min,
+        ini.SOC_bat_max,
+        outputFolder,
+        time,
+        tick,
+    )
     plotting_all_powers(dico, outputFolder, time, tick)
     plotting_additive_all_powers(resultsDf, outputFolder, time, tick)
     plotting_additive_all_powers_sym(resultsDf, outputFolder, time, tick)
@@ -90,12 +98,21 @@ def plotting_powers(dico, outputFolder, time, tick):
 
 
 # Plotting EV and batteries energies
-def plotting_energys(dico, E_bat_max, SOC_bat_min, SOC_bat_max,outputFolder, time, tick):
+def plotting_energys(
+    dico, E_bat_max, SOC_bat_min, SOC_bat_max, outputFolder, time, tick
+):
     plt.plot(dico["batEnergys"], label="Battery Energy", color=colorDico["batEnergys"])
     plt.plot(dico["evEnergys"], label="EV Energy", color=colorDico["evEnergys"])
-    plt.plot([0,len(dico["batEnergys"])],[E_bat_max,E_bat_max],ls='--',c='turquoise')
-    plt.fill_between([0,len(dico["batEnergys"])],[E_bat_max,E_bat_max],hatch=".",color='turquoise')
-    plt.legend(loc="upper left", ncol=2,prop={"size": 8})
+    plt.plot(
+        [0, len(dico["batEnergys"])], [E_bat_max, E_bat_max], ls="--", c="turquoise"
+    )
+    plt.fill_between(
+        [0, len(dico["batEnergys"])],
+        [E_bat_max, E_bat_max],
+        hatch=".",
+        color="turquoise",
+    )
+    plt.legend(loc="upper left", ncol=2, prop={"size": 8})
     plt.xticks(tick, time, rotation=20)
     plt.xlabel("Time")
     plt.ylabel("Energy (kWh)")
@@ -136,7 +153,7 @@ def plotting_additive_all_powers(resultsPd, outputFolder, time, tick):
     step = None  # 'mid'
 
     # Devide in and out flows (esp. for batteries) and make them all positive
-    negResults, resultsPd = resultsPd.clip(upper=0)*(-1), resultsPd.clip(lower=0)
+    negResults, resultsPd = resultsPd.clip(upper=0) * (-1), resultsPd.clip(lower=0)
     negResults.columns = [str(col) + "Neg" for col in negResults.columns]
     resultsPd[["batPowersNeg", "evPowersNeg"]] = negResults[
         ["batPowersNeg", "evPowersNeg"]
@@ -195,10 +212,11 @@ def plotting_additive_all_powers(resultsPd, outputFolder, time, tick):
     plt.savefig(outputFolder + "/power-balance2.png")
     plt.show()
 
+
 # Area plotting of all the powers from our system (in and out) inside one graph with consumption (loads) as baseline
 def plotting_additive_all_powers_sym(resultsPd, outputFolder, time, tick):
     kindPlot = "bar"  # 'bar'
-    style =  'steps-mid'
+    style = "steps-mid"
     step = None  # 'mid'
 
     # Devide in and out flows (esp. for batteries)
@@ -218,7 +236,7 @@ def plotting_additive_all_powers_sym(resultsPd, outputFolder, time, tick):
         ["batPowersNeg", "evPowersNeg"]
     ]
     # make loads and toGrid values negative
-    resultsPd[['fixedLoads', 'toGridPowers']] *= -1
+    resultsPd[["fixedLoads", "toGridPowers"]] *= -1
 
     # Colorscheme with selection lists
     inColors = list(map(colorDico.get, selIn))
@@ -234,14 +252,16 @@ def plotting_additive_all_powers_sym(resultsPd, outputFolder, time, tick):
     )
 
     plt.plot(
-        - resultsPd["fixedLoads"], label="Loads Power", color=colorDico["fixedLoads"]
+        -resultsPd["fixedLoads"], label="Loads Power", color=colorDico["fixedLoads"]
     )
 
     resultsPd[selOut].plot(
         kind=kindPlot, stacked=True, linewidth=0, ax=ax, ls="--", color=outColors
     )
     [resultsPd[selOut].sum(axis=1).min(), resultsPd[selIn].sum(axis=1).max()]
-    ax.set_ylim([resultsPd[selOut].sum(axis=1).min(), resultsPd[selIn].sum(axis=1).max()])
+    ax.set_ylim(
+        [resultsPd[selOut].sum(axis=1).min(), resultsPd[selIn].sum(axis=1).max()]
+    )
 
     # Settings
     plt.xticks(tick, time, rotation=20)
@@ -252,6 +272,7 @@ def plotting_additive_all_powers_sym(resultsPd, outputFolder, time, tick):
     plt.legend(bbox_to_anchor=(1.5, 0.8), loc="upper right")
     plt.savefig(outputFolder + "/power-balance3.png")
     plt.show()
+
 
 # Plotting the evolution of the power in and out on the grid and the evolution of prices
 def plotting_in_out_price(dico, outputFolder, gridPrices, time, tick):
