@@ -29,8 +29,9 @@ def plotPrediction(train_y, train_predict_y, val_y, val_predict_y, test_y, test_
     x2 = np.array(list(range(len(y2)))) + len(x1)
     x3 = np.array(list(range(len(y3)))) + len(x1) + len(x2)
 
-    plt.plot(x1, y1, label="actual", color="green")
+
     plt.plot(x1, y1b, label="predict", color="orange")
+    plt.plot(x1, y1, label="actual", color="green")
     plt.plot(x2, y2, label="actual", color="blue")
     plt.plot(x2, y2b, label="predict", color="red")
     plt.plot(x3, y3, label="actual", color="green")
@@ -45,11 +46,10 @@ def plotPrediction(train_y, train_predict_y, val_y, val_predict_y, test_y, test_
 
 def plotPredictionPart(real, predicted, nameOfSet, timestamps):
     time, tick = makeTick(timestamps)
+    x1 = list(range(len(real)))
 
-    x1 = list(range(len(real[0])))
-
-    plt.plot(x1, real[0], label="actual of " + nameOfSet, color="green")
-    plt.plot(x1, predicted[0], label="predicted of " + nameOfSet, color="orange")
+    plt.plot(x1, real, label="actual of " + nameOfSet, color="green")
+    plt.plot(x1, predicted, label="predicted of " + nameOfSet, color="orange")
 
     plt.xticks(tick, time, rotation=20)
     plt.xlabel("Time")
@@ -116,7 +116,7 @@ def plotEcart(train_y, train_predict_y, val_y, val_predict_y, test_y, test_predi
         y3.extend(test_y[i * config.OUTPUT_SIZE])
         y3b.extend(test_predict_y[i * config.OUTPUT_SIZE])
 
-    y1, y1b, y2, y2b, y3, y3b = np.array(y1), np.array(y1), np.array(y2), np.array(y2b), np.array(y3), np.array(y3b)
+    y1, y1b, y2, y2b, y3, y3b = np.array(y1), np.array(y1b), np.array(y2), np.array(y2b), np.array(y3), np.array(y3b)
 
     y1 = [y1[i] - y1b[i] for i in range(len(y1))]
     y2 = [y2[i] - y2b[i] for i in range(len(y2))]
@@ -125,9 +125,9 @@ def plotEcart(train_y, train_predict_y, val_y, val_predict_y, test_y, test_predi
     x1 = np.array(list(range(len(y1))))
     x2 = np.array(list(range(len(y2)))) + len(x1)
     x3 = np.array(list(range(len(y3)))) + len(x1) + len(x2)
-    plt.plot(x1, y1, label="actual", color="green")
-    plt.plot(x2, y2, label="actual", color="blue")
-    plt.plot(x3, y3, label="actual", color="orange")
+    plt.plot(x1, y1, label="train", color="green")
+    plt.plot(x2, y2, label="validation", color="blue")
+    plt.plot(x3, y3, label="test", color="orange")
     # plt.xticks(tick, time, rotation=20)
     plt.xlabel("Time")
     plt.ylabel("Difference (kW)")
