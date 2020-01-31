@@ -6,14 +6,10 @@ from tensorflow import set_random_seed
 import numpy as np
 import pandas as pd
 from data import getPecanstreetData
-from keras import metrics
-from keras.layers import LSTM, Dropout, Activation
-from keras.layers.core import Dense
-from keras.models import Sequential
 from sklearn.preprocessing import MinMaxScaler
 from util import constructTimeStamps
 
-from forecast import splitData, addMinutes, buildSet, train, saveModel
+from forecast import splitData, addMinutes, buildSet, train, saveModel, buildModel
 from forecast_conf import ForecastConfig
 from forecast_load_conf import ForecastLoadConfig
 from plot_forecast import plotHistory, plotPredictionPart
@@ -25,7 +21,7 @@ set_random_seed(ForecastConfig().SEED)
 np.random.seed(ForecastConfig().SEED)
 
 
-def prepareData(config, loadConfig, timestamps):
+def getNormalizedParts(config, loadConfig, timestamps):
     loadsData = getPecanstreetData(
         loadConfig.DATA_FILE,
         loadConfig.TIME_HEADER,
@@ -49,6 +45,14 @@ def prepareData(config, loadConfig, timestamps):
     validation_part = scaler.transform(validation_part)
     test_part = scaler.transform(test_part)
 
+    return train_part, validation_part, test_part, scaler
+
+
+def prepareData(config, loadConfig, timestamps):
+    train_part, validation_part, test_part, scaler = getNormalizedParts(
+        config, loadConfig, timestamps
+    )
+
     train_x, train_y = buildSet(
         train_part, loadConfig.LOOK_BACK, loadConfig.OUTPUT_SIZE
     )
@@ -58,21 +62,6 @@ def prepareData(config, loadConfig, timestamps):
     test_x, test_y = buildSet(test_part, loadConfig.LOOK_BACK, loadConfig.OUTPUT_SIZE)
 
     return train_x, train_y, validation_x, validation_y, test_x, test_y, scaler
-
-
-# building the model
-def buildModel(loadConfig, trainXShape):
-    model = Sequential()
-    model.add(LSTM(loadConfig.NEURONS, input_shape=(trainXShape[1], trainXShape[2])))
-    model.add(Dropout(loadConfig.DROPOUT))
-    model.add(Dense(loadConfig.OUTPUT_SIZE))
-    model.add(Activation(loadConfig.ACTIVATION_FUNCTION))
-    model.compile(
-        loss=loadConfig.LOSS_FUNCTION,
-        optimizer=loadConfig.OPTIMIZE_FUNCTION,
-        metrics=[metrics.mape, metrics.mae, metrics.mse],
-    )
-    return model
 
 
 def add_day_of_week(data):
@@ -115,11 +104,12 @@ def main(argv):
     plotHistory(loadConfig, history)
     validation_begin = len(train_y) + loadConfig.LOOK_BACK + loadConfig.OUTPUT_SIZE
     validation_timestamps = timestamps[
-        validation_begin : validation_begin
+        validation_begin
+        + loadConfig.OUTPUT_SIZE : validation_begin
         + len(validation_y)
-        + loadConfig.OUTPUT_SIZE
         + loadConfig.LOOK_BACK
     ]
+    assert len(validation_timestamps) == len(validation_y)
     validation_prediction = model.predict(validation_x)
     plotPredictionPart(
         validation_y[1, :],

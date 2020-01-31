@@ -19,7 +19,7 @@ class ForecastPvConfig:
         self.BATCH_SIZE = 30
         self.DROPOUT = 0.1
         self.DENSE = 1
-        self.NEURONS = 128
+        self.NEURONS = [128]
         self.PATIENCE = 5
         self.MIN_DELTA = 0.0001
         self.OUTPUT_SIZE = 24
