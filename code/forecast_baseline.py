@@ -2,11 +2,19 @@ import sys
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+from sklearn.metrics import mean_squared_error
 from data import getPecanstreetData
 from util import constructTimeStamps, mean_absolute_percentage_error
 from util import makeTick
 
-from forecast import splitData, addMinutes, buildSet, train, saveModel
+from forecast import (
+    splitData,
+    addMinutes,
+    buildSet,
+    train,
+    saveModel,
+    get_timestamps_per_day,
+)
 from forecast_conf import ForecastConfig
 from forecast_load_conf import ForecastLoadConfig
 
@@ -73,6 +81,23 @@ def meanBaseline(train, test):
     mse = mean_squared_error(predictions, test)
     print("Baseline MSE: ", mse)
     return mse
+
+
+def one_step_persistence_model(part):
+    predictions = part[0:-1, 0]
+    real = part[1:, 0]
+    mse = mean_squared_error(real, predictions)
+    print("1 Step Persistence Model MSE: ", mse)
+
+
+def one_day_persistence_model(config, part):
+    predictions = np.empty((len(part) - 2 * config.OUTPUT_SIZE, config.OUTPUT_SIZE))
+    real = np.empty((len(part) - 2 * config.OUTPUT_SIZE, config.OUTPUT_SIZE))
+    for i in range(len(part) - 2 * config.OUTPUT_SIZE):
+        predictions[i] = part[i : i + config.OUTPUT_SIZE, 0]
+        real[i] = part[i + config.OUTPUT_SIZE : i + 2 * config.OUTPUT_SIZE, 0]
+    mse = mean_squared_error(real, predictions)
+    print("1 Day Persistence Model MSE: ", mse)
 
 
 def main(argv):

@@ -1,3 +1,5 @@
+from datetime import datetime, timedelta
+
 import pandas as pd
 from keras.callbacks import EarlyStopping
 from keras.engine.saving import model_from_json
@@ -7,11 +9,28 @@ from keras import metrics
 from keras.layers.core import Dense
 from plot_forecast import *
 
+from util import getStepsize
+
+
+def get_timestamps_per_day(config):
+    timestamps_per_day = timedelta(hours=24) / getStepsize(config.TIMESTAMPS)
+    assert timestamps_per_day.is_integer()
+    return int(timestamps_per_day)
+
+
+def get_split_indexes(config):
+    diff = config.TIMESTAMPS[-1] - config.TIMESTAMPS[0]
+    timestamps_per_day = get_timestamps_per_day(config)
+    end_train = timestamps_per_day * int(diff.days * config.TRAIN_FRACTION)
+    end_validation = end_train + timestamps_per_day * int(
+        diff.days * config.VALIDATION_FRACTION
+    )
+    return end_train, end_validation
+
 
 def splitData(config, loadsData):
-    diff = loadsData.index[-1] - loadsData.index[0]
-    endTrain = 96 * int(diff.days * config.TRAIN_FRACTION)
-    endValidation = endTrain + 96 * int(diff.days * config.VALIDATION_FRACTION)
+    endTrain, endValidation = get_split_indexes(config)
+
     return (
         loadsData[:endTrain],
         loadsData[endTrain:endValidation],
@@ -26,13 +45,20 @@ def addMinutes(data):
     return pd.concat([data, minutes], axis=1)
 
 
+def addDayOfYear(data, timestamps):
+    days = pd.Series(
+        [((timestamps[i] - datetime(2019, 1, 1)).days % 365) for i in range(len(timestamps))], index=data.index
+    )
+    return pd.concat([data, days], axis=1)
+
+
 # we assume that data is either train, test or validation and is shape (nbPts, nbFeatures)
 def buildSet(data, look_back, nbOutput):
     x = np.empty((len(data) - look_back - nbOutput, look_back, data.shape[1]))
     y = np.empty((len(data) - look_back - nbOutput, nbOutput))
     for i in range(len(data) - look_back - nbOutput):
-        x[i] = data[i: i + look_back, :]
-        y[i] = data[i + look_back: i + look_back + nbOutput, 0]
+        x[i] = data[i : i + look_back, :]
+        y[i] = data[i + look_back : i + look_back + nbOutput, 0]
     return x, y
 
 
@@ -77,19 +103,19 @@ def saveModel(config, model):
     model.save_weights(config.OUTPUT_FOLDER + "model.h5")
 
 
-def loadModel():
+def loadModel(config):
     # load json and create model
-    json_file = open(outputFolder + "model.json", "r")
+    json_file = open(config.MODEL_FILE, "r")
     loaded_model_json = json_file.read()
     json_file.close()
 
     loaded_model = model_from_json(loaded_model_json)
     # load weights into new model
-    loaded_model.load_weights(outputFolder + "model.h5")
+    loaded_model.load_weights(config.MODEL_FILE_H5)
 
     # evaluate loaded model
     loaded_model.compile(
-        loss="binary_crossentropy", optimizer="rmsprop", metrics=["accuracy"]
+        loss=config.LOSS_FUNCTION, optimizer=config.OPTIMIZE_FUNCTION, metrics=["accuracy"]
     )
     return loaded_model
 

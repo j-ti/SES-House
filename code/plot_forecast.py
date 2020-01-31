@@ -1,20 +1,41 @@
 import matplotlib.pyplot as plt
-from util import makeTick, getMeanSdDay
 import numpy as np
+from util import makeTick, getMeanSdDay
 
 outputFolder = ""
 
 
-def plotPrediction(train_y, train_predict_y, test_y, test_predict_y, timestamps):
+# TODO : add number of day we want to plot
+def plotPrediction(train_y, train_predict_y, val_y, val_predict_y, test_y, test_predict_y, timestamps, config):
     time, tick = makeTick(timestamps)
 
-    x1 = [i for i in range(len(train_y))]
-    x2 = [i for i in range(len(train_y), len(test_y) + len(train_y))]
-    plt.plot(x1, train_y, label="actual", color="green")
-    plt.plot(x1, train_predict_y, label="predict", color="orange")
-    plt.plot(x2, test_y, label="actual", color="blue")
-    plt.plot(x2, test_predict_y, label="predict", color="red")
-    plt.xticks(tick, time, rotation=20)
+    y1, y1b = [], []
+    for i in range(min((len(train_predict_y) // config.OUTPUT_SIZE) - 1, config.NB_PLOT)):
+        y1.extend(train_y[i * config.OUTPUT_SIZE])
+        y1b.extend(train_predict_y[i * config.OUTPUT_SIZE])
+
+    y2, y2b = [], []
+    for i in range(min((len(val_predict_y) // config.OUTPUT_SIZE) - 1, config.NB_PLOT)):
+        y2.extend(val_y[i * config.OUTPUT_SIZE])
+        y2b.extend(val_predict_y[i * config.OUTPUT_SIZE])
+
+    y3, y3b = [], []
+    for i in range(min((len(test_predict_y) // config.OUTPUT_SIZE) - 1, config.NB_PLOT)):
+        y3.extend(test_y[i * config.OUTPUT_SIZE])
+        y3b.extend(test_predict_y[i * config.OUTPUT_SIZE])
+
+    y1, y1b, y2, y2b, y3, y3b = np.array(y1), np.array(y1), np.array(y2), np.array(y2b), np.array(y3), np.array(y3b)
+    x1 = np.array(list(range(len(y1))))
+    x2 = np.array(list(range(len(y2)))) + len(x1)
+    x3 = np.array(list(range(len(y3)))) + len(x1) + len(x2)
+
+    plt.plot(x1, y1b, label="predict", color="orange")
+    plt.plot(x1, y1, label="actual", color="green")
+    plt.plot(x2, y2, label="actual", color="blue")
+    plt.plot(x2, y2b, label="predict", color="red")
+    plt.plot(x3, y3, label="actual", color="green")
+    plt.plot(x3, y3b, label="predict", color="orange")
+    # plt.xticks(tick, time, rotation=20)
     plt.xlabel("Time")
     plt.ylabel("Power output (kW)")
     plt.legend()
@@ -24,7 +45,6 @@ def plotPrediction(train_y, train_predict_y, test_y, test_predict_y, timestamps)
 
 def plotPredictionPart(real, predicted, nameOfSet, timestamps):
     time, tick = makeTick(timestamps)
-
     x1 = list(range(len(real)))
 
     plt.plot(x1, real, label="actual of " + nameOfSet, color="green")
@@ -38,10 +58,10 @@ def plotPredictionPart(real, predicted, nameOfSet, timestamps):
     plt.show()
 
 
-def plotDay(timestamps, realY, predictY):
+def plotDay(config, timestamps, realY, predictY):
     assert len(realY) == len(predictY)
-    realMeans, realSd = getMeanSdDay(realY)
-    predictedMeans, predictedSd = getMeanSdDay(predictY)
+    realMeans, realSd = getMeanSdDay(config, realY)
+    predictedMeans, predictedSd = getMeanSdDay(config, predictY)
     x1 = list(range(96))
 
     plt.plot(x1, realMeans, label="actual", color="green")
@@ -77,16 +97,37 @@ def plot100first(train_y, train_predict_y):
     plt.show()
 
 
-def plotEcart(train_y, train_predict_y, test_y, test_predict_y, timestamps):
+def plotEcart(train_y, train_predict_y, val_y, val_predict_y, test_y, test_predict_y, timestamps, config):
     time, tick = makeTick(timestamps)
 
-    x1 = [i for i in range(len(train_y))]
-    x2 = [i for i in range(len(train_y), len(test_y) + len(train_y))]
-    y1 = [train_predict_y[i] - train_y[i] for i in range(len(x1))]
-    y2 = [test_predict_y[i] - test_y[i] for i in range(len(x2))]
-    plt.plot(x1, y1, label="actual", color="green")
-    plt.plot(x2, y2, label="actual", color="blue")
-    plt.xticks(tick, time, rotation=20)
+    y1, y1b = [], []
+    for i in range(min((len(train_predict_y) // config.OUTPUT_SIZE) - 1, config.NB_PLOT)):
+        y1.extend(train_y[i * config.OUTPUT_SIZE])
+        y1b.extend(train_predict_y[i * config.OUTPUT_SIZE])
+
+    y2, y2b = [], []
+    for i in range(min((len(val_predict_y) // config.OUTPUT_SIZE) - 1, config.NB_PLOT)):
+        y2.extend(val_y[i * config.OUTPUT_SIZE])
+        y2b.extend(val_predict_y[i * config.OUTPUT_SIZE])
+
+    y3, y3b = [], []
+    for i in range(min((len(test_predict_y) // config.OUTPUT_SIZE) - 1, config.NB_PLOT)):
+        y3.extend(test_y[i * config.OUTPUT_SIZE])
+        y3b.extend(test_predict_y[i * config.OUTPUT_SIZE])
+
+    y1, y1b, y2, y2b, y3, y3b = np.array(y1), np.array(y1b), np.array(y2), np.array(y2b), np.array(y3), np.array(y3b)
+
+    y1 = [y1[i] - y1b[i] for i in range(len(y1))]
+    y2 = [y2[i] - y2b[i] for i in range(len(y2))]
+    y3 = [y3[i] - y3b[i] for i in range(len(y3))]
+
+    x1 = np.array(list(range(len(y1))))
+    x2 = np.array(list(range(len(y2)))) + len(x1)
+    x3 = np.array(list(range(len(y3)))) + len(x1) + len(x2)
+    plt.plot(x1, y1, label="train", color="green")
+    plt.plot(x2, y2, label="validation", color="blue")
+    plt.plot(x3, y3, label="test", color="orange")
+    # plt.xticks(tick, time, rotation=20)
     plt.xlabel("Time")
     plt.ylabel("Difference (kW)")
     plt.legend()
@@ -94,15 +135,21 @@ def plotEcart(train_y, train_predict_y, test_y, test_predict_y, timestamps):
     plt.show()
 
 
-def plotInput(df, timestamps):
-    time, tick = makeTick(timestamps)
-    y = np.array(df)
-    plt.plot(y, label="actual", color="green")
+def plotInputDay(df, timestamps, config):
+    realMeans, realSd = getMeanSdDay(config, df)
+    x1 = list(range(96))
+
+    plt.plot(x1, realMeans, label="mean", color="green")
+    plt.fill_between(
+        x1, realMeans - realSd * 0.5, realMeans + realSd * 0.5, color="green", alpha=0.5
+    )
+
+    time, tick = makeTick(timestamps[:96], "%H:%M")
     plt.xticks(tick, time, rotation=20)
-    plt.xlabel("Time")
-    plt.ylabel("Input datas")
+    plt.xlabel("Time of Day")
+    plt.ylabel("Average Power consumption (kW)")
     plt.legend()
-    plt.savefig(outputFolder + "/input.png")
+    plt.tight_layout()
     plt.show()
 
 

@@ -7,7 +7,7 @@ from data import getPecanstreetData
 from util import constructTimeStamps
 from util import makeTick
 
-from forecasting_load_config import Config
+from forecast_load_conf import ForecastLoadConfig
 
 import time
 
@@ -101,7 +101,7 @@ def plotDay(timestamps, realY):
 
 
 def main(argv):
-    config = Config()
+    config = ForecastLoadConfig()
 
     timestamps = constructTimeStamps(
         datetime.strptime(config.BEGIN, "20%y-%m-%d %H:%M:%S"),
