@@ -49,7 +49,9 @@ def getNormalizedParts(config, loadConfig, timestamps):
 
 
 def prepareData(config, loadConfig, timestamps):
-    train_part, validation_part, test_part, scaler = getNormalizedParts(config, loadConfig, timestamps)
+    train_part, validation_part, test_part, scaler = getNormalizedParts(
+        config, loadConfig, timestamps
+    )
 
     train_x, train_y = buildSet(
         train_part, loadConfig.LOOK_BACK, loadConfig.OUTPUT_SIZE

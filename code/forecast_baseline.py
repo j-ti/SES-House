@@ -84,7 +84,9 @@ def one_step_persistence_model(part):
 
     plot_x = range(len(part_x))
     plt.plot(plot_x[0:96], part_y[0:96], label="actual", color="green")
-    plt.plot(plot_x[0:96], part_x[0:96], label="persistence model prediction", color="orange")
+    plt.plot(
+        plot_x[0:96], part_x[0:96], label="persistence model prediction", color="orange"
+    )
     plt.xlabel("Time")
     plt.ylabel("Power (kW)")
     plt.legend()
