@@ -9,7 +9,7 @@ from forecast_conf import ForecastConfig
 from forecast_pv_conf import ForecastPvConfig
 from keras import Sequential, metrics
 from keras.layers import LSTM, Dropout, Dense, Activation
-from plot_forecast import plotHistory, plotPrediction, plotEcart, plotPredictionPart
+from plot_forecast import plotHistory, plotPrediction, plotEcart, plotPredictionPart, plotEcartMSE
 from sklearn.preprocessing import MinMaxScaler
 from util import constructTimeStamps
 
@@ -118,6 +118,18 @@ def forecasting(config_main, config_pv):
         timestamps,
         config_pv
     )
+
+    plotEcartMSE(
+        trainY,
+        trainPrediction,
+        validationY,
+        valPrediction,
+        testY,
+        testPrediction,
+        timestamps,
+        config_pv
+    )
+
     # # printing error
     # for _ in [1]:
     #     print(
