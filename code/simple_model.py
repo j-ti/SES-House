@@ -572,14 +572,17 @@ def setUpPV(model, ini):
         print("PV data: use sample files")
         if ini.dataPSPv:
             print("PV data: use Pecanstreet dataset with dataid:", (ini.dataid))
-            pvPowerValues = getPecanstreetData(
-                ini.dataFile,
-                ini.timeHeader,
-                ini.dataid,
-                "solar",
-                ini.timestamps,
-                ini.dataDelta,
-            ) * ini.pvScale
+            pvPowerValues = (
+                getPecanstreetData(
+                    ini.dataFile,
+                    ini.timeHeader,
+                    ini.dataid,
+                    "solar",
+                    ini.timestamps,
+                    ini.dataDelta,
+                )
+                * ini.pvScale
+            )
         else:
             pvPowerValues = getNinja(ini.pvFile, ini.timestamps) * ini.pvScale
     assert len(pvPowerValues) == len(ini.timestamps)
@@ -596,14 +599,17 @@ def setUpFixedLoads(model, ini):
         len(ini.timestamps), 1, lb=0.0, vtype=GRB.CONTINUOUS, name="fixedLoads"
     )
     if ini.dataPSLoads:
-        loadValues = getPecanstreetData(
-            ini.dataFile,
-            ini.timeHeader,
-            ini.dataid,
-            "grid",
-            ini.timestamps,
-            ini.dataDelta,
-        ) * ini.loadsScale
+        loadValues = (
+            getPecanstreetData(
+                ini.dataFile,
+                ini.timeHeader,
+                ini.dataid,
+                "grid",
+                ini.timestamps,
+                ini.dataDelta,
+            )
+            * ini.loadsScale
+        )
     else:
         loadValues = getLoadsData(ini.loadsFile, ini.timestamps) * ini.loadsScale
 
