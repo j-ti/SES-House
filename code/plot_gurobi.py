@@ -13,20 +13,22 @@ colorDico = {
     "evPowersNeg": "lightseagreen",
     "fixedLoads": "brown",
     "fromGridPowers": "k",
-    "toGridPowers": "cadetblue",
+    "toGridPowers": "slateblue",
     "dieselGenerators": "dimgray",
     "gridPrice": "goldenrod",
 }
 
 labelDico = {
-    "PVPowers": "PV Power",
-    "windPowers": "Wind Power",
-    "batPowers": "Battery Power",
-    "evPowers": "EV Power",
-    "fixedLoads": "Loads Power",
-    "fromGridPowers": "Grid Power In",
-    "toGridPowers": "Grid Power Out",
-    "dieselGenerators": "Diesel Power",
+    "PVPowers": "PV",
+    "windPowers": "Wind",
+    "batPowers": "Bat. Discharging",
+    "evPowers": "EV Discharging",
+    "batPowersNeg": "Bat. Charging",
+    "evPowersNeg": "EV Charging",
+    "fixedLoads": "Loads",
+    "fromGridPowers": "Grid In",
+    "toGridPowers": "Grid Out",
+    "dieselGenerators": "Diesel",
     "gridPrice": "Grid Price",
 }
 
@@ -75,8 +77,8 @@ def plotting(varName, varVal, gridPrices, outputFolder, ini):
         tick,
     )
     plotting_all_powers(dico, outputFolder, time, tick)
-    plotting_additive_all_powers(resultsDf, outputFolder, time, tick)
-    plotting_additive_all_powers_sym(resultsDf, outputFolder, time, tick)
+    plotting_additive_all_powers(resultsDf, outputFolder, time, tick, 'bar')
+    plotting_additive_all_powers_sym(resultsDf, outputFolder, time, tick, 'bar')
     plotting_in_out_price(dico, outputFolder, gridPrices, time, tick)
     plotting_pie_gen_pow(dico, outputFolder)
     plotting_bar_in_out(dico, outputFolder)
@@ -147,10 +149,15 @@ def plotting_all_powers(dico, outputFolder, time, tick):
 
 
 # Area plotting of all the powers from our system (in and out) inside one graph with consumption (loads) as baseline
-def plotting_additive_all_powers(resultsPd, outputFolder, time, tick):
-    kindPlot = "area"  # 'bar'
-    style = "default"  # 'steps-mid'
-    step = None  # 'mid'
+def plotting_additive_all_powers(resultsPd, outputFolder, time, tick, kindPlot = 'area'):
+    if kindPlot is 'bar':
+        style = "steps-mid"
+        step = 'mid'
+        kwargs = {'width':1.0}
+    else:
+        style = "default"
+        step = None
+        kwargs = {}
 
     # Devide in and out flows (esp. for batteries) and make them all positive
     negResults, resultsPd = resultsPd.clip(upper=0) * (-1), resultsPd.clip(lower=0)
@@ -178,7 +185,7 @@ def plotting_additive_all_powers(resultsPd, outputFolder, time, tick):
     # Plottting
     fig, ax = plt.subplots()
     resultsPd[selArea].plot(
-        kind=kindPlot, linewidth=0, stacked=True, ax=ax, color=inColors
+        kind=kindPlot, linewidth=0, stacked=True, ax=ax, color=inColors, **kwargs
     )
 
     additiveOut = resultsPd[selOut].copy()
@@ -192,32 +199,42 @@ def plotting_additive_all_powers(resultsPd, outputFolder, time, tick):
             range(len(additiveOut)),
             additiveOut[selOut[i - 1]],
             additiveOut[selOut[i]],
-            facecolor="none",
+            facecolor=colorDico[selOut[i]],
             step=step,
             hatch=hatch[i],
             edgecolor=colorDico[selOut[i]],
             linewidth=1.0,
+            alpha=0.3,
+            zorder=2,
         )
 
     plt.plot(
-        resultsPd["fixedLoads"], label="Loads Power", color=colorDico["fixedLoads"]
+        resultsPd["fixedLoads"], drawstyle=style, label="fixedLoads", color=colorDico["fixedLoads"]
     )
 
     plt.xticks(tick, time, rotation=20)
     plt.xlabel("Time")
     plt.ylabel("Power (kW)")
+    handles, labels = ax.get_legend_handles_labels()
+    labelsList = list(map(labelDico.get, labels))
+    labelsList = ["pink" if l is None else l for l in labelsList]
     chartBox = ax.get_position()
     ax.set_position([chartBox.x0, chartBox.y0, chartBox.width * 0.75, chartBox.height])
-    plt.legend(bbox_to_anchor=(1.5, 0.8), loc="upper right")
-    plt.savefig(outputFolder + "/power-balance2.png")
+    ax.legend(handles, labelsList,bbox_to_anchor=(1.5, 0.8), loc="upper right")
+    plt.savefig(outputFolder + "/power-balance-area.png")
     plt.show()
 
 
 # Area plotting of all the powers from our system (in and out) inside one graph with consumption (loads) as baseline
-def plotting_additive_all_powers_sym(resultsPd, outputFolder, time, tick):
-    kindPlot = "bar"  # 'bar'
-    style = "steps-mid"
-    step = None  # 'mid'
+def plotting_additive_all_powers_sym(resultsPd, outputFolder, time, tick, kindPlot = 'area'):
+    if kindPlot is 'bar':
+        style = "steps-mid"
+        step = 'mid'
+        kwargs = {'width':1.0}
+    else:
+        style = "default"
+        step = None
+        kwargs = {}
 
     # Devide in and out flows (esp. for batteries)
     # Selection list for in/out series in plotting order
@@ -248,15 +265,15 @@ def plotting_additive_all_powers_sym(resultsPd, outputFolder, time, tick):
     # Plottting
     fig, ax = plt.subplots()
     resultsPd[selIn].plot(
-        kind=kindPlot, linewidth=0, stacked=True, ax=ax, color=inColors
+        kind=kindPlot, linewidth=0, stacked=True, ax=ax, color=inColors, **kwargs
     )
 
     plt.plot(
-        -resultsPd["fixedLoads"], label="Loads Power", color=colorDico["fixedLoads"]
+        -resultsPd["fixedLoads"], drawstyle=style, color=colorDico["fixedLoads"]
     )
 
     resultsPd[selOut].plot(
-        kind=kindPlot, stacked=True, linewidth=0, ax=ax, ls="--", color=outColors
+        kind=kindPlot, stacked=True, linewidth=0, ax=ax, ls="--", color=outColors, **kwargs
     )
     [resultsPd[selOut].sum(axis=1).min(), resultsPd[selIn].sum(axis=1).max()]
     ax.set_ylim(
@@ -267,10 +284,13 @@ def plotting_additive_all_powers_sym(resultsPd, outputFolder, time, tick):
     plt.xticks(tick, time, rotation=20)
     plt.xlabel("Time")
     plt.ylabel("Power (kW)")
+    handles, labels = ax.get_legend_handles_labels()
+    labelsList = list(map(labelDico.get, labels))
+    labelsList = ["pink" if l is None else l for l in labelsList]
     chartBox = ax.get_position()
     ax.set_position([chartBox.x0, chartBox.y0, chartBox.width * 0.75, chartBox.height])
-    plt.legend(bbox_to_anchor=(1.5, 0.8), loc="upper right")
-    plt.savefig(outputFolder + "/power-balance3.png")
+    ax.legend(handles, labelsList,bbox_to_anchor=(1.5, 0.8), loc="upper right")
+    plt.savefig(outputFolder + "/power-balance-symmetric.png")
     plt.show()
 
 
