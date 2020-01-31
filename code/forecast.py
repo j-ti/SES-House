@@ -8,10 +8,10 @@ from keras.layers.core import Dense
 from plot_forecast import *
 
 
-def splitData(config, loadsData):
+def splitData(config, loadsData, nbPointPerDay):
     diff = loadsData.index[-1] - loadsData.index[0]
-    endTrain = 96 * int(diff.days * config.TRAIN_FRACTION)
-    endValidation = endTrain + 96 * int(diff.days * config.VALIDATION_FRACTION)
+    endTrain = nbPointPerDay * int(diff.days * config.TRAIN_FRACTION)
+    endValidation = endTrain + nbPointPerDay * int(diff.days * config.VALIDATION_FRACTION)
     return (
         loadsData[:endTrain],
         loadsData[endTrain:endValidation],

@@ -20,9 +20,9 @@ from util import constructTimeStamps
 
 def dataImport(config_main, config_pv):
     timestamps = constructTimeStamps(
-        datetime.strptime(config_main.BEGIN, "20%y-%m-%d %H:%M:%S"),
-        datetime.strptime(config_main.END, "20%y-%m-%d %H:%M:%S"),
-        datetime.strptime(config_main.STEPSIZE, "%H:%M:%S") - datetime.strptime("00:00:00", "%H:%M:%S")
+        datetime.strptime(config_pv.BEGIN, "20%y-%m-%d %H:%M:%S"),
+        datetime.strptime(config_pv.END, "20%y-%m-%d %H:%M:%S"),
+        datetime.strptime(config_pv.STEP_SIZE, "%H:%M:%S") - datetime.strptime("00:00:00", "%H:%M:%S")
     )
     # input datas : uncontrollable resource : solar production
     df = getPecanstreetData(
@@ -54,7 +54,7 @@ def forecasting(config_main, config_pv):
     # import data, with all the features we want
     df, timestamps = dataImport(config_main, config_pv)
 
-    df_train, df_validation, df_test = splitData(config_main, df)
+    df_train, df_validation, df_test = splitData(config_main, df, 24)
 
     # datas are normalized
     scaler = MinMaxScaler()
@@ -92,20 +92,20 @@ def forecasting(config_main, config_pv):
         trainY, trainPrediction, testY, validationY, valPrediction, testPrediction, timestamps, config_pv
     )
     plotPredictionPart(
-        trainY[1, :],
-        trainPrediction[1, :],
+        trainY,
+        trainPrediction,
         "1st day of train set",
         timestamps[: 96],
     )
     plotPredictionPart(
-        validationY[1, :],
-        valPrediction[1, :],
+        validationY[0],
+        valPrediction[0],
         "1st day of validation set",
         timestamps[len(trainX):len(trainX) + 96],
     )
     plotPredictionPart(
-        testY[1, :],
-        testPrediction[1, :],
+        testY[0],
+        testPrediction[0],
         "1st day of test set",
         timestamps[len(trainX)+len(validationX): len(trainX)+len(validationX) + 96],
     )
@@ -160,8 +160,8 @@ def forecasting(config_main, config_pv):
 
 
 def main(argv):
-    config_pv = ForecastPvConfig()
     config_main = ForecastConfig()
+    config_pv = ForecastPvConfig(config_main)
     np.random.seed(config_main.SEED)
     global outputFolder
     outputFolder = config_pv.OUTPUT_FOLDER

@@ -46,10 +46,10 @@ def plotPrediction(train_y, train_predict_y, val_y, val_predict_y, test_y, test_
 def plotPredictionPart(real, predicted, nameOfSet, timestamps):
     time, tick = makeTick(timestamps)
 
-    x1 = list(range(len(real)))
+    x1 = list(range(len(real[0])))
 
-    plt.plot(x1, real, label="actual of " + nameOfSet, color="green")
-    plt.plot(x1, predicted, label="predicted of " + nameOfSet, color="orange")
+    plt.plot(x1, real[0], label="actual of " + nameOfSet, color="green")
+    plt.plot(x1, predicted[0], label="predicted of " + nameOfSet, color="orange")
 
     plt.xticks(tick, time, rotation=20)
     plt.xlabel("Time")
