@@ -8,6 +8,7 @@ class ForecastLoadConfig:
         self.LOAD_MODEL = False
         self.MODEL_FILE = "./output/forecast/load/model.json"
 
+        self.APPLIANCES = ["car1", "heater1", "waterheater1"]
         self.EPOCHS = 100
         self.LOOK_BACK = 15
         self.OUTPUT_SIZE = 24

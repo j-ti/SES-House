@@ -43,6 +43,16 @@ def getNormalizedParts(config, loadConfig, timestamps):
     input_data = add_day_of_week(input_data)
     input_data = add_weekend(input_data)
 
+    for load in loadConfig.APPLIANCES:
+        appliance_data = getPecanstreetData(
+            loadConfig.DATA_FILE,
+            loadConfig.TIME_HEADER,
+            loadConfig.DATAID,
+            load,
+            timestamps,
+        )
+        pd.concat([input_data, appliance_data], axis=1)
+
     train_part, validation_part, test_part = splitData(config, input_data)
 
     train_part = train_part.values
