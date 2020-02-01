@@ -16,6 +16,7 @@ from forecast import (
     buildModel,
     get_split_indexes,
     add_day_of_week,
+    add_weekend,
 )
 from forecast_conf import ForecastConfig
 from forecast_load_conf import ForecastLoadConfig
@@ -40,6 +41,7 @@ def getNormalizedParts(config, loadConfig, timestamps):
 
     input_data = addMinutes(loadsData)
     input_data = add_day_of_week(input_data)
+    input_data = add_weekend(input_data)
 
     train_part, validation_part, test_part = splitData(config, input_data)
 
