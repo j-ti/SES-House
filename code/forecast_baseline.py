@@ -4,17 +4,21 @@ import numpy as np
 from sklearn.metrics import mean_squared_error
 from util import makeTick
 
+from forecast import get_timestamps_per_day
 
-def getMeanSdDayBaseline(data):
-    data = np.reshape(data, (96, int(len(data) / 96)))
+
+def getMeanSdDayBaseline(config, data):
+    timestamps_per_day = get_timestamps_per_day(config)
+    data = np.reshape(data, (timestamps_per_day, int(len(data) / timestamps_per_day)))
     means = np.mean(data, axis=1)
     standard_dev = np.std(data, axis=1)
     return means, standard_dev
 
 
-def plotDayBaseline(timestamps, realY, predictY):
-    realMeans, realSd = getMeanSdDayBaseline(realY)
-    x1 = list(range(96))
+def plotDayBaseline(config, timestamps, realY, predictY):
+    timestamps_per_day = get_timestamps_per_day(config)
+    realMeans, realSd = getMeanSdDayBaseline(config, realY)
+    x1 = list(range(timestamps_per_day))
 
     plt.plot(x1, realMeans, label="actual", color="green")
     plt.fill_between(
@@ -22,7 +26,7 @@ def plotDayBaseline(timestamps, realY, predictY):
     )
     plt.plot(x1, predictY, label="predict Baseline", color="orange")
 
-    time, tick = makeTick(timestamps[:96], "%H:%M")
+    time, tick = makeTick(timestamps[:timestamps_per_day], "%H:%M")
     plt.xticks(tick, time, rotation=20)
     plt.xlabel("Time of Day")
     plt.ylabel("Average Power consumption (kW)")
@@ -48,38 +52,40 @@ def plotSets(timestamps, train, validation, test):
     plt.show()
 
 
-def predictMean(train, test):
-    assert len(train) % 96 == 0
-    data = np.reshape(train, (96, int(len(train) / 96)))
+def predictMean(config, train, test):
+    timestamps_per_day = get_timestamps_per_day(config)
+    data = np.reshape(train, (timestamps_per_day, int(len(train) / timestamps_per_day)))
     means = np.mean(data, axis=1)
     predictions = np.array(means)
-    for i in range(int(len(test) / 96) - 1):
+    for i in range(int(len(test) / timestamps_per_day) - 1):
         predictions = np.concatenate((predictions, means))
-    print(predictions)
     return predictions
 
 
-def meanBaseline(train, test):
-    predictions = predictMean(train, test)
-    assert len(test) % 96 == 0
+def meanBaseline(config, train, test):
+    timestamps_per_day = get_timestamps_per_day(config)
+    predictions = predictMean(config, train, test)
+    assert len(test) % timestamps_per_day == 0
     mse = mean_squared_error(predictions, test)
-    print("Baseline MSE: ", mse)
+    print("mean baseline mse: ", mse)
     return mse
 
 
 def one_step_persistence_model(part):
-    predictions = part[0:-1, 0]
-    real = part[1:, 0]
+    assert len(part.shape) == 1
+    predictions = part[0:-1]
+    real = part[1:]
     mse = mean_squared_error(real, predictions)
     print("1 Step Persistence Model MSE: ", mse)
 
 
 def one_day_persistence_model(config, part):
+    assert len(part.shape) == 1
     predictions = np.empty((len(part) - 2 * config.OUTPUT_SIZE, config.OUTPUT_SIZE))
     real = np.empty((len(part) - 2 * config.OUTPUT_SIZE, config.OUTPUT_SIZE))
     for i in range(len(part) - 2 * config.OUTPUT_SIZE):
-        predictions[i] = part[i : i + config.OUTPUT_SIZE, 0]
-        real[i] = part[i + config.OUTPUT_SIZE : i + 2 * config.OUTPUT_SIZE, 0]
+        predictions[i] = part[i : i + config.OUTPUT_SIZE]
+        real[i] = part[i + config.OUTPUT_SIZE : i + 2 * config.OUTPUT_SIZE]
     mse = mean_squared_error(real, predictions)
     print("1 Day Persistence Model MSE: ", mse)
 
