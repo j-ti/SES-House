@@ -1,5 +1,4 @@
 import sys
-from datetime import datetime
 from tensorflow import set_random_seed
 
 
@@ -7,7 +6,6 @@ import numpy as np
 import pandas as pd
 from data import getPecanstreetData
 from sklearn.preprocessing import MinMaxScaler
-from util import constructTimeStamps
 
 from forecast import (
     splitData,

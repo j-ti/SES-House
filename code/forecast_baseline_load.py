@@ -1,24 +1,13 @@
 import sys
 from datetime import datetime
-from tensorflow import set_random_seed
 
 
-import numpy as np
-import pandas as pd
-from data import getPecanstreetData
 from util import constructTimeStamps
 
-from forecast import splitData, addMinutes, buildSet, train, saveModel, buildModel
 from forecast_load import getNormalizedParts
 from forecast_baseline import one_step_persistence_model, one_day_persistence_model
 from forecast_conf import ForecastConfig
 from forecast_load_conf import ForecastLoadConfig
-
-from shutil import copyfile
-
-
-set_random_seed(ForecastConfig().SEED)
-np.random.seed(ForecastConfig().SEED)
 
 
 def main(argv):
