@@ -39,11 +39,11 @@ def plotPrediction(train_y, train_predict_y, val_y, val_predict_y, test_y, test_
     plt.xlabel("Time")
     plt.ylabel("Power output (kW)")
     plt.legend()
-    plt.savefig(outputFolder + "/prediction.png")
+    plt.savefig(config.OUTPUT_FOLDER + "/prediction.png")
     plt.show()
 
 
-def plotPredictionPart(real, predicted, nameOfSet, timestamps):
+def plotPredictionPart(config, real, predicted, nameOfSet, timestamps):
     time, tick = makeTick(timestamps)
     x1 = list(range(len(real)))
 
@@ -55,6 +55,7 @@ def plotPredictionPart(real, predicted, nameOfSet, timestamps):
     plt.ylabel("Power consumption (kW)")
     plt.legend()
     plt.tight_layout()
+    plt.savefig(config.OUTPUT_FOLDER + "/prediction_part.png")
     plt.show()
 
 

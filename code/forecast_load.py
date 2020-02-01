@@ -16,10 +16,11 @@ from forecast import (
     get_split_indexes,
     add_day_of_week,
     add_weekend,
+    loadModel,
 )
 from forecast_conf import ForecastConfig
 from forecast_load_conf import ForecastLoadConfig
-from plot_forecast import plotHistory, plotPredictionPart
+from plot_forecast import plotHistory, plotPredictionPart, plotPrediction
 
 from shutil import copyfile
 
@@ -86,43 +87,69 @@ def main(argv):
     config = ForecastConfig()
     loadConfig = ForecastLoadConfig()
 
-    copyfile("./code/forecast_conf.py", loadConfig.OUTPUT_FOLDER + "forecast_conf.py")
-    copyfile(
-        "./code/forecast_load_conf.py",
-        loadConfig.OUTPUT_FOLDER + "forecast_load_conf.py",
-    )
-
-    train_x, train_y, validation_x, validation_y, _, test_y, scaler = prepareData(
+    train_x, train_y, validation_x, validation_y, test_x, test_y, scaler = prepareData(
         config, loadConfig, config.TIMESTAMPS
     )
-
-    assert (
-        len(config.TIMESTAMPS)
-        == len(train_y)
-        + len(validation_y)
-        + len(test_y)
-        + loadConfig.LOOK_BACK * 3
-        + loadConfig.OUTPUT_SIZE * 3
-    )
-
     end_train, end_validation = get_split_indexes(config)
-    validation_timestamps = config.TIMESTAMPS[end_train:end_validation]
-    validation_y_timestamps = validation_timestamps[
-        loadConfig.LOOK_BACK + loadConfig.OUTPUT_SIZE :
-    ]
-    assert len(validation_y_timestamps) == len(validation_y)
 
-    model = buildModel(loadConfig, train_x.shape)
-    history = train(loadConfig, model, train_x, train_y, validation_x, validation_y)
-    saveModel(loadConfig, model)
-    plotHistory(loadConfig, history)
-    validation_prediction = model.predict(validation_x)
-    plotPredictionPart(
-        validation_y[1, :],
-        validation_prediction[1, :],
-        "1st day of validation set",
-        validation_y_timestamps[: loadConfig.OUTPUT_SIZE],
-    )
+    if not loadConfig.LOAD_MODEL:
+        copyfile(
+            "./code/forecast_conf.py", loadConfig.OUTPUT_FOLDER + "forecast_conf.py"
+        )
+        copyfile(
+            "./code/forecast_load_conf.py",
+            loadConfig.OUTPUT_FOLDER + "forecast_load_conf.py",
+        )
+        model = buildModel(loadConfig, train_x.shape)
+        history = train(loadConfig, model, train_x, train_y, validation_x, validation_y)
+        saveModel(loadConfig, model)
+        plotHistory(loadConfig, history)
+
+        validation_timestamps = config.TIMESTAMPS[end_train:end_validation]
+        validation_y_timestamps = validation_timestamps[loadConfig.LOOK_BACK :]
+        assert (
+            len(validation_y_timestamps) == len(validation_y) + loadConfig.OUTPUT_SIZE
+        )
+        validation_prediction = model.predict(validation_x)
+        plotPredictionPart(
+            loadConfig,
+            validation_y[1, :],
+            validation_prediction[1, :],
+            "1st day of validation set",
+            validation_y_timestamps[: loadConfig.OUTPUT_SIZE],
+        )
+    else:
+        model = loadModel(loadConfig)
+        test_prediction = model.predict(test_x)
+
+        plotPrediction(
+            train_y,
+            model.predict(train_x),
+            validation_y,
+            model.predict(validation_x),
+            test_y,
+            test_prediction,
+            config.TIMESTAMPS,
+            loadConfig,
+        )
+
+        test_timestamps = config.TIMESTAMPS[end_validation:]
+        test_y_timestamps = test_timestamps[loadConfig.LOOK_BACK :]
+        assert len(test_y_timestamps) == len(test_y) + loadConfig.OUTPUT_SIZE
+        plotPredictionPart(
+            loadConfig,
+            test_y[1, :],
+            test_prediction[1, :],
+            "1st day of test set",
+            test_y_timestamps[: loadConfig.OUTPUT_SIZE],
+        )
+        plotPredictionPart(
+            loadConfig,
+            test_y[2, :],
+            test_prediction[2, :],
+            "1st day of test set",
+            test_y_timestamps[loadConfig.OUTPUT_SIZE : 2 * loadConfig.OUTPUT_SIZE],
+        )
 
 
 if __name__ == "__main__":
