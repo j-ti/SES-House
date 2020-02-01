@@ -5,6 +5,7 @@ import numpy as np
 import pandas as pd
 from data import getPecanstreetData
 from sklearn.preprocessing import MinMaxScaler
+from sklearn.metrics import mean_squared_error
 
 from forecast import (
     splitData,
@@ -121,6 +122,8 @@ def main(argv):
     else:
         model = loadModel(loadConfig)
         test_prediction = model.predict(test_x)
+        test_mse = mean_squared_error(test_y, test_prediction)
+        print("test MSE: ", test_mse)
 
         plotPrediction(
             train_y,
