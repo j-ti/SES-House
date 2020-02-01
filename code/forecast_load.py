@@ -1,7 +1,6 @@
 import sys
 from tensorflow import set_random_seed
 
-
 import numpy as np
 import pandas as pd
 from data import getPecanstreetData
@@ -23,10 +22,6 @@ from forecast_load_conf import ForecastLoadConfig
 from plot_forecast import plotHistory, plotPredictionPart
 
 from shutil import copyfile
-
-
-set_random_seed(ForecastConfig().SEED)
-np.random.seed(ForecastConfig().SEED)
 
 
 def getNormalizedParts(config, loadConfig, timestamps):
@@ -85,6 +80,9 @@ def prepareData(config, loadConfig, timestamps):
 
 
 def main(argv):
+    set_random_seed(ForecastConfig().SEED)
+    np.random.seed(ForecastConfig().SEED)
+
     config = ForecastConfig()
     loadConfig = ForecastLoadConfig()
 

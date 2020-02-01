@@ -1,7 +1,4 @@
 import sys
-from datetime import datetime
-
-from util import constructTimeStamps
 
 from forecast_load import getNormalizedParts
 from forecast_baseline import (
