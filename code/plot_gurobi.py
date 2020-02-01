@@ -16,6 +16,7 @@ colorDico = {
     "toGridPowers": "slateblue",
     "dieselGenerators": "dimgray",
     "gridPrice": "goldenrod",
+    "ClothWasherPower": "salmon"
 }
 
 labelDico = {
@@ -30,6 +31,7 @@ labelDico = {
     "toGridPowers": "Grid Out",
     "dieselGenerators": "Diesel",
     "gridPrice": "Grid Price",
+    "ClothWasherPower":"silmon"
 }
 
 
@@ -43,6 +45,7 @@ def plotting(varName, varVal, gridPrices, outputFolder, ini):
         "fromGridPowers": [],
         "toGridPowers": [],
         "dieselGenerators": [],
+        "ClothWasherPower":[]
     }
 
     dicoEnergy = {"batEnergys": [], "evEnergys": []}
@@ -143,6 +146,12 @@ def plotting_all_powers(dico, outputFolder, time, tick):
         dico["dieselGenerators"],
         label="Diesel Power",
         color=colorDico["dieselGenerators"],
+    )
+
+    plt.plot(
+        dico["ClothWasherPower"],
+        label="Cloth Washer Power",
+        color=colorDico["ClothWasherPower"],
     )
     plt.xticks(tick, time, rotation=20)
     plt.xlabel("Time")
