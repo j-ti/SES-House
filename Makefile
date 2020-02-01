@@ -17,6 +17,8 @@ test:
 
 travis:
 	$(PYTHON) -m flake8 code
+	black code
+	git diff --exit-code
 
 clean:
 	for dir in code ; \
