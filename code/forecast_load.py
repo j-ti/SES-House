@@ -46,7 +46,7 @@ def getNormalizedParts(config, loadConfig, timestamps):
             load,
             timestamps,
         )
-        pd.concat([input_data, appliance_data], axis=1)
+        input_data = pd.concat([input_data, appliance_data], axis=1)
 
     train_part, validation_part, test_part = splitData(config, input_data)
 
