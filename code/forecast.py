@@ -44,6 +44,11 @@ def addMinutes(data):
     return pd.concat([data, minutes], axis=1)
 
 
+def add_day_of_week(data):
+    days_of_week = pd.Series([i.weekday() for i in data.index], index=data.index)
+    return pd.concat([data, days_of_week], axis=1)
+
+
 def addDayOfYear(data, timestamps):
     days = pd.Series(
         [((timestamps[i] - datetime(2019, 1, 1)).days % 365) for i in range(len(timestamps))], index=data.index

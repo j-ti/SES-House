@@ -15,6 +15,7 @@ from forecast import (
     saveModel,
     buildModel,
     get_split_indexes,
+    add_day_of_week,
 )
 from forecast_conf import ForecastConfig
 from forecast_load_conf import ForecastLoadConfig
@@ -69,11 +70,6 @@ def prepareData(config, loadConfig, timestamps):
     test_x, test_y = buildSet(test_part, loadConfig.LOOK_BACK, loadConfig.OUTPUT_SIZE)
 
     return train_x, train_y, validation_x, validation_y, test_x, test_y, scaler
-
-
-def add_day_of_week(data):
-    daysOfWeek = pd.Series([i.weekday() for i in data.index], index=data.index)
-    return pd.concat([data, daysOfWeek], axis=1)
 
 
 def main(argv):
