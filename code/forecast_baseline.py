@@ -71,6 +71,24 @@ def meanBaseline(config, train, test):
     return mse
 
 
+def predict_zero_one_step(part):
+    assert len(part.shape) == 1
+    predictions = [0 for i in range(len(part) - 1)]
+    real = part[1:]
+    mse = mean_squared_error(real, predictions)
+    print("predict 0 for 1 step output MSE: ", mse)
+
+
+def predict_zero_one_day(config, part):
+    assert len(part.shape) == 1
+    predictions = np.zeros((len(part) - 2 * config.OUTPUT_SIZE, config.OUTPUT_SIZE))
+    real = np.empty((len(part) - 2 * config.OUTPUT_SIZE, config.OUTPUT_SIZE))
+    for i in range(len(part) - 2 * config.OUTPUT_SIZE):
+        real[i] = part[i + config.OUTPUT_SIZE : i + 2 * config.OUTPUT_SIZE]
+    mse = mean_squared_error(real, predictions)
+    print("predict 0 for day output MSE: ", mse)
+
+
 def one_step_persistence_model(part):
     assert len(part.shape) == 1
     predictions = part[0:-1]

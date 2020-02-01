@@ -5,6 +5,8 @@ from forecast_baseline import (
     one_step_persistence_model,
     one_day_persistence_model,
     meanBaseline,
+    predict_zero_one_day,
+    predict_zero_one_step,
 )
 from forecast_conf import ForecastConfig
 from forecast_load_conf import ForecastLoadConfig
@@ -36,6 +38,16 @@ def main(argv):
     meanBaseline(config, train, validation)
     print("Test:")
     meanBaseline(config, train, test)
+
+    print("Validation:")
+    predict_zero_one_day(loadConfig, validation)
+    print("Test:")
+    predict_zero_one_day(loadConfig, test)
+
+    print("Validation:")
+    predict_zero_one_step(validation)
+    print("Test:")
+    predict_zero_one_step(test)
 
 
 if __name__ == "__main__":
