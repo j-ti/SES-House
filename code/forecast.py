@@ -50,7 +50,9 @@ def add_day_of_week(data):
 
 
 def add_weekend(data):
-    is_weekend = pd.Series([1 if i.weekday() in [5,6] else 0 for i in data.index], index=data.index)
+    is_weekend = pd.Series(
+        [1 if i.weekday() in [5, 6] else 0 for i in data.index], index=data.index
+    )
     return pd.concat([data, is_weekend], axis=1)
 
 
