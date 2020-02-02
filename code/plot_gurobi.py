@@ -3,35 +3,37 @@ import numpy as np
 import pandas as pd
 
 colorDico = {
-    "PVPowers": "orange",
-    "windPowers": "blue",
-    "batPowers": "green",
-    "batEnergys": "green",
-    "evPowers": "lime",
-    "evEnergys": "lime",
+    "PVPowers": "darkorange",
+    "windPowers": "darkblue",
+    "batPowers": "forestgreen",
+    "batEnergys": "forestgreen",
+    "evPowers": "lightseagreen",
+    "evEnergys": "lightseagreen",
     "batPowersNeg": "forestgreen",
-    "evPowersNeg": "greenyellow",
-    "fixedLoads": "red",
-    "fromGridPowers": "black",
-    "toGridPowers": "cyan",
-    "dieselGenerators": "silver",
-    "gridPrice": "gold",
+    "evPowersNeg": "lightseagreen",
+    "fixedLoads": "brown",
+    "fromGridPowers": "k",
+    "toGridPowers": "slateblue",
+    "dieselGenerators": "dimgray",
+    "gridPrice": "goldenrod",
 }
 
 labelDico = {
-    "PVPowers": "PV Power",
-    "windPowers": "Wind Power",
-    "batPowers": "Battery Power",
-    "evPowers": "EV Power",
-    "fixedLoads": "Loads Power",
-    "fromGridPowers": "Grid Power In",
-    "toGridPowers": "Grid Power Out",
-    "dieselGenerators": "Diesel Power",
+    "PVPowers": "PV",
+    "windPowers": "Wind",
+    "batPowers": "Bat. Discharging",
+    "evPowers": "EV Discharging",
+    "batPowersNeg": "Bat. Charging",
+    "evPowersNeg": "EV Charging",
+    "fixedLoads": "Loads",
+    "fromGridPowers": "Grid In",
+    "toGridPowers": "Grid Out",
+    "dieselGenerators": "Diesel",
     "gridPrice": "Grid Price",
 }
 
 
-def plotting(varName, varVal, gridPrices, outputFolder, timestamps):
+def plotting(varName, varVal, gridPrices, outputFolder, ini):
     dico = {
         "PVPowers": [],
         "windPowers": [],
@@ -45,11 +47,11 @@ def plotting(varName, varVal, gridPrices, outputFolder, timestamps):
 
     dicoEnergy = {"batEnergys": [], "evEnergys": []}
 
-    step = int(len(timestamps) / 10)
-    time = [timestamps[i].strftime("%m-%d %H:%M") for i in range(len(timestamps))][
-        ::step
-    ]
-    tick = [i for i in range(len(timestamps))][::step]
+    step = int(len(ini.timestamps) / 10)
+    time = [
+        ini.timestamps[i].strftime("%m-%d %H:%M") for i in range(len(ini.timestamps))
+    ][::step]
+    tick = [i for i in range(len(ini.timestamps))][::step]
 
     for i in range(len(varName)):
         for val in dico.keys():
@@ -63,10 +65,22 @@ def plotting(varName, varVal, gridPrices, outputFolder, timestamps):
 
     resultsDf = pd.DataFrame.from_dict(dict(dico), orient="columns")
 
+    plt.style.use("bmh")
     plotting_powers(dico, outputFolder, time, tick)
-    plotting_energys(dicoEnergy, outputFolder, time, tick)
+    plotting_energys(
+        dicoEnergy,
+        ini.E_bat_max,
+        ini.SOC_bat_min,
+        ini.SOC_bat_max,
+        outputFolder,
+        time,
+        tick,
+    )
     plotting_all_powers(dico, outputFolder, time, tick)
-    plotting_additive_all_powers(resultsDf, outputFolder, time, tick)
+    plotting_additive_all_powers(resultsDf, outputFolder, time, tick, "bar")
+    plotting_additive_all_powers(resultsDf, outputFolder, time, tick, "area")
+    plotting_additive_all_powers_sym(resultsDf, outputFolder, time, tick, "bar")
+    plotting_additive_all_powers_sym(resultsDf, outputFolder, time, tick, "area")
     plotting_in_out_price(dico, outputFolder, gridPrices, time, tick)
     plotting_pie_gen_pow(dico, outputFolder)
     plotting_bar_in_out(dico, outputFolder)
@@ -75,22 +89,34 @@ def plotting(varName, varVal, gridPrices, outputFolder, timestamps):
 
 # Plotting PV power, wind power and fixed loads power.
 def plotting_powers(dico, outputFolder, time, tick):
+
     plt.plot(dico["PVPowers"], label="pv", color=colorDico["PVPowers"])
     plt.plot(dico["windPowers"], label="wind", color=colorDico["windPowers"])
     plt.plot(dico["fixedLoads"], label="Loads Power", color=colorDico["fixedLoads"])
     plt.xticks(tick, time, rotation=20)
     plt.xlabel("Time")
     plt.ylabel("Output power - kW")
-    plt.legend(loc="upper left")
+    plt.legend(loc="upper left", ncol=3)
     plt.savefig(outputFolder + "/pv_wind-power.png")
     plt.show()
 
 
 # Plotting EV and batteries energies
-def plotting_energys(dico, outputFolder, time, tick):
+def plotting_energys(
+    dico, E_bat_max, SOC_bat_min, SOC_bat_max, outputFolder, time, tick
+):
     plt.plot(dico["batEnergys"], label="Battery Energy", color=colorDico["batEnergys"])
     plt.plot(dico["evEnergys"], label="EV Energy", color=colorDico["evEnergys"])
-    plt.legend(loc="upper right", prop={"size": 8})
+    plt.plot(
+        [0, len(dico["batEnergys"])], [E_bat_max, E_bat_max], ls="--", c="turquoise"
+    )
+    plt.fill_between(
+        [0, len(dico["batEnergys"])],
+        [E_bat_max, E_bat_max],
+        hatch=".",
+        color="turquoise",
+    )
+    plt.legend(loc="upper left", ncol=2, prop={"size": 8})
     plt.xticks(tick, time, rotation=20)
     plt.xlabel("Time")
     plt.ylabel("Energy (kWh)")
@@ -119,26 +145,30 @@ def plotting_all_powers(dico, outputFolder, time, tick):
     plt.xticks(tick, time, rotation=20)
     plt.xlabel("Time")
     plt.ylabel("Power (kW)")
-    plt.legend(loc="upper right")
+    plt.legend(loc="upper left", ncol=2)
     plt.savefig(outputFolder + "/power-balance.png")
     plt.show()
 
 
 # Area plotting of all the powers from our system (in and out) inside one graph with consumption (loads) as baseline
-def plotting_additive_all_powers(resultsPd, outputFolder, time, tick):
-    kindPlot = "area"  # 'bar'
-    style = "default"  # 'steps-mid'
-    step = None  # 'mid'
+def plotting_additive_all_powers(resultsPd, outputFolder, time, tick, kindPlot="area"):
+    if kindPlot is "bar":
+        style = "steps-mid"
+        step = "mid"
+        kwargs = {"width": 1.0}
+    else:
+        style = "default"
+        step = None
+        kwargs = {}
 
     # Devide in and out flows (esp. for batteries) and make them all positive
-    negResults = -resultsPd[resultsPd < 0]
-    resultsPd[resultsPd < 0] = 0
-    negResults.fillna(0.0, inplace=True)
+    negResults, resultsPd = resultsPd.clip(upper=0) * (-1), resultsPd.clip(lower=0)
     negResults.columns = [str(col) + "Neg" for col in negResults.columns]
     resultsPd[["batPowersNeg", "evPowersNeg"]] = negResults[
         ["batPowersNeg", "evPowersNeg"]
     ]
     # selection list of series to be plotted as area-plot and in which order
+    selOut = ["fixedLoads", "batPowersNeg", "evPowersNeg", "toGridPowers"]
     selArea = [
         "PVPowers",
         "windPowers",
@@ -147,50 +177,129 @@ def plotting_additive_all_powers(resultsPd, outputFolder, time, tick):
         "dieselGenerators",
         "fromGridPowers",
     ]
-    fig = plt.figure()
-    ax = fig.add_subplot(1, 1, 1)
-    areaColors = list(map(colorDico.get, selArea))
-    areaColors = ["pink" if c is None else c for c in areaColors]
-
-    resultsPd[selArea].plot(
-        kind=kindPlot, linewidth=0, stacked=True, ax=ax, color=areaColors
-    )
-
-    selLine = ["fixedLoads", "batPowersNeg", "evPowersNeg", "toGridPowers"]
-    lineColors = list(map(colorDico.get, selLine))
-    lineColors = ["pink" if c is None else c for c in lineColors]
+    # Colorscheme with selection lists
+    inColors = list(map(colorDico.get, selArea))
+    inColors = ["pink" if c is None else c for c in inColors]
+    outColors = list(map(colorDico.get, selOut))
+    outColors = ["pink" if c is None else c for c in outColors]
     hatch = ["", "//", "--", ".."]
 
-    additiveOut = resultsPd[selLine].copy()
-    additiveOut = additiveOut.cumsum(axis=1)
-
-    additiveOut[selLine[1:]].plot(
-        kind="line", drawstyle=style, linewidth=2, ls="--", ax=ax, color=lineColors[1:]
+    # Plottting
+    fig, ax = plt.subplots()
+    resultsPd[selArea].plot(
+        kind=kindPlot, linewidth=0, stacked=True, ax=ax, color=inColors, **kwargs
     )
 
-    for i in range(1, len(selLine)):
+    additiveOut = resultsPd[selOut].copy()
+    additiveOut = additiveOut.cumsum(axis=1)
+
+    for i in range(1, len(selOut)):
         plt.fill_between(
             range(len(additiveOut)),
-            additiveOut[selLine[i - 1]],
-            additiveOut[selLine[i]],
-            facecolor="none",
+            additiveOut[selOut[i - 1]],
+            additiveOut[selOut[i]],
+            facecolor="none",  # outColors[i],
+            label=selOut[i],
             step=step,
             hatch=hatch[i],
-            edgecolor=colorDico[selLine[i]],
-            linewidth=1.0,
+            edgecolor=outColors[i],
+            linewidth=2.0,
+            ls="--",
+            # alpha=0.3,
+            zorder=2,
         )
 
     plt.plot(
-        resultsPd["fixedLoads"], label="Loads Power", color=colorDico["fixedLoads"]
+        resultsPd["fixedLoads"],
+        drawstyle=style,
+        label="fixedLoads",
+        color=colorDico["fixedLoads"],
     )
 
     plt.xticks(tick, time, rotation=20)
     plt.xlabel("Time")
     plt.ylabel("Power (kW)")
+    handles, labels = ax.get_legend_handles_labels()
+    labelsList = list(map(labelDico.get, labels))
+    labelsList = ["pink" if l is None else l for l in labelsList]
     chartBox = ax.get_position()
     ax.set_position([chartBox.x0, chartBox.y0, chartBox.width * 0.75, chartBox.height])
-    plt.legend(bbox_to_anchor=(1.5, 0.8), loc="upper right")
-    plt.savefig(outputFolder + "/power-balance2.png")
+    ax.legend(handles, labelsList, bbox_to_anchor=(1.5, 0.8), loc="upper right")
+    plt.savefig(outputFolder + "/power-balance-" + kindPlot + ".png")
+    plt.show()
+
+
+# Area plotting of all the powers from our system (in and out) inside one graph with consumption (loads) as baseline
+def plotting_additive_all_powers_sym(
+    resultsPd, outputFolder, time, tick, kindPlot="area"
+):
+    if kindPlot is "bar":
+        style = "steps-mid"
+        step = "mid"
+        kwargs = {"width": 1.0}
+    else:
+        style = "default"
+        step = None
+        kwargs = {}
+
+    # Devide in and out flows (esp. for batteries)
+    # Selection list for in/out series in plotting order
+    selOut = ["fixedLoads", "batPowersNeg", "evPowersNeg", "toGridPowers"]
+    selIn = [
+        "PVPowers",
+        "windPowers",
+        "batPowers",
+        "evPowers",
+        "dieselGenerators",
+        "fromGridPowers",
+    ]
+    negResults, resultsPd = resultsPd.clip(upper=0), resultsPd.clip(lower=0)
+    negResults.columns = [str(col) + "Neg" for col in negResults.columns]
+    resultsPd[["batPowersNeg", "evPowersNeg"]] = negResults[
+        ["batPowersNeg", "evPowersNeg"]
+    ]
+    # make loads and toGrid values negative
+    resultsPd[["fixedLoads", "toGridPowers"]] *= -1
+
+    # Colorscheme with selection lists
+    inColors = list(map(colorDico.get, selIn))
+    inColors = ["pink" if c is None else c for c in inColors]
+    outColors = list(map(colorDico.get, selOut))
+    outColors = ["pink" if c is None else c for c in outColors]
+    hatch = ["", "//", "--", ".."]
+
+    # Plottting
+    fig, ax = plt.subplots()
+    resultsPd[selIn].plot(
+        kind=kindPlot, linewidth=0, stacked=True, ax=ax, color=inColors, **kwargs
+    )
+
+    plt.plot(-resultsPd["fixedLoads"], drawstyle=style, color=colorDico["fixedLoads"])
+
+    resultsPd[selOut].plot(
+        kind=kindPlot,
+        stacked=True,
+        linewidth=0,
+        ax=ax,
+        ls="--",
+        color=outColors,
+        **kwargs
+    )
+    ax.set_ylim(
+        [resultsPd[selOut].sum(axis=1).min(), resultsPd[selIn].sum(axis=1).max()]
+    )
+
+    # Settings
+    plt.xticks(tick, time, rotation=20)
+    plt.xlabel("Time")
+    plt.ylabel("Power (kW)")
+    handles, labels = ax.get_legend_handles_labels()
+    labelsList = list(map(labelDico.get, labels))
+    labelsList = ["pink" if l is None else l for l in labelsList]
+    chartBox = ax.get_position()
+    ax.set_position([chartBox.x0, chartBox.y0, chartBox.width * 0.75, chartBox.height])
+    ax.legend(handles, labelsList, bbox_to_anchor=(1.5, 0.8), loc="upper right")
+    plt.savefig(outputFolder + "/power-balance-symmetric-" + kindPlot + ".png")
     plt.show()
 
 
@@ -215,8 +324,8 @@ def plotting_in_out_price(dico, outputFolder, gridPrices, time, tick):
     ax1.set_xlabel("Time")
     ax1.set_ylabel("Price - $ / kWh")
     ax2.set_ylabel("Power (kW)")
-    ax1.legend(loc="upper right")
-    ax2.legend(loc="upper left")
+    ax1.legend(loc="upper center", ncol=1)
+    ax2.legend(loc="upper left", ncol=1)
     plt.savefig(outputFolder + "grid_in-out_price.png")
     plt.show()
 
@@ -276,7 +385,7 @@ def plotting_bar_all_powers(dico, outputFolder):
         0, fromGridPow, 0.2, bottom=pvPow + windPow, color=colorDico["fromGridPowers"]
     )
     p4 = plt.bar(
-        0,
+        0.05,
         dieselPow,
         0.1,
         bottom=pvPow + windPow + fromGridPow,
