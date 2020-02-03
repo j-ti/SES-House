@@ -13,7 +13,7 @@ from util import constructTimeStamps
 from forecast import splitData, addMinutes, buildSet, train, saveModel, buildModel
 from forecast_pv import getParts, dataImport
 from forecast_baseline import one_step_persistence_model, one_day_persistence_model, meanBaseline, predict_zero_one_day, \
-    predict_zero_one_step
+    predict_zero_one_step, plot_baselines
 from forecast_conf import ForecastConfig
 from forecast_pv_conf import ForecastPvConfig
 
@@ -48,6 +48,7 @@ def main(argv):
     df_train = np.array([df_train[i, 0] for i in range(len(df_train))])
     df_validation = np.array([df_validation[i, 0] for i in range(len(df_validation))])
     df_test = np.array([df_test[i, 0] for i in range(len(df_test))])
+    plot_baselines(config, df_train, df_test[:96], timestamps[len(df_train):len(df_train)+96])
 
     print("Validation:")
     one_step_persistence_model(df_validation)
@@ -55,9 +56,9 @@ def main(argv):
     one_step_persistence_model(df_test)
 
     print("Validation:")
-    one_day_persistence_model(pvConfig, df_validation)
+    one_day_persistence_model(config, df_validation)
     print("Test:")
-    one_day_persistence_model(pvConfig, df_test)
+    one_day_persistence_model(config, df_test)
 
     print("Validation:")
     meanBaseline(config, df_train, df_validation)
@@ -67,9 +68,9 @@ def main(argv):
     meanBaseline(config, df_test, df_test)
 
     print("Validation:")
-    predict_zero_one_day(pvConfig, df_validation)
+    predict_zero_one_day(config, df_validation)
     print("Test:")
-    predict_zero_one_day(pvConfig, df_test)
+    predict_zero_one_day(config, df_test)
 
     print("Validation:")
     predict_zero_one_step(df_validation)
