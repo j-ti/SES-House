@@ -1,12 +1,16 @@
 import sys
 
 from forecast_load import getNormalizedParts
+from forecast import get_split_indexes
 from forecast_baseline import (
     one_step_persistence_model,
     one_day_persistence_model,
     meanBaseline,
     predict_zero_one_day,
     predict_zero_one_step,
+    plot_test_set,
+    plot_days,
+    plot_baselines,
 )
 from forecast_conf import ForecastConfig
 from forecast_load_conf import ForecastLoadConfig
@@ -24,31 +28,27 @@ def main(argv):
     validation = validation[:, 0]
     test = test[:, 0]
 
+    _, end_validation = get_split_indexes(config)
+    test_timestamps = config.TIMESTAMPS[end_validation:]
+
+    # plot_test_set(config, test)
+    # plot_days(config, test[:96])
+    plot_baselines(config, train, test[:96], test_timestamps[:96])
+
     print("Validation:")
     one_step_persistence_model(validation)
+    one_day_persistence_model(config, validation)
+    meanBaseline(config, train, validation)
+    predict_zero_one_day(config, validation)
+    predict_zero_one_step(validation)
+
     print("Test:")
     one_step_persistence_model(test)
-
-    print("Validation:")
-    one_day_persistence_model(loadConfig, validation)
-    print("Test:")
-    one_day_persistence_model(loadConfig, test)
-
-    print("Validation:")
-    meanBaseline(config, train, validation)
-    print("Test:")
+    one_day_persistence_model(config, test)
     meanBaseline(config, train, test)
     print("Train on test and predict for Test:")
     meanBaseline(config, test, test)
-
-    print("Validation:")
-    predict_zero_one_day(loadConfig, validation)
-    print("Test:")
-    predict_zero_one_day(loadConfig, test)
-
-    print("Validation:")
-    predict_zero_one_step(validation)
-    print("Test:")
+    predict_zero_one_day(config, test)
     predict_zero_one_step(test)
 
 

@@ -15,6 +15,26 @@ def getMeanSdDayBaseline(config, data):
     return means, standard_dev
 
 
+def plot_days(config, test):
+    timestamps_per_day = get_timestamps_per_day(config)
+    x = list(range(timestamps_per_day))
+
+    means = predictMean(config, test, test)
+    for i in range(int(len(test) / timestamps_per_day)):
+        label = "day ", i
+        plt.plot(
+            x,
+            test[i * timestamps_per_day : i * timestamps_per_day + timestamps_per_day],
+            label=label,
+        )
+    plt.plot(x, means[:timestamps_per_day], label="mean prediction", color="orange")
+    plt.xlabel("Time of Day")
+    plt.ylabel("Power (kW)")
+    plt.legend()
+    plt.tight_layout()
+    plt.show()
+
+
 def plotDayBaseline(config, timestamps, realY, predictY):
     timestamps_per_day = get_timestamps_per_day(config)
     realMeans, realSd = getMeanSdDayBaseline(config, realY)
@@ -35,18 +55,50 @@ def plotDayBaseline(config, timestamps, realY, predictY):
     plt.show()
 
 
-def plotSets(timestamps, train, validation, test):
-    time, tick = makeTick(timestamps)
-
-    x1 = range(len(train))
-    x2 = range(len(train), len(train) + len(validation))
-    x3 = range(len(train) + len(validation), len(timestamps))
-    plt.plot(x1, train, label="train set", color="green")
-    plt.plot(x2, validation, label="validation set", color="blue")
+def plot_test_set(config, test):
+    x3 = range(len(test))
     plt.plot(x3, test, label="test set", color="red")
+    plt.plot(x3, predictMean(config, test, test), label="mean", color="blue")
+    plt.xlabel("Time")
+    plt.ylabel("Power (kW)")
+    plt.legend()
+    plt.tight_layout()
+    plt.show()
+
+
+def get_following_days(config, matrix_values):
+    times_per_day = get_timestamps_per_day(config)
+    assert len(matrix_values) % times_per_day == 0
+
+    follow_predicts = np.empty((matrix_values.shape[0] + times_per_day))
+
+    for i in range(int(len(matrix_values) / times_per_day)):
+        follow_predicts[
+            i * times_per_day : i * times_per_day + times_per_day
+        ] = matrix_values[i * times_per_day]
+    return follow_predicts
+
+
+def plot_baselines(config, train, test, timestamps):
+    timestamps_per_day = get_timestamps_per_day(config)
+    _, predicts = get_one_day_persistence_model(config, test)
+    predicts = get_following_days(config, predicts)
+
+    plt.plot(range(len(test)), test, label="test set")
+    plt.plot(
+        range(len(test)), predictMean(config, train, test), label="mean prediction"
+    )
+    plt.plot(range(len(test)), np.zeros((len(test))), label="0 prediction")
+    plt.plot(range(1, len(test)), test[0:-1], label="next value persistence model")
+    plt.plot(
+        range(timestamps_per_day, len(test)),
+        predicts,
+        label="next day persistence model",
+    )
+    time, tick = makeTick(timestamps)
     plt.xticks(tick, time, rotation=20)
     plt.xlabel("Time")
-    plt.ylabel("Power consumption (kW)")
+    plt.ylabel("Power (kW)")
     plt.legend()
     plt.tight_layout()
     plt.show()
@@ -54,8 +106,8 @@ def plotSets(timestamps, train, validation, test):
 
 def predictMean(config, train, test):
     timestamps_per_day = get_timestamps_per_day(config)
-    data = np.reshape(train, (timestamps_per_day, int(len(train) / timestamps_per_day)))
-    means = np.mean(data, axis=1)
+    data = np.reshape(train, (int(len(train) / timestamps_per_day), timestamps_per_day))
+    means = np.mean(data, axis=0)
     predictions = np.array(means)
     assert len(test) % timestamps_per_day == 0
     for i in range(int(len(test) / timestamps_per_day) - 1):
@@ -81,10 +133,11 @@ def predict_zero_one_step(part):
 
 def predict_zero_one_day(config, part):
     assert len(part.shape) == 1
-    predictions = np.zeros((len(part) - 2 * config.OUTPUT_SIZE, config.OUTPUT_SIZE))
-    real = np.empty((len(part) - 2 * config.OUTPUT_SIZE, config.OUTPUT_SIZE))
-    for i in range(len(part) - 2 * config.OUTPUT_SIZE):
-        real[i] = part[i + config.OUTPUT_SIZE : i + 2 * config.OUTPUT_SIZE]
+    times_per_day = get_timestamps_per_day(config)
+    predictions = np.empty((len(part) - 2 * times_per_day, times_per_day))
+    real = np.empty((len(part) - 2 * times_per_day, times_per_day))
+    for i in range(len(part) - 2 * times_per_day):
+        real[i] = part[i + times_per_day : i + 2 * times_per_day]
     mse = mean_squared_error(real, predictions)
     print("predict 0 for day output MSE: ", mse)
 
@@ -97,13 +150,19 @@ def one_step_persistence_model(part):
     print("1 Step Persistence Model MSE: ", mse)
 
 
-def one_day_persistence_model(config, part):
+def get_one_day_persistence_model(config, part):
     assert len(part.shape) == 1
-    predictions = np.empty((len(part) - 2 * config.OUTPUT_SIZE, config.OUTPUT_SIZE))
-    real = np.empty((len(part) - 2 * config.OUTPUT_SIZE, config.OUTPUT_SIZE))
-    for i in range(len(part) - 2 * config.OUTPUT_SIZE):
-        predictions[i] = part[i : i + config.OUTPUT_SIZE]
-        real[i] = part[i + config.OUTPUT_SIZE : i + 2 * config.OUTPUT_SIZE]
+    times_per_day = get_timestamps_per_day(config)
+    predictions = np.empty((len(part) - 2 * times_per_day, times_per_day))
+    real = np.empty((len(part) - 2 * times_per_day, times_per_day))
+    for i in range(len(real)):
+        predictions[i] = part[i : i + times_per_day]
+        real[i] = part[i + times_per_day : i + 2 * times_per_day]
+    return real, predictions
+
+
+def one_day_persistence_model(config, part):
+    real, predictions = get_one_day_persistence_model(config, part)
     mse = mean_squared_error(real, predictions)
     print("1 Day Persistence Model MSE: ", mse)
 
