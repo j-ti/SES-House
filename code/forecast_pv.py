@@ -32,8 +32,8 @@ def dataImport(config_main, config_pv):
 
 def buildModel(trainX, trainY, valX, valY, config_pv, nbFeatures):
     model = Sequential()
-    model.add(LSTM(config_pv.NEURONS, input_shape=(config_pv.LOOK_BACK, nbFeatures)))
-    model.add(Dropout(config_pv.DROPOUT))
+    model.add(LSTM(config_pv.NEURONS[0], input_shape=(config_pv.LOOK_BACK, nbFeatures)))
+    model.add(Dropout(config_pv.DROPOUT[0]))
     model.add(Activation(config_pv.ACTIVATION_FUNCTION))
     model.add(Dense(config_pv.OUTPUT_SIZE))
     model.compile(
