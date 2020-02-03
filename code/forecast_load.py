@@ -22,7 +22,12 @@ from forecast import (
 )
 from forecast_conf import ForecastConfig
 from forecast_load_conf import ForecastLoadConfig
-from plot_forecast import plotHistory, plotPredictionPart, plotPrediction, plot_multiple_days
+from plot_forecast import (
+    plotHistory,
+    plotPredictionPart,
+    plotPrediction,
+    plot_multiple_days,
+)
 
 from shutil import copyfile
 
@@ -109,6 +114,9 @@ def main(argv):
             len(validation_y_timestamps) == len(validation_y) + loadConfig.OUTPUT_SIZE
         )
         validation_prediction = model.predict(validation_x)
+        test_prediction = model.predict(test_x)
+        test_mse = mean_squared_error(test_y, test_prediction)
+        print("test mse: ", test_mse)
         plotPredictionPart(
             loadConfig,
             validation_y[1, :],
@@ -116,20 +124,21 @@ def main(argv):
             "1st day of validation set",
             validation_y_timestamps[: loadConfig.OUTPUT_SIZE],
         )
-        test_prediction = model.predict(test_x)
-        test_mse = mean_squared_error(test_y, test_prediction)
-        print("test mse: ", test_mse)
     else:
         model = loadModel(loadConfig)
         test_prediction = model.predict(test_x)
         test_mse = mean_squared_error(test_y, test_prediction)
         print("test mse: ", test_mse)
 
-        test_timestamps = config.TIMESTAMPS[end_validation:end_validation+96]
+        test_timestamps = config.TIMESTAMPS[
+            end_validation : end_validation + len(test_part)
+        ]
         test_y_timestamps = test_timestamps[loadConfig.LOOK_BACK :]
         assert len(test_y_timestamps) == len(test_y) + loadConfig.OUTPUT_SIZE
 
-        plot_multiple_days(config, loadConfig, test_part[:, 0], test_prediction, test_timestamps)
+        plot_multiple_days(
+            config, loadConfig, test_part[:, 0], test_prediction, test_timestamps
+        )
 
         plotPrediction(
             train_y,
@@ -149,6 +158,7 @@ def main(argv):
             "1st day of test set",
             test_y_timestamps[: loadConfig.OUTPUT_SIZE],
         )
+
 
 if __name__ == "__main__":
     main(sys.argv)
