@@ -1,3 +1,4 @@
+import os
 import sys
 from tensorflow import set_random_seed
 
@@ -94,6 +95,9 @@ def main(argv):
     end_train, end_validation = get_split_indexes(config)
 
     if not loadConfig.LOAD_MODEL:
+        assert not os.path.isdir(loadConfig.OUTPUT_FOLDER)
+        os.makedirs(loadConfig.OUTPUT_FOLDER)
+
         copyfile(
             "./code/forecast_conf.py", loadConfig.OUTPUT_FOLDER + "forecast_conf.py"
         )

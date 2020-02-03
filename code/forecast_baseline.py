@@ -64,7 +64,6 @@ def predictMean(config, train, test):
 
 
 def meanBaseline(config, train, test):
-    timestamps_per_day = get_timestamps_per_day(config)
     predictions = predictMean(config, train, test)
     assert len(test) == len(predictions)
     mse = mean_squared_error(predictions, test)
