@@ -10,8 +10,9 @@ from forecast_pv_conf import ForecastPvConfig
 from keras import Sequential, metrics
 from keras.layers import LSTM, Dropout, Dense, Activation
 from plot_forecast import plotHistory, plotPrediction, plotEcart, plotPredictionPart
+from sklearn.metrics import mean_squared_error, mean_absolute_error
 from sklearn.preprocessing import MinMaxScaler
-from util import constructTimeStamps
+from util import constructTimeStamps, mean_absolute_percentage_error
 
 
 def dataImport(config_main, config_pv):
@@ -34,8 +35,8 @@ def buildModel(trainX, trainY, valX, valY, config_pv, nbFeatures):
     model = Sequential()
     model.add(LSTM(config_pv.NEURONS[0], input_shape=(config_pv.LOOK_BACK, nbFeatures)))
     model.add(Dropout(config_pv.DROPOUT[0]))
-    model.add(Activation(config_pv.ACTIVATION_FUNCTION))
-    model.add(Dense(config_pv.OUTPUT_SIZE))
+    model.add(Activation("tanh"))
+    model.add(Dense(config_pv.OUTPUT_SIZE, activation="relu"))
     model.compile(
         loss=config_pv.LOSS_FUNCTION,
         optimizer=config_pv.OPTIMIZE_FUNCTION,
@@ -48,9 +49,7 @@ def buildModel(trainX, trainY, valX, valY, config_pv, nbFeatures):
     return model, history
 
 
-def forecasting(config_main, config_pv):
-    # import data, with all the features we want
-    df, timestamps = dataImport(config_main, config_pv)
+def getParts(df, config_main, config_pv) :
 
     df_train, df_validation, df_test = splitData(config_main, df)
 
@@ -70,6 +69,14 @@ def forecasting(config_main, config_pv):
     df_train = scaler.transform(df_train)
     df_validation = scaler.transform(df_validation)
     df_test = scaler.transform(df_test)
+    return df_train, df_validation, df_test, scaler
+
+
+def forecasting(config_main, config_pv):
+
+    df, timestamps = dataImport(config_main, config_pv)
+
+    df_train, df_validation, df_test, scaler = getParts(df, config_main, config_pv)
 
     nbFeatures = df_train.shape[1]
 
@@ -130,44 +137,61 @@ def forecasting(config_main, config_pv):
         timestamps,
         config_pv
     )
-    # # printing error
-    # for _ in [1]:
-    #     print(
-    #         "training\tMSE :\t{}".format(
-    #             mean_squared_error(np.array(trainY), np.array(trainPrediction))
-    #         )
-    #     )
-    #     print(
-    #         "testing\t\tMSE :\t{}".format(
-    #             mean_squared_error(np.array(testY), np.array(testPrediction))
-    #         )
-    #     )
-    #
-    #     print(
-    #         "training\tMAE :\t{}".format(
-    #             mean_absolute_error(np.array(trainY), np.array(trainPrediction))
-    #         )
-    #     )
-    #     print(
-    #         "testing\t\tMAE :\t{}".format(
-    #             mean_absolute_error(np.array(testY), np.array(testPrediction))
-    #         )
-    #     )
-    #
-    #     print(
-    #         "training\tMAPE :\t{} %".format(
-    #             mean_absolute_percentage_error(
-    #                 np.array(trainY), np.array(trainPrediction)
-    #             )
-    #         )
-    #     )
-    #     print(
-    #         "testing\t\tMAPE :\t{} %".format(
-    #             mean_absolute_percentage_error(
-    #                 np.array(testY), np.array(testPrediction)
-    #             )
-    #         )
-    #     )
+    # printing error
+    for _ in [1]:
+        print(
+            "training\tMSE :\t{}".format(
+                mean_squared_error(np.array(trainY), np.array(trainPrediction))
+            )
+        )
+        print(
+            "validation\t\tMSE :\t{}".format(
+                mean_squared_error(np.array(validationY), np.array(valPrediction))
+            )
+        )
+        print(
+            "testing\t\tMSE :\t{}".format(
+                mean_squared_error(np.array(testY), np.array(testPrediction))
+            )
+        )
+        ###
+        print(
+            "training\tMAE :\t{}".format(
+                mean_absolute_error(np.array(trainY), np.array(trainPrediction))
+            )
+        )
+        print(
+            "validation\t\tMAE :\t{}".format(
+                mean_absolute_error(np.array(validationY), np.array(valPrediction))
+            )
+        )
+        print(
+            "testing\t\tMAE :\t{}".format(
+                mean_absolute_error(np.array(testY), np.array(testPrediction))
+            )
+        )
+        ###
+        print(
+            "training\tMAPE :\t{} %".format(
+                mean_absolute_percentage_error(
+                    np.array(trainY), np.array(trainPrediction)
+                )
+            )
+        )
+        print(
+            "validation\t\tMAPE :\t{} %".format(
+                mean_absolute_percentage_error(
+                    np.array(validationY), np.array(valPrediction)
+                )
+            )
+        )
+        print(
+            "testing\t\tMAPE :\t{} %".format(
+                mean_absolute_percentage_error(
+                    np.array(testY), np.array(testPrediction)
+                )
+            )
+        )
 
 
 def main(argv):
