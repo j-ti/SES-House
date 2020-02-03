@@ -38,6 +38,8 @@ def main(argv):
     meanBaseline(config, train, validation)
     print("Test:")
     meanBaseline(config, train, test)
+    print("Train on test and predict for Test:")
+    meanBaseline(config, test, test)
 
     print("Validation:")
     predict_zero_one_day(loadConfig, validation)

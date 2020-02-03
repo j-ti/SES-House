@@ -57,6 +57,7 @@ def predictMean(config, train, test):
     data = np.reshape(train, (timestamps_per_day, int(len(train) / timestamps_per_day)))
     means = np.mean(data, axis=1)
     predictions = np.array(means)
+    assert len(test) % timestamps_per_day == 0
     for i in range(int(len(test) / timestamps_per_day) - 1):
         predictions = np.concatenate((predictions, means))
     return predictions
@@ -65,7 +66,7 @@ def predictMean(config, train, test):
 def meanBaseline(config, train, test):
     timestamps_per_day = get_timestamps_per_day(config)
     predictions = predictMean(config, train, test)
-    assert len(test) % timestamps_per_day == 0
+    assert len(test) == len(predictions)
     mse = mean_squared_error(predictions, test)
     print("mean baseline mse: ", mse)
     return mse
@@ -73,7 +74,7 @@ def meanBaseline(config, train, test):
 
 def predict_zero_one_step(part):
     assert len(part.shape) == 1
-    predictions = [0 for i in range(len(part) - 1)]
+    predictions = np.zeros((len(part) - 1))
     real = part[1:]
     mse = mean_squared_error(real, predictions)
     print("predict 0 for 1 step output MSE: ", mse)
