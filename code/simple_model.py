@@ -162,7 +162,6 @@ def runSimpleModel(ini):
     batteryPowerVars = setUpBattery(model, ini)
     evPowerVars = setUpEv(model, ini)
     fixedLoadVars = setUpFixedLoads(model, ini)
-    if(ini.s)
     ClothwasherVars = setUpClothWasher(model, ini)
     dieselGeneratorsVars, dieselStatusVars = setUpDiesel(model, ini)
     fromGridVars, toGridVars = setUpGrid(model, ini)
