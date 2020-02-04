@@ -27,6 +27,8 @@ np.random.seed(ForecastConfig().SEED)
 def main(argv):
     config = ForecastConfig()
     pvConfig = ForecastPvConfig(config)
+
+    config.OUTPUT_FOLDER = pvConfig.OUTPUT_FOLDER
     timestamps = constructTimeStamps(
         datetime.strptime(pvConfig.BEGIN, "20%y-%m-%d %H:%M:%S"),
         datetime.strptime(pvConfig.END, "20%y-%m-%d %H:%M:%S"),

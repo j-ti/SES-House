@@ -4,12 +4,12 @@ from datetime import datetime
 
 import numpy as np
 from data import getPecanstreetData
-from forecast import splitData, buildSet, evalModel, loadModel, saveModel, train, addMinutes, addDayOfYear
+from forecast import splitData, buildSet, evalModel, loadModel, saveModel, train, addMinutes, addMonthOfYear
 from forecast_conf import ForecastConfig
 from forecast_pv_conf import ForecastPvConfig
 from keras import Sequential, metrics
 from keras.layers import LSTM, Dropout, Dense, Activation
-from plot_forecast import plotHistory, plotPrediction, plotEcart, plotPredictionPart
+from plot_forecast import plotHistory, plotPrediction, plotEcart, plotPredictionPart, plotPredictionPartMult
 from sklearn.metrics import mean_squared_error, mean_absolute_error
 from sklearn.preprocessing import MinMaxScaler
 from util import constructTimeStamps, mean_absolute_percentage_error
@@ -26,7 +26,7 @@ def dataImport(config_main, config_pv):
         config_pv.DATA_FILE, config_pv.TIME_HEADER, config_pv.DATAID, "solar", timestamps
     )
     df = addMinutes(df)
-    df = addDayOfYear(df, timestamps)
+    df = addMonthOfYear(df, timestamps)
 
     return df, np.array(timestamps)
 
@@ -58,7 +58,7 @@ def getParts(df, config_main, config_pv) :
     valMin = df_train.iloc[0, -1]
     df_train.iloc[0, -1] = 0
     valMax = df_train.iloc[1, -1]
-    df_train.iloc[1, -1] = 365
+    df_train.iloc[1, -1] = 12
     # datas are normalized
     scaler = MinMaxScaler()
     scaler.fit(df_train)
@@ -112,13 +112,15 @@ def forecasting(config_main, config_pv):
         trainPrediction[0],
         "1st day of train set",
         timestamps[: config_pv.TIME_PER_DAY],
+        "train"
     )
     plotPredictionPart(
         config_pv,
-        validationY[0],
-        valPrediction[0],
-        "1st day of validation set",
+        validationY[48],
+        valPrediction[48],
+        "3rd day of validation set",
         timestamps[len(trainX):len(trainX) + config_pv.TIME_PER_DAY],
+        "validation"
     )
     plotPredictionPart(
         config_pv,
@@ -126,7 +128,17 @@ def forecasting(config_main, config_pv):
         testPrediction[0],
         "1st day of test set",
         timestamps[len(trainX) + len(validationX): len(trainX) + len(validationX) + config_pv.TIME_PER_DAY],
+        "test"
     )
+    plotPredictionPartMult(
+        config_pv,
+        testY[0],
+        testPrediction,
+        "1st day of test set",
+        timestamps[len(trainX) + len(validationX): len(trainX) + len(validationX) + config_pv.TIME_PER_DAY],
+        "test"
+    )
+
     plotEcart(
         trainY,
         trainPrediction,
