@@ -190,6 +190,15 @@ def runSimpleModel(ini):
         batteryPowerVars,
     )
     plotResults(model, ini, gridPrices)
+    return getObjectiveResults(
+        ini,
+        fromGridVars,
+        toGridVars,
+        gridPrices,
+        dieselGeneratorsVars,
+        dieselStatusVars,
+        batteryPowerVars,
+    )
 
 
 def calcDieselCost(ini, dieselGeneratorsVars, dieselStatusVars):
@@ -787,6 +796,38 @@ def setUpEv(model, ini):
     return evPowerVars
 
 
+def getObjectiveResults(
+    ini,
+    fromGridVars,
+    toGridVars,
+    gridPrices,
+    dieselGeneratorsVars,
+    dieselStatusVars,
+    batteryPowerVars,
+):
+    return [
+        calcMinCostObjective(
+            ini,
+            fromGridVars,
+            toGridVars,
+            gridPrices,
+            dieselGeneratorsVars,
+            dieselStatusVars,
+            batteryPowerVars,
+            "True",
+        ).getValue(),
+        calcGreenhouseObjective(
+            ini, fromGridVars, dieselGeneratorsVars, batteryPowerVars, "True"
+        ).getValue(),
+        calcGreenhouseQuadraticObjective(
+            ini, fromGridVars, dieselGeneratorsVars, batteryPowerVars, "True"
+        ).getValue(),
+        calcGridIndependenceObjective(
+            ini, fromGridVars, toGridVars, batteryPowerVars, "True"
+        ).getValue()
+    ]
+
+
 def printObjectiveResults(
     ini,
     fromGridVars,
@@ -861,8 +902,15 @@ def main(argv):
     copyConfigFile(argv[1], outputFolder)
     config = configparser.ConfigParser()
     config.read(argv[1])
-    runSimpleModel(Configure(config))
+    configIni = Configure(config)
 
+    BatRangeEmax = [0, 10, 20]
+    resultsGoals = []
+    for b in BatRangeEmax:
+        configIni.E_bat_max = b
+        resultsGoals.append(runSimpleModel(configIni))
+
+    print(resultsGoals)
 
 if __name__ == "__main__":
     main(sys.argv)
