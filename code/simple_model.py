@@ -71,25 +71,6 @@ class Configure:
         self.stepsizeHour = self.stepsize.total_seconds() / 3600
         self.stepsizeMinute = self.stepsize.total_seconds() / 60
 
-        # ClothWasher
-        self.P_cw_heat = float(config["Clothwasher"]["P_cw_heat"])
-        self.P_cw_cycle = float(config["Clothwasher"]["P_cw_cycle"])
-        self.P_cw_spin = float(config["Clothwasher"]["P_cw_spin"])
-        self.heatStepsize = float(
-            datetime.strptime(config["Clothwasher"]["D_cw_heat"], "%H:%M:%S").minute
-            / self.stepsizeMinute
-        )
-        self.cycleStepsize = float(
-            datetime.strptime(config["Clothwasher"]["D_cw_cycle"], "%H:%M:%S").minute
-            / self.stepsizeMinute
-            + datetime.strptime(config["Clothwasher"]["D_cw_cycle"], "%H:%M:%S").hour
-            / self.stepsizeHour
-        )
-        self.spinStepsize = float(
-            datetime.strptime(config["Clothwasher"]["D_cw_spin"], "%H:%M:%S").minute
-            / self.stepsizeMinute
-        )
-
         # Generators
         self.P_dg_max = float(config["DIESEL"]["P_dg_max"])
         self.P_dg_min = float(config["DIESEL"]["P_dg_min"])
@@ -163,7 +144,6 @@ def runSimpleModel(ini):
     batteryPowerVars = setUpBattery(model, ini)
     evPowerVars = setUpEv(model, ini)
     fixedLoadVars = setUpFixedLoads(model, ini)
-    ClothwasherVars = setUpClothWasher(model, ini)
     dieselGeneratorsVars, dieselStatusVars = setUpDiesel(model, ini)
     fromGridVars, toGridVars = setUpGrid(model, ini)
     gridPrices = getPriceData(
@@ -180,7 +160,6 @@ def runSimpleModel(ini):
             + evPowerVars.sum(i, "*")
             == fixedLoadVars.sum(i, "*")
             + toGridVars.sum(i, "*")
-            + ClothwasherVars.sum(i, "*")
             for i in range(len(ini.timestamps))
         ),
         "power balance",
@@ -397,200 +376,6 @@ def setUpGrid(model, ini):
     )
 
     return fromGridVars, toGridVars
-
-
-def setUpClothWasher(model, ini):
-    # check the stepsize number is integer
-    assert ini.heatStepsize.is_integer()
-    assert ini.cycleStepsize.is_integer()
-    assert ini.spinStepsize.is_integer()
-    ini.heatStepsize = int(ini.heatStepsize)
-    ini.cycleStepsize = int(ini.cycleStepsize)
-    ini.spinStepsize = int(ini.spinStepsize)
-    ClothWasherPhaseVars = model.addVars(
-        len(ini.timestamps), 4, vtype=GRB.BINARY, name="ClothWasherPhase"
-    )
-    ClothWasherPowerVars = model.addVars(
-        len(ini.timestamps), 1, lb=0, vtype=GRB.CONTINUOUS, name="ClothWasherPower"
-    )
-    model.addConstrs(
-        (ClothWasherPhaseVars.sum(i, "*") == 1 for i in range(len(ini.timestamps)))
-    )
-    model.addConstrs(
-        (
-            (ClothWasherPhaseVars[index, 0] == 1)
-            >> (ClothWasherPowerVars[index, 0] == ini.P_cw_heat)
-            for index in range(len(ini.timestamps))
-        ),
-        "power constraint in phase 1: water heating",
-    )
-
-    model.addConstrs(
-        (
-            (ClothWasherPhaseVars[index, 1] == 1)
-            >> (ClothWasherPowerVars[index, 0] == ini.P_cw_cycle)
-            for index in range(len(ini.timestamps))
-        ),
-        "power constraint in phase 2: cycling",
-    )
-
-    model.addConstrs(
-        (
-            (ClothWasherPhaseVars[index, 2] == 1)
-            >> (ClothWasherPowerVars[index, 0] == ini.P_cw_spin)
-            for index in range(len(ini.timestamps))
-        ),
-        "power constraint in phase 3: spining",
-    )
-
-    model.addConstrs(
-        (
-            (ClothWasherPhaseVars[index, 3] == 1)
-            >> (ClothWasherPowerVars[index, 0] == 0)
-            for index in range(len(ini.timestamps))
-        ),
-        "power constraint when not committed",
-    )
-
-    # ensure the multiple tasks order
-    model.addConstrs(
-        (
-            (ClothWasherPhaseVars[index, 0] == 1)
-            >> (ClothWasherPhaseVars[index + 1, 2] == 0)
-            for index in range(len(ini.timestamps) - 1)
-        ),
-        "phase 1 to phase 3 not allowed",
-    )
-    model.addConstrs(
-        (
-            (ClothWasherPhaseVars[index, 0] == 1)
-            >> (ClothWasherPhaseVars[index + 1, 3] == 0)
-            for index in range(len(ini.timestamps) - 1)
-        ),
-        "phase 1 to not committed not allowed",
-    )
-
-    model.addConstrs(
-        (
-            (ClothWasherPhaseVars[index, 1] == 1)
-            >> (ClothWasherPhaseVars[index + 1, 0] == 0)
-            for index in range(len(ini.timestamps) - 1)
-        ),
-        "phase 2 to phase 1 not allowed",
-    )
-
-    model.addConstrs(
-        (
-            (ClothWasherPhaseVars[index, 1] == 1)
-            >> (ClothWasherPhaseVars[index + 1, 3] == 0)
-            for index in range(len(ini.timestamps) - 1)
-        ),
-        "phase 2 to not committed not allowed",
-    )
-
-    model.addConstrs(
-        (
-            (ClothWasherPhaseVars[index, 2] == 1)
-            >> (ClothWasherPhaseVars[index + 1, 0] == 0)
-            for index in range(len(ini.timestamps) - 1)
-        ),
-        "phase 3 to phase 1 not allowed",
-    )
-
-    model.addConstrs(
-        (
-            (ClothWasherPhaseVars[index, 2] == 1)
-            >> (ClothWasherPhaseVars[index + 1, 1] == 0)
-            for index in range(len(ini.timestamps) - 1)
-        ),
-        "phase 3 to phase 2 not allowed",
-    )
-
-    model.addConstrs(
-        (
-            (ClothWasherPhaseVars[index, 3] == 1)
-            >> (ClothWasherPhaseVars[index + 1, 1] == 0)
-            for index in range(len(ini.timestamps) - 1)
-        ),
-        "not committed to phase 2 not allowed",
-    )
-
-    model.addConstrs(
-        (
-            (ClothWasherPhaseVars[index, 3] == 1)
-            >> (ClothWasherPhaseVars[index + 1, 2] == 0)
-            for index in range(len(ini.timestamps) - 1)
-        ),
-        "not committed to phase 3 not allowed",
-    )
-
-    # duration constraint
-    model.addConstr(
-        (
-            gp.quicksum(ClothWasherPhaseVars[i, 0] for i in range(len(ini.timestamps)))
-            == ini.heatStepsize
-        ),
-        "duration constraint for phase 1",
-    )
-
-    model.addConstr(
-        (
-            gp.quicksum(ClothWasherPhaseVars[i, 1] for i in range(len(ini.timestamps)))
-            == ini.cycleStepsize
-        ),
-        "duration constraint for phase 2",
-    )
-
-    model.addConstr(
-        (
-            gp.quicksum(ClothWasherPhaseVars[i, 2] for i in range(len(ini.timestamps)))
-            == ini.spinStepsize
-        ),
-        "duration constraint for phase 3",
-    )
-
-    # non-interruptiable
-    model.addConstrs(
-        (
-            sum(
-                ClothWasherPhaseVars[index2, 0]
-                for index2 in range(index, index + ini.heatStepsize)
-            )
-            >= ini.heatStepsize
-            * (ClothWasherPhaseVars[index, 0] - ClothWasherPhaseVars[index - 1, 0])
-            for index in range(1, len(ini.timestamps) - ini.heatStepsize)
-        ),
-        "phase 1 non-interruptible",
-    )
-
-    model.addConstrs(
-        (
-            sum(
-                ClothWasherPhaseVars[index2, 1]
-                for index2 in range(index, index + ini.cycleStepsize)
-            )
-            >= ini.cycleStepsize
-            * (ClothWasherPhaseVars[index, 1] - ClothWasherPhaseVars[index - 1, 1])
-            for index in range(1, len(ini.timestamps) - ini.cycleStepsize)
-        ),
-        "phase 2 non-interruptible",
-    )
-
-    model.addConstrs(
-        (
-            sum(
-                ClothWasherPhaseVars[index2, 2]
-                for index2 in range(index, index + ini.spinStepsize)
-            )
-            >= ini.spinStepsize
-            * (ClothWasherPhaseVars[index, 2] - ClothWasherPhaseVars[index - 1, 2])
-            for index in range(1, len(ini.timestamps) - ini.spinStepsize)
-        ),
-        "phase 3 non-interruptible",
-    )
-    model.addConstr((ClothWasherPhaseVars[0, 3] == 1))
-    model.addConstr((ClothWasherPhaseVars[len(ini.timestamps) - 1, 3] == 1))
-    return ClothWasherPowerVars
 
 
 def setUpDiesel(model, ini):
