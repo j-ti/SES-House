@@ -9,17 +9,17 @@ class ForecastPvConfig:
         self.STEP_SIZE = "01:00:00"
         self.TIME_PER_DAY = 24
 
-        self.LOAD_MODEL = False
+        self.LOAD_MODEL = True
         self.MODEL_FILE = "./output/forecast/pv/model.json"
         self.MODEL_FILE_H5 = "./output/forecast/pv/model.h5"
 
         # TODO : for multiple layer of same type : put inside an array
         self.EPOCHS = 30
         self.LOOK_BACK = 24
-        self.BATCH_SIZE = 30
-        self.DROPOUT = [0.1]
+        self.BATCH_SIZE = 15
+        self.DROPOUT = [0.3]
         self.DENSE = 1
-        self.NEURONS = [128]
+        self.NEURONS = [150]
         self.PATIENCE = 5
         self.MIN_DELTA = 0.0001
         self.OUTPUT_SIZE = 24

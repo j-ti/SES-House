@@ -4,7 +4,7 @@ from datetime import datetime
 
 class ForecastConfig:
     def __init__(self):
-        self.SEED = 23
+        self.SEED = 15
 
         self.BEGIN = "2019-05-01 00:00:00"
         self.END = "2019-10-31 23:45:00"
@@ -15,6 +15,6 @@ class ForecastConfig:
             datetime.strptime(self.STEPSIZE, "%H:%M:%S")
             - datetime.strptime("00:00:00", "%H:%M:%S"),
         )
-
+        self.OUTPUT_FOLDER = ""
         self.TRAIN_FRACTION = 0.6
         self.VALIDATION_FRACTION = (1 - self.TRAIN_FRACTION) / 2

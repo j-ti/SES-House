@@ -1,6 +1,8 @@
 import sys
+
 import matplotlib.pyplot as plt
 import numpy as np
+from forecast import get_timestamps_per_day
 from sklearn.metrics import mean_squared_error
 from util import makeTick
 
@@ -25,7 +27,7 @@ def plot_days(config, test):
         label = "day ", i
         plt.plot(
             x,
-            test[i * timestamps_per_day : i * timestamps_per_day + timestamps_per_day],
+            test[i * timestamps_per_day: i * timestamps_per_day + timestamps_per_day],
             label=label,
         )
     plt.plot(x, means[:timestamps_per_day], label="mean prediction", color="orange")
@@ -33,6 +35,7 @@ def plot_days(config, test):
     plt.ylabel("Power (kW)")
     plt.legend()
     plt.tight_layout()
+    plt.savefig(config.OUTPUT_FOLDER + "/plot_days.png")
     plt.show()
 
 
@@ -53,6 +56,7 @@ def plotDayBaseline(config, timestamps, realY, predictY):
     plt.ylabel("Average Power consumption (kW)")
     plt.legend()
     plt.tight_layout()
+    plt.savefig(config.OUTPUT_FOLDER + "/plotDayBaseline.png")
     plt.show()
 
 
@@ -65,6 +69,19 @@ def plot_test_set(config, test):
     plt.legend()
     plt.tight_layout()
     plt.show()
+
+
+def get_following_days(config, matrix_values):
+    times_per_day = get_timestamps_per_day(config)
+    assert len(matrix_values) % times_per_day == 0
+
+    follow_predicts = np.empty((matrix_values.shape[0] + times_per_day))
+
+    for i in range(int(len(matrix_values) / times_per_day)):
+        follow_predicts[
+        i * times_per_day: i * times_per_day + times_per_day
+        ] = matrix_values[i * times_per_day]
+    return follow_predicts
 
 
 def plot_baselines(config, train, test, timestamps):
@@ -89,6 +106,7 @@ def plot_baselines(config, train, test, timestamps):
     plt.ylabel("Power (kW)")
     plt.legend()
     plt.tight_layout()
+    plt.savefig(config.OUTPUT_FOLDER + "/plot_baselines.png")
     plt.show()
 
 
@@ -155,11 +173,11 @@ def one_step_persistence_model(part):
 def get_one_day_persistence_model(config, part):
     assert len(part.shape) == 1
     times_per_day = get_timestamps_per_day(config)
-    real = np.full((len(part) - 2 * times_per_day + 1, times_per_day), np.nan)
-    predictions = np.full(real.shape, np.nan)
+    predictions = np.empty((len(part) - 2 * times_per_day, times_per_day))
+    real = np.empty((len(part) - 2 * times_per_day, times_per_day))
     for i in range(len(real)):
-        predictions[i] = part[i : i + times_per_day]
-        real[i] = part[i + times_per_day : i + 2 * times_per_day]
+        predictions[i] = part[i: i + times_per_day]
+        real[i] = part[i + times_per_day: i + 2 * times_per_day]
     return real, predictions
 
 
