@@ -173,8 +173,8 @@ def one_step_persistence_model(part):
 def get_one_day_persistence_model(config, part):
     assert len(part.shape) == 1
     times_per_day = get_timestamps_per_day(config)
-    real = np.full((len(part) - 2 * times_per_day + 1, times_per_day), np.nan)
-    predictions = np.full(real.shape, np.nan)
+    predictions = np.empty((len(part) - 2 * times_per_day, times_per_day))
+    real = np.empty((len(part) - 2 * times_per_day, times_per_day))
     for i in range(len(real)):
         predictions[i] = part[i: i + times_per_day]
         real[i] = part[i + times_per_day: i + 2 * times_per_day]
