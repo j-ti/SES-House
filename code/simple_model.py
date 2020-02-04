@@ -70,7 +70,7 @@ class Configure:
         self.stepsize = getStepsize(self.timestamps)
         self.stepsizeHour = self.stepsize.total_seconds() / 3600
         self.stepsizeMinute = self.stepsize.total_seconds() / 60
-
+        
         # ClothWasher
         self.P_cw_heat = float(config["Clothwasher"]["P_cw_heat"])
         self.P_cw_cycle = float(config["Clothwasher"]["P_cw_cycle"])

@@ -16,8 +16,9 @@ test:
 	./test.sh
 
 travis:
-	$(PYTHON) -m unittest discover -s code
 	$(PYTHON) -m flake8 code
+	black code
+	git diff --exit-code
 
 clean:
 	for dir in code ; \

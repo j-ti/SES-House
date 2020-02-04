@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta
 
+import numpy as np
 import pandas as pd
 from keras.callbacks import EarlyStopping
 from keras.engine.saving import model_from_json
@@ -7,7 +8,6 @@ from keras.models import Sequential
 from keras.layers import LSTM, Dropout, Activation
 from keras import metrics
 from keras.layers.core import Dense
-from plot_forecast import *
 
 from util import getStepsize
 
@@ -30,7 +30,6 @@ def get_split_indexes(config):
 
 def splitData(config, loadsData):
     endTrain, endValidation = get_split_indexes(config)
-
     return (
         loadsData[:endTrain],
         loadsData[endTrain:endValidation],
@@ -43,6 +42,18 @@ def addMinutes(data):
         [(i.hour * 60 + i.minute) for i in data.index], index=data.index
     )
     return pd.concat([data, minutes], axis=1)
+
+
+def add_day_of_week(data):
+    days_of_week = pd.Series([i.weekday() for i in data.index], index=data.index)
+    return pd.concat([data, days_of_week], axis=1)
+
+
+def add_weekend(data):
+    is_weekend = pd.Series(
+        [1 if i.weekday() in [5, 6] else 0 for i in data.index], index=data.index
+    )
+    return pd.concat([data, is_weekend], axis=1)
 
 
 def addDayOfYear(data, timestamps):
@@ -63,6 +74,8 @@ def buildSet(data, look_back, nbOutput):
 
 
 def buildModel(config, trainXShape):
+    assert len(config.DROPOUT) == len(config.NEURONS)
+
     model = Sequential()
 
     model.add(
@@ -72,16 +85,18 @@ def buildModel(config, trainXShape):
             input_shape=(trainXShape[1], trainXShape[2]),
         )
     )
+    model.add(Dropout(config.DROPOUT[0]))
 
-    for neuron in config.NEURONS[1:-1]:
-        model.add(LSTM(config.NEURONS, return_sequences=True))
+    for idx in range(1, len(config.NEURONS) - 1):
+        model.add(LSTM(config.NEURONS[idx], return_sequences=True))
+        model.add(Dropout(config.DROPOUT[idx]))
 
     if len(config.NEURONS) > 1:
         model.add(LSTM(config.NEURONS[-1]))
+        model.add(Dropout(config.DROPOUT[-1]))
 
-    model.add(Dropout(config.DROPOUT))
-    model.add(Dense(config.OUTPUT_SIZE))
     model.add(Activation(config.ACTIVATION_FUNCTION))
+    model.add(Dense(config.OUTPUT_SIZE))
     model.compile(
         loss=config.LOSS_FUNCTION,
         optimizer=config.OPTIMIZE_FUNCTION,
@@ -104,7 +119,6 @@ def saveModel(config, model):
 
 
 def loadModel(config):
-    # load json and create model
     json_file = open(config.MODEL_FILE, "r")
     loaded_model_json = json_file.read()
     json_file.close()
