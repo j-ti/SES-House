@@ -1,24 +1,16 @@
 import sys
 from datetime import datetime
 
-from sklearn.preprocessing import MinMaxScaler
-from tensorflow import set_random_seed
-
-
 import numpy as np
-import pandas as pd
 from data import getPecanstreetData
-from util import constructTimeStamps
-
-from forecast import splitData, addMinutes, buildSet, train, saveModel, buildModel
-from forecast_pv import getParts, dataImport
+from forecast import splitData
 from forecast_baseline import one_step_persistence_model, one_day_persistence_model, meanBaseline, predict_zero_one_day, \
     predict_zero_one_step, plot_baselines
 from forecast_conf import ForecastConfig
 from forecast_pv_conf import ForecastPvConfig
-
-from shutil import copyfile
-
+from sklearn.preprocessing import MinMaxScaler
+from tensorflow import set_random_seed
+from util import constructTimeStamps
 
 set_random_seed(ForecastConfig().SEED)
 np.random.seed(ForecastConfig().SEED)
@@ -39,7 +31,9 @@ def main(argv):
         pvConfig.DATA_FILE, pvConfig.TIME_HEADER, pvConfig.DATAID, "solar", timestamps
     )
     df_train, df_validation, df_test = splitData(config, df)
-    df_train, df_validation, df_test = np.array(df_train).reshape(-1, 1), np.array(df_validation).reshape(-1, 1), np.array(df_test).reshape(-1, 1)
+    df_train, df_validation, df_test = np.array(df_train).reshape(-1, 1), np.array(df_validation).reshape(-1,
+                                                                                                          1), np.array(
+        df_test).reshape(-1, 1)
 
     scaler = MinMaxScaler()
     scaler.fit(df_train)
@@ -50,7 +44,7 @@ def main(argv):
     df_train = np.array([df_train[i, 0] for i in range(len(df_train))])
     df_validation = np.array([df_validation[i, 0] for i in range(len(df_validation))])
     df_test = np.array([df_test[i, 0] for i in range(len(df_test))])
-    plot_baselines(config, df_train, df_test[:96], timestamps[len(df_train):len(df_train)+96])
+    plot_baselines(config, df_train, df_test[:96], timestamps[len(df_train):len(df_train) + 96])
 
     print("Validation:")
     one_step_persistence_model(df_validation)
@@ -78,7 +72,6 @@ def main(argv):
     predict_zero_one_step(df_validation)
     print("Test:")
     predict_zero_one_step(df_test)
-
 
 
 if __name__ == "__main__":

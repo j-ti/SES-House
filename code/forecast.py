@@ -1,14 +1,13 @@
-from datetime import datetime, timedelta
+from datetime import timedelta
 
 import pandas as pd
+from keras import metrics
 from keras.callbacks import EarlyStopping
 from keras.engine.saving import model_from_json
-from keras.models import Sequential
 from keras.layers import LSTM, Dropout, Activation
-from keras import metrics
 from keras.layers.core import Dense
+from keras.models import Sequential
 from plot_forecast import *
-
 from util import getStepsize
 
 

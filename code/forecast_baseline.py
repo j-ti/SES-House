@@ -1,10 +1,10 @@
 import sys
+
 import matplotlib.pyplot as plt
 import numpy as np
+from forecast import get_timestamps_per_day
 from sklearn.metrics import mean_squared_error
 from util import makeTick
-
-from forecast import get_timestamps_per_day
 
 
 def getMeanSdDayBaseline(config, data):
@@ -24,7 +24,7 @@ def plot_days(config, test):
         label = "day ", i
         plt.plot(
             x,
-            test[i * timestamps_per_day : i * timestamps_per_day + timestamps_per_day],
+            test[i * timestamps_per_day: i * timestamps_per_day + timestamps_per_day],
             label=label,
         )
     plt.plot(x, means[:timestamps_per_day], label="mean prediction", color="orange")
@@ -76,7 +76,7 @@ def get_following_days(config, matrix_values):
 
     for i in range(int(len(matrix_values) / times_per_day)):
         follow_predicts[
-            i * times_per_day : i * times_per_day + times_per_day
+        i * times_per_day: i * times_per_day + times_per_day
         ] = matrix_values[i * times_per_day]
     return follow_predicts
 
@@ -140,7 +140,7 @@ def predict_zero_one_day(config, part):
     predictions = np.empty((len(part) - 2 * times_per_day, times_per_day))
     real = np.empty((len(part) - 2 * times_per_day, times_per_day))
     for i in range(len(part) - 2 * times_per_day):
-        real[i] = part[i + times_per_day : i + 2 * times_per_day]
+        real[i] = part[i + times_per_day: i + 2 * times_per_day]
     mse = mean_squared_error(real, predictions)
     print("predict 0 for day output MSE: ", mse)
 
@@ -159,8 +159,8 @@ def get_one_day_persistence_model(config, part):
     predictions = np.empty((len(part) - 2 * times_per_day, times_per_day))
     real = np.empty((len(part) - 2 * times_per_day, times_per_day))
     for i in range(len(real)):
-        predictions[i] = part[i : i + times_per_day]
-        real[i] = part[i + times_per_day : i + 2 * times_per_day]
+        predictions[i] = part[i: i + times_per_day]
+        real[i] = part[i + times_per_day: i + 2 * times_per_day]
     return real, predictions
 
 

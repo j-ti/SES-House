@@ -1,9 +1,9 @@
 import matplotlib.pyplot as plt
 import numpy as np
 from util import makeTick, getMeanSdDay
-from sklearn.metrics import mean_squared_error
 
 outputFolder = ""
+
 
 def plotPrediction(train_y, train_predict_y, val_y, val_predict_y, test_y, test_predict_y, timestamps, config):
     y1, y1b = [], []
@@ -25,7 +25,6 @@ def plotPrediction(train_y, train_predict_y, val_y, val_predict_y, test_y, test_
         y3.extend(test_y[i * config.OUTPUT_SIZE])
         y3b.extend(test_predict_y[i * config.OUTPUT_SIZE])
         time.append(timestamps[len(train_predict_y) + len(val_predict_y) + i * config.OUTPUT_SIZE])
-
 
     y1, y1b, y2, y2b, y3, y3b = np.array(y1), np.array(y1b), np.array(y2), np.array(y2b), np.array(y3), np.array(y3b)
     x1 = np.array(list(range(len(y1))))
@@ -164,6 +163,7 @@ def plotHistory(config, history):
     plt.savefig(config.OUTPUT_FOLDER + "/MSE.png")
     plt.show()
 
+
 def plotEcart(train_y, train_predict_y, val_y, val_predict_y, test_y, test_predict_y, timestamps, config):
     time, tick = makeTick(timestamps)
 
@@ -201,14 +201,14 @@ def plotEcart(train_y, train_predict_y, val_y, val_predict_y, test_y, test_predi
     plt.savefig(outputFolder + "/difference.png")
     plt.show()
 
-    
+
 def plotPredictionPartMult(config, real, allPredicted, nameOfSet, timestamps, name):
     time, tick = makeTick(timestamps)
     x1 = np.array(list(range(len(real))))
 
     plt.plot(x1, real, label="actual of " + nameOfSet, color="green")
-    for i in range(config.TIME_PER_DAY) :
-        plt.plot(x1+i, allPredicted[i], label="predicted - " + str(i), linewidth=0.2)
+    for i in range(config.TIME_PER_DAY):
+        plt.plot(x1 + i, allPredicted[i], label="predicted - " + str(i), linewidth=0.2)
 
     # plt.xticks(tick, time, rotation=20)
     plt.xlabel("Time")

@@ -7,8 +7,6 @@ from data import getPecanstreetData
 from forecast import splitData, buildSet, evalModel, loadModel, saveModel, train, addMinutes, addMonthOfYear, buildModel
 from forecast_conf import ForecastConfig
 from forecast_pv_conf import ForecastPvConfig
-from keras import Sequential, metrics
-from keras.layers import LSTM, Dropout, Dense, Activation
 from plot_forecast import plotHistory, plotPrediction, plotEcart, plotPredictionPart, plotPredictionPartMult
 from sklearn.metrics import mean_squared_error, mean_absolute_error
 from sklearn.preprocessing import MinMaxScaler
@@ -39,8 +37,7 @@ def buildModelPv(trainX, trainY, valX, valY, config_pv):
     return model, history
 
 
-def getParts(df, config_main, config_pv) :
-
+def getParts(df, config_main, config_pv):
     df_train, df_validation, df_test = splitData(config_main, df)
 
     # the SettingWithCopyWarning warning is there because df_train is a copy of the original data.
@@ -63,7 +60,6 @@ def getParts(df, config_main, config_pv) :
 
 
 def forecasting(config_main, config_pv):
-
     df, timestamps = dataImport(config_main, config_pv)
 
     df_train, df_validation, df_test, scaler = getParts(df, config_main, config_pv)
