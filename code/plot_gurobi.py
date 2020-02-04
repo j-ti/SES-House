@@ -79,7 +79,7 @@ def plotting(varName, varVal, gridPrices, outputFolder, ini):
     plotting_all_powers(dico, outputFolder, time, tick)
     plotting_additive_all_powers(resultsDf, outputFolder, time, tick, "bar")
     plotting_additive_all_powers(resultsDf, outputFolder, time, tick, "area")
-    plotting_additive_all_powers_sym(resultsDf, outputFolder, time, tick, "bar")
+    plotting_additive_all_powers_sym(resultsDf, outputFolder, time, tick, "bar", True)
     plotting_additive_all_powers_sym(resultsDf, outputFolder, time, tick, "area")
     plotting_in_out_price(dico, outputFolder, gridPrices, time, tick)
     plotting_pie_gen_pow(dico, outputFolder)
@@ -88,7 +88,7 @@ def plotting(varName, varVal, gridPrices, outputFolder, ini):
 
 
 # Plotting PV power, wind power and fixed loads power.
-def plotting_powers(dico, outputFolder, time, tick):
+def plotting_powers(dico, outputFolder, time, tick, showFlag=False):
 
     plt.plot(dico["PVPowers"], label="pv", color=colorDico["PVPowers"])
     plt.plot(dico["windPowers"], label="wind", color=colorDico["windPowers"])
@@ -98,12 +98,14 @@ def plotting_powers(dico, outputFolder, time, tick):
     plt.ylabel("Output power - kW")
     plt.legend(loc="upper left", ncol=3)
     plt.savefig(outputFolder + "/pv_wind-power.png")
-    plt.show()
+    if showFlag:
+        plt.show()
+    plt.close()
 
 
 # Plotting EV and batteries energies
 def plotting_energys(
-    dico, E_bat_max, SOC_bat_min, SOC_bat_max, outputFolder, time, tick
+    dico, E_bat_max, SOC_bat_min, SOC_bat_max, outputFolder, time, tick, showFlag=False
 ):
 
     fig, ax1 = plt.subplots()
@@ -135,11 +137,13 @@ def plotting_energys(
 
     plt.xlabel("Time")
     plt.savefig(outputFolder + "/bat_ev-energy.png")
-    plt.show()
+    if showFlag:
+        plt.show()
+    plt.close()
 
 
 # Plotting all the powers from our system inside one graph
-def plotting_all_powers(dico, outputFolder, time, tick):
+def plotting_all_powers(dico, outputFolder, time, tick, showFlag=False):
     plt.plot(dico["batPowers"], label="Battery Power", color=colorDico["batPowers"])
     plt.plot(dico["evPowers"], label="EV Power", color=colorDico["evPowers"])
     plt.plot(dico["windPowers"], label="Wind Power", color=colorDico["windPowers"])
@@ -162,11 +166,13 @@ def plotting_all_powers(dico, outputFolder, time, tick):
     plt.ylabel("Power (kW)")
     plt.legend(loc="upper left", ncol=2)
     plt.savefig(outputFolder + "/power-balance.png")
-    plt.show()
+    if showFlag:
+        plt.show()
+    plt.close()
 
 
 # Area plotting of all the powers from our system (in and out) inside one graph with consumption (loads) as baseline
-def plotting_additive_all_powers(resultsPd, outputFolder, time, tick, kindPlot="area"):
+def plotting_additive_all_powers(resultsPd, outputFolder, time, tick, kindPlot="area", showFlag=False):
     if kindPlot is "bar":
         style = "steps-mid"
         step = "mid"
@@ -241,12 +247,14 @@ def plotting_additive_all_powers(resultsPd, outputFolder, time, tick, kindPlot="
     ax.set_position([chartBox.x0, chartBox.y0, chartBox.width * 0.75, chartBox.height])
     ax.legend(handles, labelsList, bbox_to_anchor=(1.5, 0.8), loc="upper right")
     plt.savefig(outputFolder + "/power-balance-" + kindPlot + ".png")
-    plt.show()
+    if showFlag:
+        plt.show()
+    plt.close()
 
 
 # Area plotting of all the powers from our system (in and out) inside one graph with consumption (loads) as baseline
 def plotting_additive_all_powers_sym(
-    resultsPd, outputFolder, time, tick, kindPlot="area"
+    resultsPd, outputFolder, time, tick, kindPlot="area", showFlag=False
 ):
     if kindPlot is "bar":
         style = "steps-mid"
@@ -315,11 +323,13 @@ def plotting_additive_all_powers_sym(
     ax.set_position([chartBox.x0, chartBox.y0, chartBox.width * 0.75, chartBox.height])
     ax.legend(handles, labelsList, bbox_to_anchor=(1.5, 0.8), loc="upper right")
     plt.savefig(outputFolder + "/power-balance-symmetric-" + kindPlot + ".png")
-    plt.show()
+    if showFlag:
+        plt.show()
+    plt.close()
 
 
 # Plotting the evolution of the power in and out on the grid and the evolution of prices
-def plotting_in_out_price(dico, outputFolder, gridPrices, time, tick):
+def plotting_in_out_price(dico, outputFolder, gridPrices, time, tick, showFlag=False):
     fig, ax1 = plt.subplots()
     ax2 = ax1.twinx()
     ax1.plot(
@@ -342,11 +352,13 @@ def plotting_in_out_price(dico, outputFolder, gridPrices, time, tick):
     ax1.legend(loc="upper center", ncol=1)
     ax2.legend(loc="upper left", ncol=1)
     plt.savefig(outputFolder + "grid_in-out_price.png")
-    plt.show()
+    if showFlag:
+        plt.show()
+    plt.close()
 
 
 # Pie plot with the repartion of the power generated inside our system
-def plotting_pie_gen_pow(dico, outputFolder):
+def plotting_pie_gen_pow(dico, outputFolder, showFlag=False):
     plot1 = [
         np.sum(dico["PVPowers"]),
         np.sum(dico["windPowers"]),
@@ -365,24 +377,28 @@ def plotting_pie_gen_pow(dico, outputFolder):
     )
     plt.title("Repartion of power given by the grid, pv, wind and diesel")
     plt.savefig(outputFolder + "/power_generated_pie.png")
-    plt.show()
+    if showFlag:
+        plt.show()
+    plt.close()
 
 
 # Bar plot power in out by the grid
-def plotting_bar_in_out(dico, outputFolder):
+def plotting_bar_in_out(dico, outputFolder, showFlag=False):
     plt.bar(0, np.sum(dico["fromGridPowers"]), color=colorDico["fromGridPowers"])
     plt.bar(1, np.sum(dico["toGridPowers"]), color=colorDico["toGridPowers"])
     plt.xticks([0, 1], ["From Grid", "To Grid"])
     plt.ylabel("Power (kW)")
     plt.title("Power from the grid in and out")
     plt.savefig(outputFolder + "/grid_in-out_bar.png")
-    plt.show()
+    if showFlag:
+        plt.show()
+    plt.close()
 
 
 # Bar plot of all the power
 # small bar is "kind of generator" or "kind of load" (for battery / EV discharging // charging and selling
 # the diff is due to the EV leaving (energy drop so power discharge is high but not in the system)
-def plotting_bar_all_powers(dico, outputFolder):
+def plotting_bar_all_powers(dico, outputFolder, showFlag=False):
     batPosPow = abs(np.sum([foo for foo in dico["batPowers"] if foo >= 0]))
     batNegPow = abs(np.sum([foo for foo in dico["batPowers"] if foo < 0]))
     evPosPow = abs(np.sum([foo for foo in dico["evPowers"] if foo >= 0]))
@@ -455,4 +471,6 @@ def plotting_bar_all_powers(dico, outputFolder):
     )
     plt.title("Power generated & Power needed")
     plt.savefig(outputFolder + "all-pow_bar.png")
-    plt.show()
+    if showFlag:
+        plt.show()
+    plt.close()
