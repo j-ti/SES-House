@@ -31,7 +31,7 @@ labelDico = {
     "toGridPowers": "Grid Out",
     "dieselGenerators": "Diesel",
     "gridPrice": "Grid Price",
-    "ClothWasherPower":"silmon"
+    "ClothWasherPower":"Clothes Washer"
 }
 
 
@@ -150,7 +150,7 @@ def plotting_all_powers(dico, outputFolder, time, tick):
 
     plt.plot(
         dico["ClothWasherPower"],
-        label="Cloth Washer Power",
+        label=labelDico["ClothWasherPower"],
         color=colorDico["ClothWasherPower"],
     )
     plt.xticks(tick, time, rotation=20)
