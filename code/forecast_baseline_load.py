@@ -6,6 +6,7 @@ from forecast_baseline import (
     one_step_persistence_model,
     one_day_persistence_model,
     meanBaseline,
+    mean_baseline_one_day,
     predict_zero_one_day,
     predict_zero_one_step,
     plot_test_set,
@@ -33,19 +34,20 @@ def main(argv):
 
     # plot_test_set(config, test)
     # plot_days(config, test[:96])
-    plot_baselines(config, train, test[:96], test_timestamps[:96])
+    # plot_baselines(config, train, test[:96], test_timestamps[:96])
 
-    print("Validation:")
-    one_step_persistence_model(validation)
-    one_day_persistence_model(config, validation)
-    meanBaseline(config, train, validation)
-    predict_zero_one_day(config, validation)
-    predict_zero_one_step(validation)
+    # print("Validation:")
+    # one_step_persistence_model(validation)
+    # one_day_persistence_model(config, validation)
+    # meanBaseline(config, train, validation)
+    # predict_zero_one_day(config, validation)
+    # predict_zero_one_step(validation)
 
     print("Test:")
     one_step_persistence_model(test)
     one_day_persistence_model(config, test)
     meanBaseline(config, train, test)
+    mean_baseline_one_day(config, train, test)
     print("Train on test and predict for Test:")
     meanBaseline(config, test, test)
     predict_zero_one_day(config, test)

@@ -6,6 +6,9 @@ from forecast import get_timestamps_per_day
 from sklearn.metrics import mean_squared_error
 from util import makeTick
 
+from forecast import get_timestamps_per_day
+from plot_forecast import get_following_days
+
 
 def getMeanSdDayBaseline(config, data):
     timestamps_per_day = get_timestamps_per_day(config)
@@ -126,6 +129,20 @@ def meanBaseline(config, train, test):
     return mse
 
 
+def mean_baseline_one_day(config, train, test):
+    times_per_day = get_timestamps_per_day(config)
+    data = np.reshape(train, (int(len(train) / times_per_day), times_per_day))
+    means = np.mean(data, axis=0)
+    real = np.full((len(test) - 2 * times_per_day + 1, times_per_day), np.nan)
+    predictions = np.full(real.shape, np.nan)
+    for i in range(len(real)):
+        predictions[i] = means
+        real[i] = test[i + times_per_day : i + 2 * times_per_day]
+    mse = mean_squared_error(predictions, real)
+    print("mean baseline 1 day mse: ", mse)
+    return mse
+
+
 def predict_zero_one_step(part):
     assert len(part.shape) == 1
     predictions = np.zeros((len(part) - 1))
@@ -137,10 +154,10 @@ def predict_zero_one_step(part):
 def predict_zero_one_day(config, part):
     assert len(part.shape) == 1
     times_per_day = get_timestamps_per_day(config)
-    predictions = np.empty((len(part) - 2 * times_per_day, times_per_day))
-    real = np.empty((len(part) - 2 * times_per_day, times_per_day))
-    for i in range(len(part) - 2 * times_per_day):
-        real[i] = part[i + times_per_day: i + 2 * times_per_day]
+    real = np.full((len(part) - 2 * times_per_day + 1, times_per_day), np.nan)
+    predictions = np.zeros(real.shape)
+    for i in range(len(real)):
+        real[i] = part[i + times_per_day : i + 2 * times_per_day]
     mse = mean_squared_error(real, predictions)
     print("predict 0 for day output MSE: ", mse)
 
@@ -156,8 +173,8 @@ def one_step_persistence_model(part):
 def get_one_day_persistence_model(config, part):
     assert len(part.shape) == 1
     times_per_day = get_timestamps_per_day(config)
-    predictions = np.empty((len(part) - 2 * times_per_day, times_per_day))
-    real = np.empty((len(part) - 2 * times_per_day, times_per_day))
+    real = np.full((len(part) - 2 * times_per_day + 1, times_per_day), np.nan)
+    predictions = np.full(real.shape, np.nan)
     for i in range(len(real)):
         predictions[i] = part[i: i + times_per_day]
         real[i] = part[i + times_per_day: i + 2 * times_per_day]

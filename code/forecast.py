@@ -1,13 +1,13 @@
 from datetime import timedelta
 
+import numpy as np
 import pandas as pd
 from keras import metrics
 from keras.callbacks import EarlyStopping
 from keras.engine.saving import model_from_json
 from keras.layers import LSTM, Dropout, Activation
 from keras.layers.core import Dense
-from keras.models import Sequential
-from plot_forecast import *
+
 from util import getStepsize
 
 
@@ -118,7 +118,6 @@ def saveModel(config, model):
 
 
 def loadModel(config):
-    # load json and create model
     json_file = open(config.MODEL_FILE, "r")
     loaded_model_json = json_file.read()
     json_file.close()

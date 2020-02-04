@@ -18,11 +18,8 @@ from data import (
     getPecanstreetData,
 )
 from plot_gurobi import plotting
-
 import gurobipy as gp
-
-from gurobipy import QuadExpr
-from gurobipy import GRB
+from gurobipy import QuadExpr, GRB, abs_
 
 
 outputFolder = ""
@@ -72,6 +69,7 @@ class Configure:
         )
         self.stepsize = getStepsize(self.timestamps)
         self.stepsizeHour = self.stepsize.total_seconds() / 3600
+        self.stepsizeMinute = self.stepsize.total_seconds() / 60
 
         # Generators
         self.P_dg_max = float(config["DIESEL"]["P_dg_max"])
@@ -160,7 +158,8 @@ def runSimpleModel(ini):
             + dieselGeneratorsVars.sum(i, "*")
             + batteryPowerVars.sum(i, "*")
             + evPowerVars.sum(i, "*")
-            == fixedLoadVars.sum(i, "*") + toGridVars.sum(i, "*")
+            == fixedLoadVars.sum(i, "*")
+            + toGridVars.sum(i, "*")
             for i in range(len(ini.timestamps))
         ),
         "power balance",
@@ -263,8 +262,10 @@ def calcMinCostObjective(
 def calcGreenhouseObjective(
     ini, fromGridVars, dieselGeneratorsVars, batteryPowerVars, type
 ):
-    dieselGreenhouse = ini.co2Diesel * gp.quicksum(dieselGeneratorsVars)
-    gridGreenhouse = ini.co2Grid * gp.quicksum(fromGridVars)
+    dieselGreenhouse = (
+        ini.co2Diesel * gp.quicksum(dieselGeneratorsVars) * ini.stepsizeHour
+    )
+    gridGreenhouse = ini.co2Grid * gp.quicksum(fromGridVars) * ini.stepsizeHour
     if type == "Virtual":
         return (
             dieselGreenhouse + gridGreenhouse + calcBatChargeLoss(ini, batteryPowerVars)
@@ -394,6 +395,33 @@ def setUpDiesel(model, ini):
         name="dieselStatus",
     )
 
+    dieselPowerRamp = model.addVars(
+        len(ini.timestamps),
+        1,
+        lb=-ini.deltaShutDown,
+        ub=ini.deltaStartUp,
+        vtype=GRB.CONTINUOUS,
+        name="dieselPowerRamp",
+    )
+
+    dieselStartupRamp = model.addVars(
+        len(ini.timestamps),
+        1,
+        lb=0,
+        ub=ini.deltaStartUp,
+        vtype=GRB.CONTINUOUS,
+        name="dieselStartupRamp",
+    )
+
+    dieselShutdownRamp = model.addVars(
+        len(ini.timestamps),
+        1,
+        lb=0,
+        ub=ini.deltaShutDown,
+        vtype=GRB.CONTINUOUS,
+        name="dieselShutdownRamp",
+    )
+
     model.addConstrs(
         (dieselStatusVars.sum(i, "*") == 1 for i in range(len(ini.timestamps)))
     )
@@ -401,7 +429,7 @@ def setUpDiesel(model, ini):
     model.addConstrs(
         (
             (dieselStatusVars[index, 3] == 1)
-            >> (dieselGeneratorsVars[index + 1, 0] == ini.P_dg_min)
+            >> (dieselGeneratorsVars[index + 1, 0] >= ini.P_dg_min)
             for index in range(len(ini.timestamps) - 1)
         ),
         "Power generation when diesel generator is turned on",
@@ -409,7 +437,7 @@ def setUpDiesel(model, ini):
     model.addConstrs(
         (
             (dieselStatusVars[index, 3] == 1)
-            >> (dieselGeneratorsVars[index, 0] == ini.P_dg_min)
+            >> (dieselGeneratorsVars[index, 0] >= ini.P_dg_min)
             for index in range(len(ini.timestamps))
         ),
         "Power generation when diesel generator is turned on",
@@ -438,7 +466,7 @@ def setUpDiesel(model, ini):
                 (dieselStatusVars[index, 1] == 1)
                 >> (
                     dieselGeneratorsVars[index + 1, 0]
-                    == dieselGeneratorsVars[index, 0] + ini.deltaStartUp
+                    == dieselGeneratorsVars[index, 0] + dieselStartupRamp[index, 0]
                 )
             ),
             "diesel generator power increase during Startup",
@@ -448,10 +476,21 @@ def setUpDiesel(model, ini):
                 (dieselStatusVars[index, 2] == 1)
                 >> (
                     dieselGeneratorsVars[index + 1, 0]
-                    == dieselGeneratorsVars[index, 0] - ini.deltaShutDown
+                    == dieselGeneratorsVars[index, 0] - dieselShutdownRamp[index, 0]
                 )
             ),
             "diesel generator power decrease during Shutdown",
+        )
+
+        model.addConstr(
+            (
+                (dieselStatusVars[index, 3] == 1)
+                >> (
+                    dieselGeneratorsVars[index + 1, 0]
+                    == dieselGeneratorsVars[index, 0] + dieselPowerRamp[index, 0]
+                )
+            ),
+            "ramp limit during fully committed",
         )
 
         model.addConstr(
