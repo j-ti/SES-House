@@ -56,11 +56,11 @@ def add_weekend(data):
     return pd.concat([data, is_weekend], axis=1)
 
 
-def addDayOfYear(data, timestamps):
-    days = pd.Series(
-        [((timestamps[i] - datetime(2019, 1, 1)).days % 365) for i in range(len(timestamps))], index=data.index
+def addMonthOfYear(data, timestamps):
+    months = pd.Series(
+        [timestamps[i].month for i in range(len(timestamps))], index=data.index
     )
-    return pd.concat([data, days], axis=1)
+    return pd.concat([data, months], axis=1)
 
 
 # we assume that data is either train, test or validation and is shape (nbPts, nbFeatures)

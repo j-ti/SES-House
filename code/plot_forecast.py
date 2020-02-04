@@ -24,7 +24,7 @@ def plotPrediction(train_y, train_predict_y, val_y, val_predict_y, test_y, test_
         y3.extend(test_y[i * config.OUTPUT_SIZE])
         y3b.extend(test_predict_y[i * config.OUTPUT_SIZE])
 
-    y1, y1b, y2, y2b, y3, y3b = np.array(y1), np.array(y1), np.array(y2), np.array(y2b), np.array(y3), np.array(y3b)
+    y1, y1b, y2, y2b, y3, y3b = np.array(y1), np.array(y1b), np.array(y2), np.array(y2b), np.array(y3), np.array(y3b)
     x1 = np.array(list(range(len(y1))))
     x2 = np.array(list(range(len(y2)))) + len(x1)
     x3 = np.array(list(range(len(y3)))) + len(x1) + len(x2)
@@ -43,7 +43,7 @@ def plotPrediction(train_y, train_predict_y, val_y, val_predict_y, test_y, test_
     plt.show()
 
 
-def plotPredictionPart(config, real, predicted, nameOfSet, timestamps):
+def plotPredictionPart(config, real, predicted, nameOfSet, timestamps, name):
     time, tick = makeTick(timestamps)
     x1 = list(range(len(real)))
 
@@ -55,7 +55,7 @@ def plotPredictionPart(config, real, predicted, nameOfSet, timestamps):
     plt.ylabel("Power consumption (kW)")
     plt.legend()
     plt.tight_layout()
-    plt.savefig(config.OUTPUT_FOLDER + "/prediction_part.png")
+    plt.savefig(config.OUTPUT_FOLDER + "/prediction_part-" + name + ".png")
     plt.show()
 
 
@@ -195,4 +195,21 @@ def plotHistory(config, history):
     plt.legend()
     plt.tight_layout()
     plt.savefig(config.OUTPUT_FOLDER + "/MSE.png")
+    plt.show()
+
+
+def plotPredictionPartMult(config, real, allPredicted, nameOfSet, timestamps, name):
+    time, tick = makeTick(timestamps)
+    x1 = np.array(list(range(len(real))))
+
+    plt.plot(x1, real, label="actual of " + nameOfSet, color="green")
+    for i in range(config.TIME_PER_DAY) :
+        plt.plot(x1+i, allPredicted[i], label="predicted - " + str(i), linewidth=0.2)
+
+    # plt.xticks(tick, time, rotation=20)
+    plt.xlabel("Time")
+    plt.ylabel("Power consumption (kW)")
+    # plt.legend()
+    plt.tight_layout()
+    plt.savefig(config.OUTPUT_FOLDER + "/prediction_part-" + name + ".png")
     plt.show()

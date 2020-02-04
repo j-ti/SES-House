@@ -32,6 +32,7 @@ def plot_days(config, test):
     plt.ylabel("Power (kW)")
     plt.legend()
     plt.tight_layout()
+    plt.savefig(config.OUTPUT_FOLDER + "/plot_days.png")
     plt.show()
 
 
@@ -52,6 +53,7 @@ def plotDayBaseline(config, timestamps, realY, predictY):
     plt.ylabel("Average Power consumption (kW)")
     plt.legend()
     plt.tight_layout()
+    plt.savefig(config.OUTPUT_FOLDER + "/plotDayBaseline.png")
     plt.show()
 
 
@@ -101,6 +103,7 @@ def plot_baselines(config, train, test, timestamps):
     plt.ylabel("Power (kW)")
     plt.legend()
     plt.tight_layout()
+    plt.savefig(config.OUTPUT_FOLDER + "/plot_baselines.png")
     plt.show()
 
 
