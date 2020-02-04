@@ -85,7 +85,7 @@ def getConcatDateTime(date, time):
 
 
 def makeTick(timestamps, present="%m-%d %H:%M"):
-    step = int(len(timestamps) / 14)
+    step = max(len(timestamps) // 14, 1)
     time = [timestamps[i].strftime(present) for i in range(len(timestamps))][::step]
     tick = [i for i in range(len(timestamps))][::step]
     return time, tick

@@ -91,7 +91,7 @@ def forecasting(config_main, config_pv):
         model = loadModel(config_pv)
         history = None
     else:
-        model, history = buildModel(trainX, trainY, validationX, validationY, config_pv, nbFeatures)
+        model, history = buildModelPv(trainX, trainY, validationX, validationY, config_pv)
 
     evalModel(model, testX, testY)
 
