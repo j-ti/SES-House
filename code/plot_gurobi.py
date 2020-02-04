@@ -261,11 +261,11 @@ def plotting_additive_all_powers_sym(
     # Selection list for in/out series in plotting order
     selOut = ["fixedLoads", "batPowersNeg", "evPowersNeg", "toGridPowers"]
     selIn = [
+        "dieselGenerators",
         "PVPowers",
         "windPowers",
         "batPowers",
         "evPowers",
-        "dieselGenerators",
         "fromGridPowers",
     ]
     negResults, resultsPd = resultsPd.clip(upper=0), resultsPd.clip(lower=0)
