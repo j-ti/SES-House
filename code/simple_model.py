@@ -16,7 +16,8 @@ from data import (
     getPriceData,
     getLoadsData,
     getPecanstreetData,
-)
+    get1DayPredictedPVValue,
+    get1DayPredictedLoadValue)
 from plot_gurobi import plotting
 import gurobipy as gp
 from gurobipy import QuadExpr, GRB, abs_
@@ -37,6 +38,7 @@ class Configure:
         # Global
         self.goal = Goal(config["GLOBAL"]["goal"])
         self.loc_flag = "yes" == config["GLOBAL"]["loc"]
+        self.dataPdct = "yes" == config["GLOBAL"]["usePredicted"]
         self.loc_lat = float(config["GLOBAL"]["lat"])
         self.loc_lon = float(config["GLOBAL"]["lon"])
 
@@ -610,7 +612,7 @@ def setUpPV(model, ini):
     else:
         print("PV data: use sample files")
         if ini.dataPSPv:
-            print("PV data: use Pecanstreet dataset with dataid:", (ini.dataid))
+            print("PV data: use Pecanstreet dataset with dataid:", ini.dataid)
             pvPowerValues = (
                 getPecanstreetData(
                     ini.dataFile,
@@ -622,6 +624,14 @@ def setUpPV(model, ini):
                 )
                 * ini.pvScale
             )
+            if ini.dataPdct:
+                print("PV data: use predicted values")
+                indexToPredict = 120
+                pvPowerValues = (
+                        get1DayPredictedPVValue(
+                            pvPowerValues, ini.timestamps, indexToPredict
+                        )
+                )
         else:
             pvPowerValues = getNinja(ini.pvFile, ini.timestamps) * ini.pvScale
     assert len(pvPowerValues) == len(ini.timestamps)
@@ -649,6 +659,14 @@ def setUpFixedLoads(model, ini):
             )
             * ini.loadsScale
         )
+        if ini.dataPdct:
+            print("Load data: use predicted values")
+            indexToPredict = 120
+            loadValues = (
+                get1DayPredictedLoadValue(
+                    loadValues, ini.timestamps, indexToPredict
+                )
+            )
     else:
         loadValues = getLoadsData(ini.loadsFile, ini.timestamps) * ini.loadsScale
 

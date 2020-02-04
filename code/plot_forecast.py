@@ -207,7 +207,7 @@ def plotPredictionPartMult(config, real, allPredicted, nameOfSet, timestamps, na
     time, tick = makeTick(timestamps)
     x1 = np.array(list(range(len(real))))
     mark = [allPredicted[i][0] for i in range(config.TIME_PER_DAY)]
-    plt.plot(x1, real, label="actual" + nameOfSet, color="green")
+    plt.plot(x1, real, 'o-', label="actual " + nameOfSet, color="green")
     plt.plot(x1, mark, 'x')
     for i in range(config.TIME_PER_DAY):
         plt.plot(x1 + i, allPredicted[i], linewidth=0.4)
