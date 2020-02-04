@@ -22,7 +22,12 @@ from forecast import (
 )
 from forecast_conf import ForecastConfig
 from forecast_load_conf import ForecastLoadConfig
-from plot_forecast import plotHistory, plotPredictionPart, plotPrediction
+from plot_forecast import (
+    plotHistory,
+    plotPredictionPart,
+    plotPrediction,
+    plot_multiple_days,
+)
 
 from shutil import copyfile
 
@@ -66,9 +71,15 @@ def getNormalizedParts(config, loadConfig, timestamps):
     return train_part, validation_part, test_part, scaler
 
 
-def prepareData(config, loadConfig, timestamps):
+def main(argv):
+    set_random_seed(ForecastConfig().SEED)
+    np.random.seed(ForecastConfig().SEED)
+
+    config = ForecastConfig()
+    loadConfig = ForecastLoadConfig()
+
     train_part, validation_part, test_part, scaler = getNormalizedParts(
-        config, loadConfig, timestamps
+        config, loadConfig, config.TIMESTAMPS
     )
 
     train_x, train_y = buildSet(
@@ -79,19 +90,6 @@ def prepareData(config, loadConfig, timestamps):
     )
     test_x, test_y = buildSet(test_part, loadConfig.LOOK_BACK, loadConfig.OUTPUT_SIZE)
 
-    return train_x, train_y, validation_x, validation_y, test_x, test_y, scaler
-
-
-def main(argv):
-    set_random_seed(ForecastConfig().SEED)
-    np.random.seed(ForecastConfig().SEED)
-
-    config = ForecastConfig()
-    loadConfig = ForecastLoadConfig()
-
-    train_x, train_y, validation_x, validation_y, test_x, test_y, scaler = prepareData(
-        config, loadConfig, config.TIMESTAMPS
-    )
     end_train, end_validation = get_split_indexes(config)
 
     if not loadConfig.LOAD_MODEL:
@@ -116,6 +114,9 @@ def main(argv):
             len(validation_y_timestamps) == len(validation_y) + loadConfig.OUTPUT_SIZE
         )
         validation_prediction = model.predict(validation_x)
+        test_prediction = model.predict(test_x)
+        test_mse = mean_squared_error(test_y, test_prediction)
+        print("test mse: ", test_mse)
         plotPredictionPart(
             loadConfig,
             validation_y[1, :],
@@ -127,7 +128,17 @@ def main(argv):
         model = loadModel(loadConfig)
         test_prediction = model.predict(test_x)
         test_mse = mean_squared_error(test_y, test_prediction)
-        print("test MSE: ", test_mse)
+        print("test mse: ", test_mse)
+
+        test_timestamps = config.TIMESTAMPS[
+            end_validation : end_validation + len(test_part)
+        ]
+        test_y_timestamps = test_timestamps[loadConfig.LOOK_BACK :]
+        assert len(test_y_timestamps) == len(test_y) + loadConfig.OUTPUT_SIZE
+
+        plot_multiple_days(
+            config, loadConfig, test_part[:, 0], test_prediction, test_timestamps
+        )
 
         plotPrediction(
             train_y,
@@ -140,22 +151,12 @@ def main(argv):
             loadConfig,
         )
 
-        test_timestamps = config.TIMESTAMPS[end_validation:]
-        test_y_timestamps = test_timestamps[loadConfig.LOOK_BACK :]
-        assert len(test_y_timestamps) == len(test_y) + loadConfig.OUTPUT_SIZE
         plotPredictionPart(
             loadConfig,
             test_y[1, :],
             test_prediction[1, :],
             "1st day of test set",
             test_y_timestamps[: loadConfig.OUTPUT_SIZE],
-        )
-        plotPredictionPart(
-            loadConfig,
-            test_y[2, :],
-            test_prediction[2, :],
-            "1st day of test set",
-            test_y_timestamps[loadConfig.OUTPUT_SIZE : 2 * loadConfig.OUTPUT_SIZE],
         )
 
 

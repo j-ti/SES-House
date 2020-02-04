@@ -1,5 +1,6 @@
 import matplotlib.pyplot as plt
 import numpy as np
+from forecast import get_timestamps_per_day
 from util import makeTick, getMeanSdDay
 
 outputFolder = ""
@@ -212,4 +213,35 @@ def plotPredictionPartMult(config, real, allPredicted, nameOfSet, timestamps, na
     # plt.legend()
     plt.tight_layout()
     plt.savefig(config.OUTPUT_FOLDER + "/prediction_part-" + name + ".png")
+    plt.show()
+
+def get_following_days(config, matrix_values):
+    times_per_day = get_timestamps_per_day(config)
+
+    follow_predicts = []
+
+    print(len(matrix_values))
+    for i in range(0, len(matrix_values), times_per_day):
+        print(i)
+        follow_predicts.extend(matrix_values[i])
+
+    return np.array(follow_predicts)
+
+
+def plot_multiple_days(config, loadConfig, test, predicts, timestamps):
+    timestamps_per_day = get_timestamps_per_day(config)
+    predicts = get_following_days(config, predicts)
+
+    plt.plot(range(len(test)), test, label="test set")
+    label = "LSTM lb=" + str(loadConfig.LOOK_BACK)
+    diff = max(loadConfig.LOOK_BACK, loadConfig.OUTPUT_SIZE) - min(
+        loadConfig.LOOK_BACK, loadConfig.OUTPUT_SIZE
+    )
+    plt.plot(range(loadConfig.LOOK_BACK, len(test) - diff), predicts, label=label)
+    time, tick = makeTick(timestamps)
+    plt.xticks(tick, time, rotation=20)
+    plt.xlabel("Time")
+    plt.ylabel("Power (kW)")
+    plt.legend()
+    plt.tight_layout()
     plt.show()
