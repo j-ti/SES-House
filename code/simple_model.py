@@ -69,6 +69,12 @@ class Configure:
             datetime.strptime(config["TIME"]["stepsize"], "%H:%M:%S")
             - datetime.strptime("00:00:00", "%H:%M:%S"),
         )
+        self.timestampsPred = constructTimeStamps(
+            datetime.strptime(config["TIME"]["startPred"], "20%y-%m-%d %H:%M:%S"),
+            datetime.strptime(config["TIME"]["end"], "20%y-%m-%d %H:%M:%S"),
+            datetime.strptime(config["TIME"]["stepsize"], "%H:%M:%S")
+            - datetime.strptime("00:00:00", "%H:%M:%S"),
+        )
         self.stepsize = getStepsize(self.timestamps)
         self.stepsizeHour = self.stepsize.total_seconds() / 3600
         self.stepsizeMinute = self.stepsize.total_seconds() / 60
@@ -599,10 +605,6 @@ def setUpDiesel(model, ini):
 
 
 def setUpPV(model, ini):
-    pvVars = model.addVars(
-        len(ini.timestamps), 1, lb=0.0, vtype=GRB.CONTINUOUS, name="PVPowers"
-    )
-
     if ini.loc_flag:
         print("PV data: use location and query from renewables.ninja API")
         metadata, pvPowerValues = getNinjaPvApi(
@@ -625,16 +627,34 @@ def setUpPV(model, ini):
                 * ini.pvScale
             )
             if ini.dataPdct:
-                print("PV data: use predicted values")
                 pvPowerValues = (
+                        getPecanstreetData(
+                            ini.dataFile,
+                            ini.timeHeader,
+                            ini.dataid,
+                            "solar",
+                            ini.timestampsPred,
+                            ini.dataDelta,
+                        )
+                        * ini.pvScale
+                )
+                print("PV data: use predicted values")
+                pvPowerValues, outputSize = (
                         getPredictedPVValue(
-                            pvPowerValues, ini.timestamps
+                            pvPowerValues, ini.timestampsPred
                         )
                 )
-                print(pvPowerValues.shape)
+                pvPowerValuesConcat = []
+                for i in range((len(pvPowerValues) // outputSize)):
+                    pvPowerValuesConcat.extend(pvPowerValues[i * outputSize])
+                pvPowerValues = pvPowerValuesConcat
         else:
             pvPowerValues = getNinja(ini.pvFile, ini.timestamps) * ini.pvScale
     assert len(pvPowerValues) == len(ini.timestamps)
+
+    pvVars = model.addVars(
+        len(ini.timestamps), 1, lb=0.0, vtype=GRB.CONTINUOUS, name="PVPowers"
+    )
     model.addConstrs(
         (pvVars[i, 0] == pvPowerValues[i] for i in range(len(ini.timestamps))),
         "1st pv panel generation",
@@ -644,9 +664,6 @@ def setUpPV(model, ini):
 
 
 def setUpFixedLoads(model, ini):
-    fixedLoadVars = model.addVars(
-        len(ini.timestamps), 1, lb=0.0, vtype=GRB.CONTINUOUS, name="fixedLoads"
-    )
     if ini.dataPSLoads:
         loadValues = (
             getPecanstreetData(
@@ -660,17 +677,36 @@ def setUpFixedLoads(model, ini):
             * ini.loadsScale
         )
         if ini.dataPdct:
-            print("Load data: use predicted values")
             loadValues = (
+                    getPecanstreetData(
+                        ini.dataFile,
+                        ini.timeHeader,
+                        ini.dataid,
+                        "grid",
+                        ini.timestampsPred,
+                        ini.dataDelta,
+                    )
+                    * ini.loadsScale
+            )
+            print("Load data: use predicted values")
+            loadValues, outputSize = (
                 getPredictedLoadValue(
-                    loadValues, ini.timestamps
+                    loadValues, ini.timestampsPred
                 )
             )
-            print(loadValues.shape)
+            loadValuesConcat = []
+            for i in range((len(loadValues) // outputSize)):
+                loadValuesConcat.extend(loadValues[i * outputSize])
+            print(len(loadValuesConcat))
+            loadValues = loadValuesConcat
     else:
         loadValues = getLoadsData(ini.loadsFile, ini.timestamps) * ini.loadsScale
 
     assert len(loadValues) == len(ini.timestamps)
+
+    fixedLoadVars = model.addVars(
+        len(ini.timestamps), 1, lb=0.0, vtype=GRB.CONTINUOUS, name="fixedLoads"
+    )
     model.addConstrs(
         (fixedLoadVars[i, 0] == loadValues[i] for i in range(len(ini.timestamps))),
         "power of fixed loads",

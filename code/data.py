@@ -374,10 +374,14 @@ def getPredictedPVValue(pvValue, timestamps):
     df.iloc[0, -1] = valMin
     df.iloc[1, -1] = valMax
     df = scaler.transform(df)
-    X, _ = buildSet(df, config_pv.LOOK_BACK, config_pv.OUTPUT_SIZE)
+
+    x = np.empty((len(df) - config_pv.LOOK_BACK, config_pv.LOOK_BACK, df.shape[1]))
+    for i in range(len(df) - config_pv.LOOK_BACK):
+        x[i] = df[i: i + config_pv.LOOK_BACK, :]
+    
     model = forecast_pv.loadModel(config_pv)
-    res = model.predict(X)
-    return res
+    res = model.predict(x)
+    return res, config_pv.OUTPUT_SIZE
 
 
 # loadsData is at least 3 days
@@ -400,7 +404,11 @@ def getPredictedLoadValue(loadsData, timestamps):
     scaler = MinMaxScaler()
     scaler.fit(input_data)
     input_data = scaler.transform(input_data)
-    X, _ = buildSet(input_data, loadConfig.LOOK_BACK, loadConfig.OUTPUT_SIZE)
+
+    x = np.empty((len(input_data) - loadConfig.LOOK_BACK, loadConfig.LOOK_BACK, input_data.shape[1]))
+    for i in range(len(input_data) - loadConfig.LOOK_BACK):
+        x[i] = input_data[i: i + loadConfig.LOOK_BACK, :]
+    
     model = forecast_pv.loadModel(loadConfig)
-    res = model.predict(X)
-    return res
+    res = model.predict(x)
+    return res, loadConfig.OUTPUT_SIZE
