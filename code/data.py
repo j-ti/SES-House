@@ -357,8 +357,8 @@ def _computeIntRelation(stepsize1, stepsize2):
     assert relation.is_integer(), "1 stepsize should be a multiple of the other."
     return int(relation)
 
-# pvValue is 24 last point for predict the next one
-def get1DayPredictedPVValue(pvValue, timestamps, indexTimeToPredict):
+# pvValue is at least 3 days
+def getPredictedPVValue(pvValue, timestamps):
     config_main = ForecastConfig()
     config_pv = ForecastPvConfig(config_main)
     df = addMinutes(pvValue)
@@ -374,14 +374,14 @@ def get1DayPredictedPVValue(pvValue, timestamps, indexTimeToPredict):
     df.iloc[0, -1] = valMin
     df.iloc[1, -1] = valMax
     df = scaler.transform(df)
-    X = np.array(df[:config_pv.LOOK_BACK])
+    X, _ = buildSet(df, config_pv.LOOK_BACK, config_pv.OUTPUT_SIZE)
     model = forecast_pv.loadModel(config_pv)
-    res = model.predict(np.array([X]))[0]
+    res = model.predict(X)
     return res
 
 
-# loadsData is 24 last point for predict the next one
-def get1DayPredictedLoadValue(loadsData, timestamps, indexTimeToPredict):
+# loadsData is at least 3 days
+def getPredictedLoadValue(loadsData, timestamps):
     loadConfig = ForecastLoadConfig()
     input_data = addMinutes(loadsData)
     input_data = add_day_of_week(input_data)
@@ -400,7 +400,7 @@ def get1DayPredictedLoadValue(loadsData, timestamps, indexTimeToPredict):
     scaler = MinMaxScaler()
     scaler.fit(input_data)
     input_data = scaler.transform(input_data)
-    X = np.array(input_data[:loadConfig.LOOK_BACK])
+    X, _ = buildSet(input_data, loadConfig.LOOK_BACK, loadConfig.OUTPUT_SIZE)
     model = forecast_pv.loadModel(loadConfig)
-    res = model.predict(np.array([X]))[0]
+    res = model.predict(X)
     return res

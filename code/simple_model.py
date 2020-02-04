@@ -16,8 +16,8 @@ from data import (
     getPriceData,
     getLoadsData,
     getPecanstreetData,
-    get1DayPredictedPVValue,
-    get1DayPredictedLoadValue)
+    getPredictedPVValue,
+    getPredictedLoadValue)
 from plot_gurobi import plotting
 import gurobipy as gp
 from gurobipy import QuadExpr, GRB, abs_
@@ -626,12 +626,12 @@ def setUpPV(model, ini):
             )
             if ini.dataPdct:
                 print("PV data: use predicted values")
-                indexToPredict = 120
                 pvPowerValues = (
-                        get1DayPredictedPVValue(
-                            pvPowerValues, ini.timestamps, indexToPredict
+                        getPredictedPVValue(
+                            pvPowerValues, ini.timestamps
                         )
                 )
+                print(pvPowerValues.shape)
         else:
             pvPowerValues = getNinja(ini.pvFile, ini.timestamps) * ini.pvScale
     assert len(pvPowerValues) == len(ini.timestamps)
@@ -661,12 +661,12 @@ def setUpFixedLoads(model, ini):
         )
         if ini.dataPdct:
             print("Load data: use predicted values")
-            indexToPredict = 120
             loadValues = (
-                get1DayPredictedLoadValue(
-                    loadValues, ini.timestamps, indexToPredict
+                getPredictedLoadValue(
+                    loadValues, ini.timestamps
                 )
             )
+            print(loadValues.shape)
     else:
         loadValues = getLoadsData(ini.loadsFile, ini.timestamps) * ini.loadsScale
 
