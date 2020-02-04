@@ -385,7 +385,7 @@ def getPredictedPVValue(pvValue, timestamps):
 
 
 # loadsData is at least 3 days
-def getPredictedLoadValue(loadsData, timestamps):
+def getPredictedLoadValue(loadsData, timestamps, timedelta):
     loadConfig = ForecastLoadConfig()
     input_data = addMinutes(loadsData)
     input_data = add_day_of_week(input_data)
@@ -398,6 +398,7 @@ def getPredictedLoadValue(loadsData, timestamps):
             loadConfig.DATAID,
             load,
             timestamps,
+            timedelta
         )
         input_data = pd.concat([input_data, appliance_data], axis=1)
 

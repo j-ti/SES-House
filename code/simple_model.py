@@ -691,7 +691,7 @@ def setUpFixedLoads(model, ini):
             print("Load data: use predicted values")
             loadValues, outputSize = (
                 getPredictedLoadValue(
-                    loadValues, ini.timestampsPred
+                    loadValues, ini.timestampsPred, ini.dataDelta
                 )
             )
             loadValuesConcat = []
