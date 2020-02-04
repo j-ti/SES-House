@@ -206,15 +206,16 @@ def plotEcart(train_y, train_predict_y, val_y, val_predict_y, test_y, test_predi
 def plotPredictionPartMult(config, real, allPredicted, nameOfSet, timestamps, name):
     time, tick = makeTick(timestamps)
     x1 = np.array(list(range(len(real))))
-
-    plt.plot(x1, real, label="actual of " + nameOfSet, color="green")
+    mark = [allPredicted[i][0] for i in range(config.TIME_PER_DAY)]
+    plt.plot(x1, real, label="actual" + nameOfSet, color="green")
+    plt.plot(x1, mark, 'x')
     for i in range(config.TIME_PER_DAY):
-        plt.plot(x1 + i, allPredicted[i], label="predicted - " + str(i), linewidth=0.2)
-
+        plt.plot(x1 + i, allPredicted[i], linewidth=0.4)
     # plt.xticks(tick, time, rotation=20)
     plt.xlabel("Time")
     plt.ylabel("Power consumption (kW)")
-    # plt.legend()
+    plt.xlim(right=25)
+    plt.legend()
     plt.tight_layout()
     plt.savefig(config.OUTPUT_FOLDER + "/prediction_all-" + name + ".png")
     plt.show()
