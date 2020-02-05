@@ -3,7 +3,7 @@ import sys
 from datetime import datetime
 
 import numpy as np
-# from data import getPecanstreetData
+from data import getPecanstreetData
 from forecast import splitData, buildSet, evalModel, loadModel, saveModel, train, addMinutes, addMonthOfYear, buildModel
 from forecast_conf import ForecastConfig
 from forecast_pv_conf import ForecastPvConfig
@@ -20,10 +20,9 @@ def dataImport(config_main, config_pv):
         datetime.strptime(config_pv.STEP_SIZE, "%H:%M:%S") - datetime.strptime("00:00:00", "%H:%M:%S")
     )
     # input datas : uncontrollable resource : solar production
-    # df = getPecanstreetData(
-    #     config_pv.DATA_FILE, config_pv.TIME_HEADER, config_pv.DATAID, "solar", timestamps
-    # )
-    df = None
+    df = getPecanstreetData(
+        config_pv.DATA_FILE, config_pv.TIME_HEADER, config_pv.DATAID, "solar", timestamps
+    )
     df = addMinutes(df)
     df = addMonthOfYear(df, timestamps)
 

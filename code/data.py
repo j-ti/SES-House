@@ -1,11 +1,10 @@
 import json
 from datetime import timedelta
 
-import forecast_pv
 import numpy as np
 import pandas as pd
 import requests
-from forecast import addMinutes, addMonthOfYear, buildSet, add_day_of_week, add_weekend
+from forecast import addMinutes, addMonthOfYear, buildSet, add_day_of_week, add_weekend, loadModel
 from forecast_conf import ForecastConfig
 from forecast_load_conf import ForecastLoadConfig
 from forecast_pv_conf import ForecastPvConfig
@@ -378,7 +377,7 @@ def getPredictedPVValue(pvValue, timestamps):
     x = np.empty((len(df) - config_pv.LOOK_BACK, config_pv.LOOK_BACK, df.shape[1]))
     for i in range(len(df) - config_pv.LOOK_BACK):
         x[i] = df[i: i + config_pv.LOOK_BACK, :]
-    
+
     model = forecast_pv.loadModel(config_pv)
     res = model.predict(x)
     return res, config_pv.OUTPUT_SIZE
@@ -409,7 +408,7 @@ def getPredictedLoadValue(loadsData, timestamps, timedelta):
     x = np.empty((len(input_data) - loadConfig.LOOK_BACK, loadConfig.LOOK_BACK, input_data.shape[1]))
     for i in range(len(input_data) - loadConfig.LOOK_BACK):
         x[i] = input_data[i: i + loadConfig.LOOK_BACK, :]
-    
+
     model = forecast_pv.loadModel(loadConfig)
     res = model.predict(x)
     return res, loadConfig.OUTPUT_SIZE
