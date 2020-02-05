@@ -43,6 +43,13 @@ def addMinutes(data):
     return pd.concat([data, minutes], axis=1)
 
 
+def add0(data):
+    zeros = pd.Series(
+        [0 for i in data.index], index=data.index
+    )
+    return pd.concat([data, zeros], axis=1)
+
+
 def add_day_of_week(data):
     days_of_week = pd.Series([i.weekday() for i in data.index], index=data.index)
     return pd.concat([data, days_of_week], axis=1)
