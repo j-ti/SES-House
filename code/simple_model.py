@@ -1,14 +1,13 @@
 #!/usr/bin/env python3.7
 import configparser
+import math
+import os
+import sys
 from datetime import datetime
 from enum import Enum
-import math
-import sys
-import os
 from shutil import copyfile
 
-from util import constructTimeStamps, getStepsize, getTimeIndexRangeDaily, diffIndexList
-
+import gurobipy as gp
 from data import (
     getNinja,
     getNinjaPvApi,
@@ -18,10 +17,9 @@ from data import (
     getPecanstreetData,
     getPredictedPVValue,
     getPredictedLoadValue)
+from gurobipy import QuadExpr, GRB
 from plot_gurobi import plotting
-import gurobipy as gp
-from gurobipy import QuadExpr, GRB, abs_
-
+from util import constructTimeStamps, getStepsize, getTimeIndexRangeDaily, diffIndexList
 
 outputFolder = ""
 
@@ -62,6 +60,10 @@ class Configure:
         self.t_b_ev = datetime.strptime(config["EV"]["t_b_ev"], "%H:%M:%S")
         self.t_goal_ev = datetime.strptime(config["EV"]["t_goal_ev"], "%H:%M:%S")
 
+        # verify we have enough day to build the set for the prediction
+        assert (datetime.strptime(config["TIME"]["start"], "20%y-%m-%d %H:%M:%S")
+                - datetime.strptime(config["TIME"]["startPred"], "20%y-%m-%d %H:%M:%S")).days >= 1, \
+            "a delay of at least 1 day is needed to predict"
         # Time frame of optimization
         self.timestamps = constructTimeStamps(
             datetime.strptime(config["TIME"]["start"], "20%y-%m-%d %H:%M:%S"),
@@ -248,16 +250,15 @@ def calcGridCost(ini, fromGridVars, toGridVars, prices):
 
 
 def calcMinCostObjective(
-    ini,
-    fromGridVars,
-    toGridVars,
-    prices,
-    dieselGeneratorsVars,
-    dieselStatusVars,
-    batteryPowerVars,
-    type,
+        ini,
+        fromGridVars,
+        toGridVars,
+        prices,
+        dieselGeneratorsVars,
+        dieselStatusVars,
+        batteryPowerVars,
+        type,
 ):
-
     dieselObjExp = calcDieselCost(ini, dieselGeneratorsVars, dieselStatusVars)
     gridCostObjExp = calcGridCost(ini, fromGridVars, toGridVars, prices)
     batCostObjExp = calcBatChargeLoss(ini, batteryPowerVars)
@@ -268,22 +269,22 @@ def calcMinCostObjective(
 
 
 def calcGreenhouseObjective(
-    ini, fromGridVars, dieselGeneratorsVars, batteryPowerVars, type
+        ini, fromGridVars, dieselGeneratorsVars, batteryPowerVars, type
 ):
     dieselGreenhouse = (
-        ini.co2Diesel * gp.quicksum(dieselGeneratorsVars) * ini.stepsizeHour
+            ini.co2Diesel * gp.quicksum(dieselGeneratorsVars) * ini.stepsizeHour
     )
     gridGreenhouse = ini.co2Grid * gp.quicksum(fromGridVars) * ini.stepsizeHour
     if type == "Virtual":
         return (
-            dieselGreenhouse + gridGreenhouse + calcBatChargeLoss(ini, batteryPowerVars)
+                dieselGreenhouse + gridGreenhouse + calcBatChargeLoss(ini, batteryPowerVars)
         )
     elif type == "True":
         return dieselGreenhouse + gridGreenhouse
 
 
 def calcGreenhouseQuadraticObjective(
-    ini, fromGridVars, dieselGeneratorsVars, batteryPowerVars, type
+        ini, fromGridVars, dieselGeneratorsVars, batteryPowerVars, type
 ):
     dieselGreenhouseQuadratic = ini.co2Diesel * sum(
         [
@@ -300,36 +301,36 @@ def calcGreenhouseQuadraticObjective(
     )
     if type == "Virtual":
         return (
-            dieselGreenhouseQuadratic
-            + gridGreenhouseQuadratic
-            + calcBatChargeLoss(ini, batteryPowerVars)
+                dieselGreenhouseQuadratic
+                + gridGreenhouseQuadratic
+                + calcBatChargeLoss(ini, batteryPowerVars)
         )
     elif type == "True":
         return dieselGreenhouseQuadratic + gridGreenhouseQuadratic
 
 
 def calcGridIndependenceObjective(
-    ini, fromGridVars, toGridVars, batteryPowerVars, type
+        ini, fromGridVars, toGridVars, batteryPowerVars, type
 ):
     if type == "Virtual":
         return (
-            gp.quicksum(fromGridVars)
-            + gp.quicksum(toGridVars)
-            + calcBatChargeLoss(ini, batteryPowerVars)
+                gp.quicksum(fromGridVars)
+                + gp.quicksum(toGridVars)
+                + calcBatChargeLoss(ini, batteryPowerVars)
         )
     elif type == "True":
         return gp.quicksum(fromGridVars) + gp.quicksum(toGridVars)
 
 
 def setObjective(
-    model,
-    ini,
-    dieselGeneratorsVars,
-    dieselStatusVars,
-    fromGridVars,
-    toGridVars,
-    batteryPowerVars,
-    prices,
+        model,
+        ini,
+        dieselGeneratorsVars,
+        dieselStatusVars,
+        fromGridVars,
+        toGridVars,
+        batteryPowerVars,
+        prices,
 ):
     if ini.goal is Goal.MINIMIZE_COST:
         model.setObjective(
@@ -398,7 +399,8 @@ def setUpDiesel(model, ini):
 
     dieselStatusVars = model.addVars(
         len(ini.timestamps),
-        4,  # the first column: diesel is not committed/second: diesel at start up, third: diesel at shut down/fourth: diesel is committed
+        4,
+        # the first column: diesel is not committed/second: diesel at start up, third: diesel at shut down/fourth: diesel is committed
         vtype=GRB.BINARY,
         name="dieselStatus",
     )
@@ -471,89 +473,89 @@ def setUpDiesel(model, ini):
     for index in range(len(ini.timestamps) - 1):
         model.addConstr(
             (
-                (dieselStatusVars[index, 1] == 1)
-                >> (
-                    dieselGeneratorsVars[index + 1, 0]
-                    == dieselGeneratorsVars[index, 0] + dieselStartupRamp[index, 0]
-                )
+                    (dieselStatusVars[index, 1] == 1)
+                    >> (
+                            dieselGeneratorsVars[index + 1, 0]
+                            == dieselGeneratorsVars[index, 0] + dieselStartupRamp[index, 0]
+                    )
             ),
             "diesel generator power increase during Startup",
         )
         model.addConstr(
             (
-                (dieselStatusVars[index, 2] == 1)
-                >> (
-                    dieselGeneratorsVars[index + 1, 0]
-                    == dieselGeneratorsVars[index, 0] - dieselShutdownRamp[index, 0]
-                )
+                    (dieselStatusVars[index, 2] == 1)
+                    >> (
+                            dieselGeneratorsVars[index + 1, 0]
+                            == dieselGeneratorsVars[index, 0] - dieselShutdownRamp[index, 0]
+                    )
             ),
             "diesel generator power decrease during Shutdown",
         )
 
         model.addConstr(
             (
-                (dieselStatusVars[index, 3] == 1)
-                >> (
-                    dieselGeneratorsVars[index + 1, 0]
-                    == dieselGeneratorsVars[index, 0] + dieselPowerRamp[index, 0]
-                )
+                    (dieselStatusVars[index, 3] == 1)
+                    >> (
+                            dieselGeneratorsVars[index + 1, 0]
+                            == dieselGeneratorsVars[index, 0] + dieselPowerRamp[index, 0]
+                    )
             ),
             "ramp limit during fully committed",
         )
 
         model.addConstr(
             (
-                (dieselStatusVars[index, 0] == 1)
-                >> (dieselStatusVars[index + 1, 3] == 0)
+                    (dieselStatusVars[index, 0] == 1)
+                    >> (dieselStatusVars[index + 1, 3] == 0)
             ),
             "Not Working -> Working IMPOSSIBLE",
         )
         model.addConstr(
             (
-                (dieselStatusVars[index, 0] == 1)
-                >> (dieselStatusVars[index + 1, 2] == 0)
+                    (dieselStatusVars[index, 0] == 1)
+                    >> (dieselStatusVars[index + 1, 2] == 0)
             ),
             "Not Working -> Shutdown IMPOSSIBLE",
         )
         model.addConstr(
             (
-                (dieselStatusVars[index, 1] == 1)
-                >> (dieselStatusVars[index + 1, 2] == 0)
+                    (dieselStatusVars[index, 1] == 1)
+                    >> (dieselStatusVars[index + 1, 2] == 0)
             ),
             "Startup -> Shutdown IMPOSSIBLE",
         )
         model.addConstr(
             (
-                (dieselStatusVars[index, 1] == 1)
-                >> (dieselStatusVars[index + 1, 0] == 0)
+                    (dieselStatusVars[index, 1] == 1)
+                    >> (dieselStatusVars[index + 1, 0] == 0)
             ),
             "Startup -> Not working IMPOSSIBLE",
         )
         model.addConstr(
             (
-                (dieselStatusVars[index, 2] == 1)
-                >> (dieselStatusVars[index + 1, 3] == 0)
+                    (dieselStatusVars[index, 2] == 1)
+                    >> (dieselStatusVars[index + 1, 3] == 0)
             ),
             "Shutdown -> working IMPOSSIBLE",
         )
         model.addConstr(
             (
-                (dieselStatusVars[index, 2] == 1)
-                >> (dieselStatusVars[index + 1, 1] == 0)
+                    (dieselStatusVars[index, 2] == 1)
+                    >> (dieselStatusVars[index + 1, 1] == 0)
             ),
             "Shutdown -> startup IMPOSSIBLE",
         )
         model.addConstr(
             (
-                (dieselStatusVars[index, 3] == 1)
-                >> (dieselStatusVars[index + 1, 0] == 0)
+                    (dieselStatusVars[index, 3] == 1)
+                    >> (dieselStatusVars[index + 1, 0] == 0)
             ),
             "Working -> Not working IMPOSSIBLE",
         )
         model.addConstr(
             (
-                (dieselStatusVars[index, 3] == 1)
-                >> (dieselStatusVars[index + 1, 1] == 0)
+                    (dieselStatusVars[index, 3] == 1)
+                    >> (dieselStatusVars[index + 1, 1] == 0)
             ),
             "Working -> Startup IMPOSSIBLE",
         )
@@ -573,8 +575,8 @@ def setUpDiesel(model, ini):
             >= ini.dieselLeastPauseTimestepNumber
             * (dieselStatusVars[index, 3] - dieselStatusVars[index - 1, 3])
             for index in range(
-                1, len(ini.timestamps) - ini.dieselLeastRunTimestepNumber
-            )
+            1, len(ini.timestamps) - ini.dieselLeastRunTimestepNumber
+        )
         ),
         "Least Running time",
     )
@@ -587,8 +589,8 @@ def setUpDiesel(model, ini):
             >= ini.dieselLeastPauseTimestepNumber
             * (dieselStatusVars[index, 0] - dieselStatusVars[index - 1, 0])
             for index in range(
-                1, len(ini.timestamps) - ini.dieselLeastPauseTimestepNumber
-            )
+            1, len(ini.timestamps) - ini.dieselLeastPauseTimestepNumber
+        )
         ),
         "Least Pause time",
     )
@@ -605,51 +607,52 @@ def setUpDiesel(model, ini):
 
 
 def setUpPV(model, ini):
-    if ini.loc_flag:
-        print("PV data: use location and query from renewables.ninja API")
-        metadata, pvPowerValues = getNinjaPvApi(
-            ini.loc_lat, ini.loc_lon, ini.timestamps
-        )
-        pvPowerValues = pvPowerValues.values * ini.pvScale
-    else:
-        print("PV data: use sample files")
-        if ini.dataPSPv:
-            print("PV data: use Pecanstreet dataset with dataid:", ini.dataid)
-            pvPowerValues = (
+    if ini.dataPdct:
+        pvPowerValues = (
                 getPecanstreetData(
                     ini.dataFile,
                     ini.timeHeader,
                     ini.dataid,
                     "solar",
-                    ini.timestamps,
+                    ini.timestampsPred,
                     ini.dataDelta,
                 )
                 * ini.pvScale
+        )
+        print("PV data: use predicted values")
+        pvPowerValues, outputSize = (
+            getPredictedPVValue(
+                pvPowerValues, ini.timestampsPred
             )
-            if ini.dataPdct:
+        )
+        pvPowerValuesConcat = []
+        for i in range((len(pvPowerValues) // outputSize)):
+            pvPowerValuesConcat.extend(pvPowerValues[i * outputSize])
+        pvPowerValues = pvPowerValuesConcat
+    else:
+        if ini.loc_flag:
+            print("PV data: use location and query from renewables.ninja API")
+            metadata, pvPowerValues = getNinjaPvApi(
+                ini.loc_lat, ini.loc_lon, ini.timestamps
+            )
+            pvPowerValues = pvPowerValues.values * ini.pvScale
+        else:
+            print("PV data: use sample files")
+            if ini.dataPSPv:
+                print("PV data: use Pecanstreet dataset with dataid:", ini.dataid)
                 pvPowerValues = (
                         getPecanstreetData(
                             ini.dataFile,
                             ini.timeHeader,
                             ini.dataid,
                             "solar",
-                            ini.timestampsPred,
+                            ini.timestamps,
                             ini.dataDelta,
                         )
                         * ini.pvScale
                 )
-                print("PV data: use predicted values")
-                pvPowerValues, outputSize = (
-                        getPredictedPVValue(
-                            pvPowerValues, ini.timestampsPred
-                        )
-                )
-                pvPowerValuesConcat = []
-                for i in range((len(pvPowerValues) // outputSize)):
-                    pvPowerValuesConcat.extend(pvPowerValues[i * outputSize])
-                pvPowerValues = pvPowerValuesConcat
-        else:
-            pvPowerValues = getNinja(ini.pvFile, ini.timestamps) * ini.pvScale
+            else:
+                pvPowerValues = getNinja(ini.pvFile, ini.timestamps) * ini.pvScale
     assert len(pvPowerValues) == len(ini.timestamps)
 
     pvVars = model.addVars(
@@ -664,43 +667,44 @@ def setUpPV(model, ini):
 
 
 def setUpFixedLoads(model, ini):
-    if ini.dataPSLoads:
+    if ini.dataPdct:
         loadValues = (
-            getPecanstreetData(
-                ini.dataFile,
-                ini.timeHeader,
-                ini.dataid,
-                "grid",
-                ini.timestamps,
-                ini.dataDelta,
-            )
-            * ini.loadsScale
+                getPecanstreetData(
+                    ini.dataFile,
+                    ini.timeHeader,
+                    ini.dataid,
+                    "grid",
+                    ini.timestampsPred,
+                    ini.dataDelta,
+                )
+                * ini.loadsScale
         )
-        if ini.dataPdct:
+        print("Load data: use predicted values")
+        loadValues, outputSize = (
+            getPredictedLoadValue(
+                loadValues, ini.timestampsPred, ini.dataDelta
+            )
+        )
+        loadValuesConcat = []
+        for i in range((len(loadValues) // outputSize)):
+            loadValuesConcat.extend(loadValues[i * outputSize])
+        print(len(loadValuesConcat))
+        loadValues = loadValuesConcat
+    else:
+        if ini.dataPSLoads:
             loadValues = (
                     getPecanstreetData(
                         ini.dataFile,
                         ini.timeHeader,
                         ini.dataid,
                         "grid",
-                        ini.timestampsPred,
+                        ini.timestamps,
                         ini.dataDelta,
                     )
                     * ini.loadsScale
             )
-            print("Load data: use predicted values")
-            loadValues, outputSize = (
-                getPredictedLoadValue(
-                    loadValues, ini.timestampsPred, ini.dataDelta
-                )
-            )
-            loadValuesConcat = []
-            for i in range((len(loadValues) // outputSize)):
-                loadValuesConcat.extend(loadValues[i * outputSize])
-            print(len(loadValuesConcat))
-            loadValues = loadValuesConcat
-    else:
-        loadValues = getLoadsData(ini.loadsFile, ini.timestamps) * ini.loadsScale
+        else:
+            loadValues = getLoadsData(ini.loadsFile, ini.timestamps) * ini.loadsScale
 
     assert len(loadValues) == len(ini.timestamps)
 
@@ -842,13 +846,13 @@ def setUpEv(model, ini):
 
 
 def printObjectiveResults(
-    ini,
-    fromGridVars,
-    toGridVars,
-    gridPrices,
-    dieselGeneratorsVars,
-    dieselStatusVars,
-    batteryPowerVars,
+        ini,
+        fromGridVars,
+        toGridVars,
+        gridPrices,
+        dieselGeneratorsVars,
+        dieselStatusVars,
+        batteryPowerVars,
 ):
     print(
         "MINIMIZE_COST goal: %.2f"
@@ -906,9 +910,9 @@ def copyConfigFile(filepath, outputFolder):
 def main(argv):
     global outputFolder
     outputFolder = (
-        "output/"
-        + str(datetime.now()).split(".")[0].replace(" ", "_").replace(":", "-")
-        + "/"
+            "output/"
+            + str(datetime.now()).split(".")[0].replace(" ", "_").replace(":", "-")
+            + "/"
     )
     if not os.path.isdir(outputFolder):
         os.makedirs(outputFolder)
