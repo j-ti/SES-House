@@ -7,6 +7,8 @@ from datetime import datetime
 from enum import Enum
 from shutil import copyfile
 
+import numpy as np
+
 import gurobipy as gp
 from data import (
     getNinja,
@@ -655,6 +657,10 @@ def setUpPV(model, ini):
                 pvPowerValues = getNinja(ini.pvFile, ini.timestamps) * ini.pvScale
     assert len(pvPowerValues) == len(ini.timestamps)
 
+    pvPowerValues = np.abs(pvPowerValues)
+
+    assert all(i >= 0 for i in pvPowerValues)
+
     pvVars = model.addVars(
         len(ini.timestamps), 1, lb=0.0, vtype=GRB.CONTINUOUS, name="PVPowers"
     )
@@ -707,6 +713,7 @@ def setUpFixedLoads(model, ini):
             loadValues = getLoadsData(ini.loadsFile, ini.timestamps) * ini.loadsScale
 
     assert len(loadValues) == len(ini.timestamps)
+    assert all(i >= 0 for i in loadValues)
 
     fixedLoadVars = model.addVars(
         len(ini.timestamps), 1, lb=0.0, vtype=GRB.CONTINUOUS, name="fixedLoads"

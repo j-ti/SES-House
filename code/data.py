@@ -9,7 +9,7 @@ from forecast_conf import ForecastConfig
 from forecast_load_conf import ForecastLoadConfig
 from forecast_pv_conf import ForecastPvConfig
 from sklearn.preprocessing import MinMaxScaler
-from util import getStepsize
+from util import getStepsize, invertScaler
 
 FROM_MEGAWATTHOURS_TO_KILOWATTHOURS = 1000
 
@@ -378,8 +378,9 @@ def getPredictedPVValue(pvValue, timestamps):
     for i in range(len(df) - config_pv.LOOK_BACK):
         x[i] = df[i: i + config_pv.LOOK_BACK, :]
 
-    model = forecast_pv.loadModel(config_pv)
+    model = loadModel(config_pv)
     res = model.predict(x)
+    res = invertScaler(res, scaler)
     return res, config_pv.OUTPUT_SIZE
 
 
@@ -409,6 +410,7 @@ def getPredictedLoadValue(loadsData, timestamps, timedelta):
     for i in range(len(input_data) - loadConfig.LOOK_BACK):
         x[i] = input_data[i: i + loadConfig.LOOK_BACK, :]
 
-    model = forecast_pv.loadModel(loadConfig)
+    model = loadModel(loadConfig)
     res = model.predict(x)
+    res = invertScaler(res, scaler)
     return res, loadConfig.OUTPUT_SIZE
