@@ -7,6 +7,7 @@ from keras.callbacks import EarlyStopping
 from keras.engine.saving import model_from_json
 from keras.layers import LSTM, Dropout, Activation
 from keras.layers.core import Dense
+from keras.models import Sequential
 
 from util import getStepsize
 
