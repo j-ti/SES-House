@@ -72,9 +72,6 @@ def getNormalizedParts(config, loadConfig, timestamps):
 
 
 def main(argv):
-    set_random_seed(ForecastConfig().SEED)
-    np.random.seed(ForecastConfig().SEED)
-
     config = ForecastConfig()
     loadConfig = ForecastLoadConfig()
 
