@@ -120,9 +120,9 @@ def evalModel(model, testx, testy):
 
 def saveModel(config, model):
     model_json = model.to_json()
-    with open(config.OUTPUT_FOLDER + "model.json", "w") as json_file:
+    with open(config.MODEL_FILE, "w") as json_file:
         json_file.write(model_json)
-    model.save_weights(config.OUTPUT_FOLDER + "model.h5")
+    model.save_weights(config.MODEL_FILE_H5)
 
 
 def loadModel(config):

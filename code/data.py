@@ -366,7 +366,7 @@ def getPredictedPVValue(pvValue, timestamps):
     valMin = df.iloc[0, -1]
     df.iloc[0, -1] = 0
     valMax = df.iloc[1, -1]
-    df.iloc[1, -1] = 12
+    df.iloc[1, -1] = 11
     # datas are normalized
     scaler = MinMaxScaler()
     scaler.fit(df)
