@@ -51,7 +51,7 @@ def main(argv):
 
     # plot_baselines(config, df_train, df_test[:96], timestamps[len(df_train):len(df_train) + 96])
     plotLSTM_Base_Real(config, df_train, testPredictY[0], "mean", y[0])
-    plotLSTM_Base_Real(config, df_train, testPredictY[0], "", y[0])
+    plotLSTM_Base_Real(config, df_train, testPredictY[0], "1step", y[0])
 
     print("Validation:")
     one_step_persistence_model(df_validation)

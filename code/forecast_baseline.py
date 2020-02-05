@@ -172,6 +172,7 @@ def plotLSTM_Base_Real(config, train, lstm_predict, base, real) :
     plt.xticks(ticks, time)
     plt.xlabel("Time")
     plt.ylabel("Normalized Output Power")
+    plt.savefig(config.OUTPUT_FOLDER + "/plot_lstm_" + base + "_real.png")
     plt.show()
 
 
