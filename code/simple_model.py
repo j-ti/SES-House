@@ -6,6 +6,7 @@ import math
 import sys
 import os
 from shutil import copyfile
+import numpy as np
 
 from util import constructTimeStamps, getStepsize, getTimeIndexRangeDaily, diffIndexList
 
@@ -904,13 +905,32 @@ def main(argv):
     config.read(argv[1])
     configIni = Configure(config)
 
-    BatRangeEmax = [0, 10, 20]
-    resultsGoals = []
-    for b in BatRangeEmax:
-        configIni.E_bat_max = b
-        resultsGoals.append(runSimpleModel(configIni))
 
+    goalsRange = [Goal(x) for x in ["MINIMIZE_COST", "GREEN_HOUSE", "GRID_INDEPENDENCE"]]
+    batRangeEmax = [0, 10, 20]
+    loadRangeScale = [0, 1, 2]
+    cases = np.array([goalsRange, batRangeEmax, loadRangeScale])
+    resultsGoals = np.full((len(goalsRange), len(batRangeEmax), len(loadRangeScale), 4), None)
+    # Calculate all
+    # calculated = np.full((len(goalsRange),len(batRangeEmax),len(loadRangeScale)), False)
+    # calculate only case 000
+    calculated = np.full((len(goalsRange), len(batRangeEmax), len(loadRangeScale)), True)
+    calculated[0,:,1] = False
+
+    for ig, g in enumerate(goalsRange):
+        configIni.goal = g
+        for ib, b in enumerate(batRangeEmax):
+            configIni.E_bat_max = b
+            for il, l in enumerate(loadRangeScale):
+                configIni.loadsScale = l
+                print([ig, ib, il])
+                if not calculated[ig, ib, il]:
+                    resultsGoals[ig, ib, il,:] = np.array(runSimpleModel(configIni))[:]
+                    calculated[ig, ib, il] = True
+
+    print(cases)
     print(resultsGoals)
+    #work in Progress: plot_parameter_variation()
 
 if __name__ == "__main__":
     main(sys.argv)
