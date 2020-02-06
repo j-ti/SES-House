@@ -35,15 +35,15 @@ def main(argv):
 
     df_train, df_validation, df_test = splitData(config, df)
 
-    valMin = df.iloc[0, -1]
-    df.iloc[0, -1] = 0
-    valMax = df.iloc[1, -1]
-    df.iloc[1, -1] = 11
+    valMin = df_train.iloc[0, -1]
+    df_train.iloc[0, -1] = 0
+    valMax = df_train.iloc[1, -1]
+    df_train.iloc[1, -1] = 11
     # datas are normalized
     scaler = MinMaxScaler()
     scaler.fit(df_train)
-    df.iloc[0, -1] = valMin
-    df.iloc[1, -1] = valMax
+    df_train.iloc[0, -1] = valMin
+    df_train.iloc[1, -1] = valMax
 
     df_train = scaler.transform(df_train)
     df_validation = scaler.transform(df_validation)
