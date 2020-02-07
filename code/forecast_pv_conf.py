@@ -6,7 +6,7 @@ class ForecastPvConfig:
         self.OUTPUT_FOLDER = "./output/forecast/pv/model_48Out_30"
         self.BEGIN = conf.BEGIN
         self.END = conf.END
-        self.STEP_SIZE = "00:30:00"
+        self.STEP_SIZE = "0030:00"
         self.TIME_PER_DAY = 48
 
         self.LOAD_MODEL = True

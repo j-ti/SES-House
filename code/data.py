@@ -389,7 +389,7 @@ def getPredictedPVValue(pvValue, timestamps):
     model = loadModel(config_pv)
     res = model.predict(x)
     res = invertScaler(res, scaler)
-    return res, config_pv.OUTPUT_SIZE
+    return res, config_pv.LOOK_BACK
 
 
 # loadsData is at least 3 days
@@ -427,4 +427,4 @@ def getPredictedLoadValue(loadsData, timestamps, timedelta):
     model = loadModel(loadConfig)
     res = model.predict(x)
     res = invertScaler(res, scaler)
-    return res, loadConfig.OUTPUT_SIZE
+    return res, loadConfig.LOOK_BACK

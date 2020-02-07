@@ -642,13 +642,15 @@ def setUpPV(model, ini):
                 * ini.pvScale
         )
         print("PV data: use predicted values")
-        pvPowerValues, outputSize = (
+        pvPowerValues, lookback = (
             getPredictedPVValue(
                 pvPowerValues, ini.timestampsPredPV
             )
         )
-        # the 0 index is not the value at midnight
-        pvPowerValues = pvPowerValues[24]
+        pvPowerValues = pvPowerValues[lookback]
+        import matplotlib.pyplot as plt
+        plt.plot(pvPowerValues)
+        plt.show()
         data = pd.DataFrame(pvPowerValues, index=ini.timestampsPredPV[-len(pvPowerValues):])
         pvPowerValues = resampleData(data, ini.timestamps)
     else:
@@ -706,13 +708,13 @@ def setUpFixedLoads(model, ini):
                 * ini.loadsScale
         )
         print("Load data: use predicted values")
-        loadValues, outputSize = (
+        loadValues, lookback = (
             getPredictedLoadValue(
                 loadValues, ini.timestampsPredLoad, ini.dataDelta
             )
         )
         # the 0 index is not the value at midnight
-        loadValues = loadValues[0]
+        loadValues = loadValues[lookback]
         data = pd.DataFrame(loadValues, index=ini.timestampsPredLoad[-len(loadValues):])
         loadValues = resampleData(data, ini.timestamps)
     else:
