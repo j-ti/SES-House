@@ -80,10 +80,16 @@ class Configure:
             datetime.strptime(config["TIME"]["stepsize"], "%H:%M:%S")
             - datetime.strptime("00:00:00", "%H:%M:%S"),
         )
-        self.timestampsPred = constructTimeStamps(
+        self.timestampsPredPV = constructTimeStamps(
             datetime.strptime(config["TIME"]["startPred"], "20%y-%m-%d %H:%M:%S"),
             datetime.strptime(config["TIME"]["end"], "20%y-%m-%d %H:%M:%S"),
-            datetime.strptime(config["TIME"]["stepsizePred"], "%H:%M:%S")
+            datetime.strptime(config["TIME"]["stepsizePredPV"], "%H:%M:%S")
+            - datetime.strptime("00:00:00", "%H:%M:%S"),
+        )
+        self.timestampsPredLoad = constructTimeStamps(
+            datetime.strptime(config["TIME"]["startPred"], "20%y-%m-%d %H:%M:%S"),
+            datetime.strptime(config["TIME"]["end"], "20%y-%m-%d %H:%M:%S"),
+            datetime.strptime(config["TIME"]["stepsizePredLoad"], "%H:%M:%S")
             - datetime.strptime("00:00:00", "%H:%M:%S"),
         )
         self.stepsize = getStepsize(self.timestamps)
@@ -625,23 +631,25 @@ def setUpDiesel(model, ini):
 def setUpPV(model, ini):
     if ini.dataPdct:
         pvPowerValues = (
-            getPecanstreetData(
-                ini.dataFile,
-                ini.timeHeader,
-                ini.dataid,
-                "solar",
-                ini.timestampsPred,
-                ini.dataDelta,
-            )
-            * ini.pvScale
+                getPecanstreetData(
+                    ini.dataFile,
+                    ini.timeHeader,
+                    ini.dataid,
+                    "solar",
+                    ini.timestampsPredPV,
+                    ini.dataDelta,
+                )
+                * ini.pvScale
         )
         print("PV data: use predicted values")
-        pvPowerValues, outputSize = getPredictedPVValue(
-            pvPowerValues, ini.timestampsPred
+        pvPowerValues, outputSize = (
+            getPredictedPVValue(
+                pvPowerValues, ini.timestampsPredPV
+            )
         )
         # the 0 index is not the value at midnight
         pvPowerValues = pvPowerValues[24]
-        data = pd.DataFrame(pvPowerValues, index=ini.timestampsPred[-len(pvPowerValues):])
+        data = pd.DataFrame(pvPowerValues, index=ini.timestampsPredPV[-len(pvPowerValues):])
         pvPowerValues = resampleData(data, ini.timestamps)
     else:
         if ini.loc_flag:
@@ -687,22 +695,26 @@ def setUpPV(model, ini):
 def setUpFixedLoads(model, ini):
     if ini.dataPdct:
         loadValues = (
-            getPecanstreetData(
-                ini.dataFile,
-                ini.timeHeader,
-                ini.dataid,
-                "grid",
-                ini.timestampsPred,
-                ini.dataDelta,
-            )
-            * ini.loadsScale
+                getPecanstreetData(
+                    ini.dataFile,
+                    ini.timeHeader,
+                    ini.dataid,
+                    "grid",
+                    ini.timestampsPredLoad,
+                    ini.dataDelta,
+                )
+                * ini.loadsScale
         )
         print("Load data: use predicted values")
-        loadValues, outputSize = getPredictedLoadValue(
-            loadValues, ini.timestampsPred, ini.dataDelta
+        loadValues, outputSize = (
+            getPredictedLoadValue(
+                loadValues, ini.timestampsPredLoad, ini.dataDelta
+            )
         )
         # the 0 index is not the value at midnight
         loadValues = loadValues[0]
+        data = pd.DataFrame(loadValues, index=ini.timestampsPredLoad[-len(loadValues):])
+        loadValues = resampleData(data, ini.timestamps)
     else:
         if ini.dataPSLoads:
             loadValues = (
