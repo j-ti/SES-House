@@ -62,6 +62,8 @@ def getParts(df, config_main, config_pv):
 def forecasting(config_main, config_pv):
     df, timestamps = dataImport(config_main, config_pv)
 
+    config_main.TIMESTAMPS = timestamps
+
     df_train, df_validation, df_test, scaler = getParts(df, config_main, config_pv)
 
     nbFeatures = df_train.shape[1]
