@@ -23,3 +23,4 @@ class ForecastLoadConfig:
         self.ACTIVATION_FUNCTION = "relu"
         self.LOSS_FUNCTION = "mean_squared_error"
         self.OPTIMIZE_FUNCTION = "adam"
+        self.LEARNING_RATE=0.0001

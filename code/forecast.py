@@ -2,7 +2,7 @@ from datetime import timedelta
 
 import numpy as np
 import pandas as pd
-from keras import metrics
+from keras import metrics, optimizers
 from keras.callbacks import EarlyStopping
 from keras.engine.saving import model_from_json
 from keras.layers import LSTM, Dropout, Activation
@@ -104,9 +104,14 @@ def buildModel(config, trainXShape):
 
     model.add(Activation(config.ACTIVATION_FUNCTION))
     model.add(Dense(config.OUTPUT_SIZE))
+
+    if config.OPTIMIZE_FUNCTION == "adam":
+        optimizer = optimizers.Adam(lr=config.LEARNING_RATE)
+    else:
+        optimizer = config.OPTIMIZE_FUNCTION
     model.compile(
         loss=config.LOSS_FUNCTION,
-        optimizer=config.OPTIMIZE_FUNCTION,
+        optimizer=optimizer,
         metrics=[metrics.mape, metrics.mae, metrics.mse],
     )
     return model
