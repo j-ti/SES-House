@@ -1011,7 +1011,7 @@ def main(argv):
     updateResults = np.full(
         (len(goalsRange), len(batRangeEmax), len(loadRangeScale)), False
     )
-    updateResults[0, 0, 0] = True
+    updateResults[0, 1, 1] = True
 
     for ig, g in enumerate(goalsRange):
         ini.goal = g
@@ -1027,10 +1027,10 @@ def main(argv):
                     os.makedirs(outputFolder)
                     resultsGoals[ig, ibe, il, :] = np.array(runSimpleModel(ini))[:]
 
-    print(cases)
-    print(resultsGoals)
     np.save(os.path.join(baseOutputFolder, "resultsGoal.npy"), resultsGoals)
-
+    dfResults = pd.DataFrame(resultsGoals.reshape(27, 4), index=pd.MultiIndex.from_frame(idx),
+                             columns=["COST", "GGE", "GGEsq", "GRID_INDEPENDENCE"])
+    print(dfResults)
     # work in Progress: plot_parameter_variation()
 
 
