@@ -58,11 +58,15 @@ def main(argv):
     df_validation = np.array([df_validation[i, 0] for i in range(len(df_validation))])
     df_test = np.array([df_test[i, 0] for i in range(len(df_test))])
 
+
+
     model = loadModel(pvConfig)
     testPredictY = model.predict(X)
 
     import matplotlib.pyplot as plt
-    plt.plot(y[72])
+    plt.plot(df_test[:100])
+    plt.show()
+    plt.plot(y[0])
     plt.show()
 
     # plot_baselines(config, df_train, df_test[:96], timestamps[len(df_train):len(df_train) + 96])

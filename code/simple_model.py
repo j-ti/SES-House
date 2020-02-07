@@ -21,8 +21,7 @@ from data import (
     getLoadsData,
     getPecanstreetData,
     getPredictedPVValue,
-    getPredictedLoadValue,
-)
+    getPredictedLoadValue, resampleData)
 from gurobipy import QuadExpr, GRB
 from plot_gurobi import plotting
 from util import constructTimeStamps, getStepsize, getTimeIndexRangeDaily, diffIndexList
@@ -84,7 +83,7 @@ class Configure:
         self.timestampsPred = constructTimeStamps(
             datetime.strptime(config["TIME"]["startPred"], "20%y-%m-%d %H:%M:%S"),
             datetime.strptime(config["TIME"]["end"], "20%y-%m-%d %H:%M:%S"),
-            datetime.strptime(config["TIME"]["stepsize"], "%H:%M:%S")
+            datetime.strptime(config["TIME"]["stepsizePred"], "%H:%M:%S")
             - datetime.strptime("00:00:00", "%H:%M:%S"),
         )
         self.stepsize = getStepsize(self.timestamps)
@@ -640,10 +639,10 @@ def setUpPV(model, ini):
         pvPowerValues, outputSize = getPredictedPVValue(
             pvPowerValues, ini.timestampsPred
         )
-        pvPowerValuesConcat = []
-        for i in range((len(pvPowerValues) // outputSize)):
-            pvPowerValuesConcat.extend(pvPowerValues[i * outputSize])
-        pvPowerValues = pvPowerValuesConcat
+        # the 0 index is not the value at midnight
+        pvPowerValues = pvPowerValues[24]
+        data = pd.DataFrame(pvPowerValues, index=ini.timestampsPred[-len(pvPowerValues):])
+        pvPowerValues = resampleData(data, ini.timestamps)
     else:
         if ini.loc_flag:
             print("PV data: use location and query from renewables.ninja API")
@@ -702,11 +701,8 @@ def setUpFixedLoads(model, ini):
         loadValues, outputSize = getPredictedLoadValue(
             loadValues, ini.timestampsPred, ini.dataDelta
         )
-        loadValuesConcat = []
-        for i in range((len(loadValues) // outputSize)):
-            loadValuesConcat.extend(loadValues[i * outputSize])
-        print(len(loadValuesConcat))
-        loadValues = loadValuesConcat
+        # the 0 index is not the value at midnight
+        loadValues = loadValues[0]
     else:
         if ini.dataPSLoads:
             loadValues = (
