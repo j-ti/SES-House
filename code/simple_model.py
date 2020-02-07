@@ -645,7 +645,7 @@ def setUpPV(model, ini):
         print("PV data: use predicted values")
         pvPowerValues, lookback = (
             getPredictedPVValue(
-                pvPowerValues, ini.timestampsPredPV
+                pvPowerValues, ini.timestampsPredPV, ini.dataDelta
             )
         )
         pvPowerValues = pvPowerValues[lookback]

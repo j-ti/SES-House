@@ -365,7 +365,7 @@ def _computeIntRelation(stepsize1, stepsize2):
 
 
 # pvValue is at least 3 days
-def getPredictedPVValue(pvValue, timestamps):
+def getPredictedPVValue(pvValue, timestamps, delta):
     config_main = ForecastConfig()
     config_pv = ForecastPvConfig(config_main)
 
@@ -375,7 +375,7 @@ def getPredictedPVValue(pvValue, timestamps):
         datetime.strptime(config_pv.STEP_SIZE, "%H:%M:%S") - datetime.strptime("00:00:00", "%H:%M:%S")
     )
     _, endValidation = get_split_indexes(config_main)
-    assert config_main.TIMESTAMPS[endValidation] < timestamps[-1]
+    assert config_main.TIMESTAMPS[endValidation] < (timestamps[-1] + delta)
 
     df = addMinutes(pvValue)
     df = addMonthOfYear(df, timestamps)
@@ -415,7 +415,7 @@ def getPredictedLoadValue(loadsData, timestamps, timedelta):
         datetime.strptime(loadConfig.STEPSIZE, "%H:%M:%S") - datetime.strptime("00:00:00", "%H:%M:%S")
     )
     _, endValidation = get_split_indexes(config)
-    assert config.TIMESTAMPS[endValidation] < timestamps[-1]
+    assert config.TIMESTAMPS[endValidation] < (timestamps[-1] + timedelta)
 
     for load in loadConfig.APPLIANCES:
         appliance_data = getPecanstreetData(
