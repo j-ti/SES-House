@@ -116,14 +116,14 @@ def forecasting(config_main, config_pv):
         timestamps[len(trainX) + len(validationX): len(trainX) + len(validationX) + config_pv.TIME_PER_DAY],
         "test"
     )
-    plotPredictionPartMult(
-        config_pv,
-        testY[0],
-        testPrediction,
-        "1st day of test set",
-        timestamps[len(trainX) + len(validationX): len(trainX) + len(validationX) + config_pv.TIME_PER_DAY],
-        "test"
-    )
+    # plotPredictionPartMult(
+    #     config_pv,
+    #     testY[0],
+    #     testPrediction,
+    #     "1st day of test set",
+    #     timestamps[len(trainX) + len(validationX): len(trainX) + len(validationX) + config_pv.TIME_PER_DAY],
+    #     "test"
+    # )
 
     plotEcart(
         trainY,

@@ -105,3 +105,9 @@ def getMeanSdDay(config, data):
     means = np.nanmean(data, axis=1)
     standard_dev = np.nanstd(data, axis=1)
     return means, standard_dev
+
+
+def invertScaler(data, scaler) :
+    Xmax = scaler.data_max_[0]
+    Xmin = scaler.data_min_[0]
+    return data * (Xmax - Xmin) + Xmin

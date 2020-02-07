@@ -1,4 +1,5 @@
 import sys
+from datetime import datetime
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -155,6 +156,27 @@ def one_step_persistence_model(part):
     real = part[1:]
     mse = mean_squared_error(real, predictions)
     print("1 Step Persistence Model MSE: ", mse)
+
+
+def plotLSTM_Base_Real(config, train, lstm_predict, base, real) :
+    plt.plot(lstm_predict, label="LSTM prediction")
+    plt.plot(real, label="real")
+    if base == "mean" :
+        plt.plot(predictMean(config, train, real), label="mean prediction")
+    else:
+        x = np.array(list(range(len(real)))) + 1
+        plt.plot(x, real, label="next value persistence model")
+    plt.legend()
+    time = [0, 5, 10, 15, 20]
+    ticks = np.array(time) * 1
+    time = [datetime.strftime(j, "%H:%M") for j in [datetime.strptime(str(i), "%H") for i in time]]
+    plt.xticks(ticks, time)
+    plt.xlabel("Time")
+    plt.ylabel("Normalized Output Power")
+    plt.savefig(config.OUTPUT_FOLDER + "/plot_lstm_" + base + "_real.png")
+    plt.show()
+
+
 
 def main(argv):
     pass

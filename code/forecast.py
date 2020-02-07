@@ -7,6 +7,7 @@ from keras.callbacks import EarlyStopping
 from keras.engine.saving import model_from_json
 from keras.layers import LSTM, Dropout, Activation
 from keras.layers.core import Dense
+from keras.models import Sequential
 
 from util import getStepsize
 
@@ -41,6 +42,13 @@ def addMinutes(data):
         [(i.hour * 60 + i.minute) for i in data.index], index=data.index
     )
     return pd.concat([data, minutes], axis=1)
+
+
+def add0(data):
+    zeros = pd.Series(
+        [0 for i in data.index], index=data.index
+    )
+    return pd.concat([data, zeros], axis=1)
 
 
 def add_day_of_week(data):
@@ -112,9 +120,9 @@ def evalModel(model, testx, testy):
 
 def saveModel(config, model):
     model_json = model.to_json()
-    with open(config.OUTPUT_FOLDER + "model.json", "w") as json_file:
+    with open(config.MODEL_FILE, "w") as json_file:
         json_file.write(model_json)
-    model.save_weights(config.OUTPUT_FOLDER + "model.h5")
+    model.save_weights(config.MODEL_FILE_H5)
 
 
 def loadModel(config):
