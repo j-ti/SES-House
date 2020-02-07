@@ -26,6 +26,9 @@ def main(argv):
         datetime.strptime(pvConfig.END, "20%y-%m-%d %H:%M:%S"),
         datetime.strptime(pvConfig.STEP_SIZE, "%H:%M:%S") - datetime.strptime("00:00:00", "%H:%M:%S")
     )
+
+    config.TIMESTAMPS = timestamps
+
     # input datas : uncontrollable resource : solar production
     df = getPecanstreetData(
         pvConfig.DATA_FILE, pvConfig.TIME_HEADER, pvConfig.DATAID, "solar", timestamps
@@ -58,9 +61,13 @@ def main(argv):
     model = loadModel(pvConfig)
     testPredictY = model.predict(X)
 
+    import matplotlib.pyplot as plt
+    plt.plot(y[72])
+    plt.show()
+
     # plot_baselines(config, df_train, df_test[:96], timestamps[len(df_train):len(df_train) + 96])
-    plotLSTM_Base_Real(config, df_train, testPredictY[0], "mean", y[0])
-    plotLSTM_Base_Real(config, df_train, testPredictY[0], "1step", y[0])
+    plotLSTM_Base_Real(config, df_train, testPredictY[72], "mean", y[72])
+    # plotLSTM_Base_Real(config, df_train, testPredictY[0], "1step", y[0])
 
     print("Validation:")
     one_step_persistence_model(df_validation)

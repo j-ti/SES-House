@@ -62,6 +62,8 @@ def getParts(df, config_main, config_pv):
 def forecasting(config_main, config_pv):
     df, timestamps = dataImport(config_main, config_pv)
 
+    config_main.TIMESTAMPS = timestamps
+
     df_train, df_validation, df_test, scaler = getParts(df, config_main, config_pv)
 
     nbFeatures = df_train.shape[1]
@@ -94,26 +96,26 @@ def forecasting(config_main, config_pv):
     )
     plotPredictionPart(
         config_pv,
-        trainY[0],
-        trainPrediction[0],
+        trainY[24],
+        trainPrediction[24],
         "1st day of train set",
-        timestamps[: config_pv.TIME_PER_DAY],
+        timestamps[24: config_pv.TIME_PER_DAY+24],
         "train"
     )
     plotPredictionPart(
         config_pv,
-        validationY[48],
-        valPrediction[48],
+        validationY[24],
+        valPrediction[24],
         "3rd day of validation set",
-        timestamps[len(trainX):len(trainX) + config_pv.TIME_PER_DAY],
+        timestamps[len(trainX)+24:len(trainX)+24 + config_pv.TIME_PER_DAY],
         "validation"
     )
     plotPredictionPart(
         config_pv,
-        testY[0],
-        testPrediction[0],
+        testY[24],
+        testPrediction[24],
         "1st day of test set",
-        timestamps[len(trainX) + len(validationX): len(trainX) + len(validationX) + config_pv.TIME_PER_DAY],
+        timestamps[len(trainX) + len(validationX)+24: len(trainX)+24 + len(validationX) + config_pv.TIME_PER_DAY],
         "test"
     )
     # plotPredictionPartMult(
