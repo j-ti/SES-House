@@ -172,7 +172,9 @@ def plotting_all_powers(dico, outputFolder, time, tick, showFlag=False):
 
 
 # Area plotting of all the powers from our system (in and out) inside one graph with consumption (loads) as baseline
-def plotting_additive_all_powers(resultsPd, outputFolder, time, tick, kindPlot="area", showFlag=False):
+def plotting_additive_all_powers(
+    resultsPd, outputFolder, time, tick, kindPlot="area", showFlag=False
+):
     if kindPlot is "bar":
         style = "steps-mid"
         step = "mid"

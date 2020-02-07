@@ -4,7 +4,14 @@ from datetime import timedelta
 import numpy as np
 import pandas as pd
 import requests
-from forecast import addMinutes, addMonthOfYear, buildSet, add_day_of_week, add_weekend, loadModel
+from forecast import (
+    addMinutes,
+    addMonthOfYear,
+    buildSet,
+    add_day_of_week,
+    add_weekend,
+    loadModel,
+)
 from forecast_conf import ForecastConfig
 from forecast_load_conf import ForecastLoadConfig
 from forecast_pv_conf import ForecastPvConfig
@@ -24,7 +31,7 @@ def getNinja(filePath, timestamps):
         data = pd.read_csv(
             dataFile, parse_dates=["time", "local_time"], index_col="local_time"
         )
-        data = data.loc[timestamps[0]: timestamps[-1] + getStepsize(timestamps)]
+        data = data.loc[timestamps[0] : timestamps[-1] + getStepsize(timestamps)]
         origStepsize = getStepsize(data.index)
         wantedStepsize = getStepsize(timestamps)
         if origStepsize > wantedStepsize:
@@ -35,7 +42,7 @@ def getNinja(filePath, timestamps):
                 origStepsize, wantedStepsize, timestamps, data
             )
             data = data.resample(wantedStepsize).mean()
-        data = data.loc[timestamps[0]: timestamps[-1]]
+        data = data.loc[timestamps[0] : timestamps[-1]]
         return data["electricity"]
 
 
@@ -84,17 +91,17 @@ class RenewNinja:
         self.s.close()
 
     def getPvData(
-            self,
-            lat,
-            long,
-            date_from,
-            date_to,
-            dataset="merra2",
-            cap=1.0,
-            sys_loss=0.1,
-            track=0,
-            tilt=35,
-            azim=180,
+        self,
+        lat,
+        long,
+        date_from,
+        date_to,
+        dataset="merra2",
+        cap=1.0,
+        sys_loss=0.1,
+        track=0,
+        tilt=35,
+        azim=180,
     ):
         """Request PV power value
 
@@ -153,14 +160,14 @@ class RenewNinja:
         return metadata, data
 
     def getWindData(
-            self,
-            lat,
-            long,
-            date_from,
-            date_to,
-            cap=1.0,
-            height=100,
-            turbine="Vestas V80 2000",
+        self,
+        lat,
+        long,
+        date_from,
+        date_to,
+        cap=1.0,
+        height=100,
+        turbine="Vestas V80 2000",
     ):
         """Request wind power value
 
@@ -224,7 +231,7 @@ def resampleData(data, timestamps, offset=timedelta(days=0), positive=True):
             origStepsize, wantedStepsize, timestamps, data
         )
         data = data.resample(wantedStepsize).first()
-    data = data.loc[timestamps[0] + offset: timestamps[-1] + offset]
+    data = data.loc[timestamps[0] + offset : timestamps[-1] + offset]
     assert data.shape[1] <= 3
     if data.shape[1] == 3:
         dataOut = data.sum(axis=1)
@@ -247,7 +254,7 @@ def getLoadsData(filePath, timestamps):
             sep=";",
             decimal=",",
         )
-        data = data.loc[timestamps[0]: timestamps[-1] + getStepsize(timestamps)]
+        data = data.loc[timestamps[0] : timestamps[-1] + getStepsize(timestamps)]
         return resampleData(data, timestamps)
 
 
@@ -257,13 +264,13 @@ def dateparserWithoutUTC(x):
 
 
 def getPecanstreetData(
-        filePath,
-        timeHeader,
-        dataid,
-        column,
-        timestamps,
-        offset=timedelta(days=0),
-        nb_rows=20000,
+    filePath,
+    timeHeader,
+    dataid,
+    column,
+    timestamps,
+    offset=timedelta(days=0),
+    nb_rows=20000,
 ):
     with open(filePath, "r", encoding="utf-8") as dataFile:
         # TODO: read more rows or split dataid into files
@@ -286,7 +293,7 @@ def getPecanstreetData(
         if stepsize < timedelta(minutes=15):
             stepsize = timedelta(hours=0)
 
-        data = data.loc[timestamps[0] + offset: timestamps[-1] + offset + stepsize]
+        data = data.loc[timestamps[0] + offset : timestamps[-1] + offset + stepsize]
         return resampleData(data, timestamps, offset)
 
 
@@ -311,8 +318,8 @@ def getPriceData(filePath, timestamps, offset, constantPrice):
             decimal=",",
         )
         data = data.loc[
-               timestamps[0] + offset: timestamps[-1] + offset + getStepsize(timestamps)
-               ]
+            timestamps[0] + offset : timestamps[-1] + offset + getStepsize(timestamps)
+        ]
         origStepsize = getStepsize(data.index)
         assert origStepsize == timedelta(hours=1)
         wantedStepsize = getStepsize(timestamps)
@@ -327,9 +334,9 @@ def getPriceData(filePath, timestamps, offset, constantPrice):
             data = data.resample(wantedStepsize).sum()
         assert data.shape[1] <= 2
 
-        data = data.loc[timestamps[0] + offset: timestamps[-1] + offset]
+        data = data.loc[timestamps[0] + offset : timestamps[-1] + offset]
         return data.iloc[:, 0] / FROM_MEGAWATTHOURS_TO_KILOWATTHOURS + constantPrice / (
-                origStepsize / wantedStepsize
+            origStepsize / wantedStepsize
         )
 
 
@@ -343,7 +350,7 @@ def _applyOppositeOfResampleSum(data, timestamps, relation):
 
 
 def _dropUnfittingValuesAtEndForDownSampling(
-        origStepsize, wantedStepsize, timestamps, data
+    origStepsize, wantedStepsize, timestamps, data
 ):
     relation = _computeIntRelation(wantedStepsize, origStepsize)
     if data.size % relation != 0:
@@ -355,6 +362,7 @@ def _computeIntRelation(stepsize1, stepsize2):
     relation = stepsize1 / stepsize2
     assert relation.is_integer(), "1 stepsize should be a multiple of the other."
     return int(relation)
+
 
 # pvValue is at least 3 days
 def getPredictedPVValue(pvValue, timestamps):
@@ -376,7 +384,7 @@ def getPredictedPVValue(pvValue, timestamps):
 
     x = np.empty((len(df) - config_pv.LOOK_BACK, config_pv.LOOK_BACK, df.shape[1]))
     for i in range(len(df) - config_pv.LOOK_BACK):
-        x[i] = df[i: i + config_pv.LOOK_BACK, :]
+        x[i] = df[i : i + config_pv.LOOK_BACK, :]
 
     model = loadModel(config_pv)
     res = model.predict(x)
@@ -398,7 +406,7 @@ def getPredictedLoadValue(loadsData, timestamps, timedelta):
             loadConfig.DATAID,
             load,
             timestamps,
-            timedelta
+            timedelta,
         )
         input_data = pd.concat([input_data, appliance_data], axis=1)
 
@@ -406,9 +414,15 @@ def getPredictedLoadValue(loadsData, timestamps, timedelta):
     scaler.fit(input_data)
     input_data = scaler.transform(input_data)
 
-    x = np.empty((len(input_data) - loadConfig.LOOK_BACK, loadConfig.LOOK_BACK, input_data.shape[1]))
+    x = np.empty(
+        (
+            len(input_data) - loadConfig.LOOK_BACK,
+            loadConfig.LOOK_BACK,
+            input_data.shape[1],
+        )
+    )
     for i in range(len(input_data) - loadConfig.LOOK_BACK):
-        x[i] = input_data[i: i + loadConfig.LOOK_BACK, :]
+        x[i] = input_data[i : i + loadConfig.LOOK_BACK, :]
 
     model = loadModel(loadConfig)
     res = model.predict(x)
