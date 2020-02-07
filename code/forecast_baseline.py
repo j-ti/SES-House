@@ -177,7 +177,6 @@ def plotLSTM_Base_Real(config, train, lstm_predict, base, real) :
     plt.show()
 
 
-
 def main(argv):
     pass
 
