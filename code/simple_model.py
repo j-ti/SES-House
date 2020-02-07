@@ -7,6 +7,8 @@ import sys
 import os
 from shutil import copyfile
 import numpy as np
+import pandas as pd
+from itertools import product
 
 from util import constructTimeStamps, getStepsize, getTimeIndexRangeDaily, diffIndexList
 
@@ -40,6 +42,9 @@ class Configure:
         self.loc_flag = "yes" == config["GLOBAL"]["loc"]
         self.loc_lat = float(config["GLOBAL"]["lat"])
         self.loc_lon = float(config["GLOBAL"]["lon"])
+        self.loadResFlag = "yes" == config["GLOBAL"]["loadResFlag"]
+        self.overwrite = "yes" == config["GLOBAL"]["overwrite"]
+        self.calcAllFlag = "yes" == config["GLOBAL"]["calcAllFlag"]
 
         # Battery init (to be moved to a initialization file)
         self.SOC_bat_min = float(config["BAT"]["SOC_bat_min"])
@@ -565,7 +570,6 @@ def setUpDiesel(model, ini):
     # s_3:      0 0 0 0 1 1 1 1 1  0  0  0  0
     # sum:      1 2 3 4 5 4 3 2 1  0  0  0  0
     # d*s_3':   0 0 0 0 5 0 0 0 0 -5  0  0  0
-    print(ini.dieselLeastRunTimestepNumber)
     model.addConstrs(
         (
             sum(
@@ -729,10 +733,9 @@ def setUpBattery(model, ini):
         (batteryEnergyVars[0, 0] == ini.SOC_bat_init * ini.E_bat_max), "battery init"
     )
 
-    # TODO: to be changed, if multiple days are considered
     model.addConstr(
         (batteryEnergyVars[len(ini.timestamps), 0] == ini.SOC_bat_init * ini.E_bat_max),
-        "battery end-of-day value",
+        "battery start-end energy equality",
     )
 
     return batteryPowerVars
@@ -903,33 +906,48 @@ def main(argv):
     copyConfigFile(argv[1], outputFolder)
     config = configparser.ConfigParser()
     config.read(argv[1])
-    configIni = Configure(config)
+    ini = Configure(config)
 
+    baseOutputFolder = outputFolder
 
     goalsRange = [Goal(x) for x in ["MINIMIZE_COST", "GREEN_HOUSE", "GRID_INDEPENDENCE"]]
     batRangeEmax = [0, 10, 20]
     loadRangeScale = [0, 1, 2]
     cases = np.array([goalsRange, batRangeEmax, loadRangeScale])
-    resultsGoals = np.full((len(goalsRange), len(batRangeEmax), len(loadRangeScale), 4), None)
-    # Calculate all
-    # calculated = np.full((len(goalsRange),len(batRangeEmax),len(loadRangeScale)), False)
-    # calculate only case 000
-    calculated = np.full((len(goalsRange), len(batRangeEmax), len(loadRangeScale)), True)
-    calculated[0,:,1] = False
+
+    casesDf = pd.DataFrame(cases.T, columns=["goals", "E_bat_mas", "loadsScale"])
+    idx = pd.DataFrame(list([[x[0][0], x[0][1], x[1]] for x in list(product(product(goalsRange, batRangeEmax), loadRangeScale))]), columns=["goals", "E_bat_mas", "loadsScale"])
+
+    if ini.loadResFlag:
+        # try to load previous results
+        try:
+            resultsGoals = np.load('resultsGoal.npy',allow_pickle=True)
+            print("Loaded Results")
+        except:
+            print("No resultsGoal.npy found. Continue without loading results.")
+            resultsGoals = np.full((len(goalsRange), len(batRangeEmax), len(loadRangeScale), 4), None)
+    else:
+        resultsGoals = np.full((len(goalsRange), len(batRangeEmax), len(loadRangeScale), 4), None)
+
+    # Only update the results selected in update Results with a True value
+    updateResults = np.full((len(goalsRange), len(batRangeEmax), len(loadRangeScale)), False)
+    updateResults[0,0,0] = True
 
     for ig, g in enumerate(goalsRange):
-        configIni.goal = g
-        for ib, b in enumerate(batRangeEmax):
-            configIni.E_bat_max = b
+        ini.goal = g
+        for ibe, be in enumerate(batRangeEmax):
+            ini.E_bat_max = be
             for il, l in enumerate(loadRangeScale):
-                configIni.loadsScale = l
-                print([ig, ib, il])
-                if not calculated[ig, ib, il]:
-                    resultsGoals[ig, ib, il,:] = np.array(runSimpleModel(configIni))[:]
-                    calculated[ig, ib, il] = True
+                ini.loadsScale = l
+                if (updateResults[ig, ibe, il] and (ini.overwrite or resultsGoals[ig, ibe, il, 0] is None)) or ini.calcAllFlag:
+                    outputFolder = '{}{}_BE{}_L{}/'.format(baseOutputFolder, g, be, l)
+                    os.makedirs(outputFolder)
+                    resultsGoals[ig, ibe, il,:] = np.array(runSimpleModel(ini))[:]
 
     print(cases)
     print(resultsGoals)
+    np.save(os.path.join(baseOutputFolder, "resultsGoal.npy"), resultsGoals)
+
     #work in Progress: plot_parameter_variation()
 
 if __name__ == "__main__":
