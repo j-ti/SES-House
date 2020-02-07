@@ -16,7 +16,7 @@ colorDico = {
     "toGridPowers": "slateblue",
     "dieselGenerators": "dimgray",
     "gridPrice": "goldenrod",
-    "ClothWasherPower": "salmon"
+    "ClothWasherPower": "salmon",
 }
 
 labelDico = {
@@ -31,7 +31,8 @@ labelDico = {
     "toGridPowers": "Grid Out",
     "dieselGenerators": "Diesel",
     "gridPrice": "Grid Price",
-    "ClothWasherPower":"Cloth Washer"
+    "ClothWasherPower": "Clothes Washer",
+
 }
 
 
@@ -45,7 +46,7 @@ def plotting(varName, varVal, gridPrices, outputFolder, ini):
         "fromGridPowers": [],
         "toGridPowers": [],
         "dieselGenerators": [],
-        "ClothWasherPower":[]
+        "ClothWasherPower": [],
     }
 
     dicoEnergy = {"batEnergys": [], "evEnergys": []}
@@ -112,17 +113,29 @@ def plotting_energys(
     fig, ax1 = plt.subplots()
     ax2 = ax1.twinx()
     ax1.plot(dico["batEnergys"], label="Battery Energy", color=colorDico["batEnergys"])
-    ax1.plot([0,len(dico["batEnergys"])],[E_bat_max*SOC_bat_max,E_bat_max*SOC_bat_max],ls='--',c='darkgray')
-    ax1.plot([0, len(dico["batEnergys"])], [E_bat_max * SOC_bat_min, E_bat_max * SOC_bat_min], ls='--',c='darkgray')
+    ax1.plot(
+        [0, len(dico["batEnergys"])],
+        [E_bat_max * SOC_bat_max, E_bat_max * SOC_bat_max],
+        ls="--",
+        c="darkgray",
+    )
+    ax1.plot(
+        [0, len(dico["batEnergys"])],
+        [E_bat_max * SOC_bat_min, E_bat_max * SOC_bat_min],
+        ls="--",
+        c="darkgray",
+    )
     ax2.plot(dico["evEnergys"], label="EV Energy", color=colorDico["evEnergys"])
     ax1.legend(loc="upper left", ncol=1, prop={"size": 8})
     ax2.legend(loc="upper center", ncol=1, prop={"size": 8})
-    ax1.tick_params(axis='x', rotation=20)
+    ax1.tick_params(axis="x", rotation=20)
     ax1.set_xticks(tick)
     ax1.set_xticklabels(time)
     ax1.set_ylabel("Energy (kWh)")
-    ax2.set_yticks([E_bat_max*SOC_bat_max,E_bat_max*SOC_bat_min])
-    ax2.set_yticklabels(["SOC"+str(SOC_bat_max*100)+"%","SOC"+str(SOC_bat_min*100)+"%"])
+    ax2.set_yticks([E_bat_max * SOC_bat_max, E_bat_max * SOC_bat_min])
+    ax2.set_yticklabels(
+        ["SOC" + str(SOC_bat_max * 100) + "%", "SOC" + str(SOC_bat_min * 100) + "%"]
+    )
 
     plt.xlabel("Time")
     plt.savefig(outputFolder + "/bat_ev-energy.png")
@@ -150,7 +163,7 @@ def plotting_all_powers(dico, outputFolder, time, tick):
 
     plt.plot(
         dico["ClothWasherPower"],
-        label="Cloth Washer Power",
+        label=labelDico["ClothWasherPower"],
         color=colorDico["ClothWasherPower"],
     )
     plt.xticks(tick, time, rotation=20)

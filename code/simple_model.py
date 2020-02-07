@@ -70,7 +70,7 @@ class Configure:
         self.stepsize = getStepsize(self.timestamps)
         self.stepsizeHour = self.stepsize.total_seconds() / 3600
         self.stepsizeMinute = self.stepsize.total_seconds() / 60
-
+        
         # ClothWasher
         self.P_cw_heat = float(config["Clothwasher"]["P_cw_heat"])
         self.P_cw_cycle = float(config["Clothwasher"]["P_cw_cycle"])
@@ -81,7 +81,8 @@ class Configure:
         )
         self.cycleStepsize = float(
             datetime.strptime(config["Clothwasher"]["D_cw_cycle"], "%H:%M:%S").minute
-            / self.stepsizeMinute+datetime.strptime(config["Clothwasher"]["D_cw_cycle"], "%H:%M:%S").hour
+            / self.stepsizeMinute
+            + datetime.strptime(config["Clothwasher"]["D_cw_cycle"], "%H:%M:%S").hour
             / self.stepsizeHour
         )
         self.spinStepsize = float(
@@ -407,10 +408,10 @@ def setUpClothWasher(model, ini):
     ini.cycleStepsize = int(ini.cycleStepsize)
     ini.spinStepsize = int(ini.spinStepsize)
     ClothWasherPhaseVars = model.addVars(
-        len(ini.timestamps), 4, vtype=GRB.BINARY, name="ClothWasherPhase",
+        len(ini.timestamps), 4, vtype=GRB.BINARY, name="ClothWasherPhase"
     )
     ClothWasherPowerVars = model.addVars(
-        len(ini.timestamps), 1, lb=0, vtype=GRB.CONTINUOUS, name="ClothWasherPower",
+        len(ini.timestamps), 1, lb=0, vtype=GRB.CONTINUOUS, name="ClothWasherPower"
     )
     model.addConstrs(
         (ClothWasherPhaseVars.sum(i, "*") == 1 for i in range(len(ini.timestamps)))
@@ -587,8 +588,8 @@ def setUpClothWasher(model, ini):
         ),
         "phase 3 non-interruptible",
     )
-    model.addConstr((ClothWasherPhaseVars[0,3] ==1))
-    model.addConstr((ClothWasherPhaseVars[len(ini.timestamps)-1, 3] == 1))
+    model.addConstr((ClothWasherPhaseVars[0, 3] == 1))
+    model.addConstr((ClothWasherPhaseVars[len(ini.timestamps) - 1, 3] == 1))
     return ClothWasherPowerVars
 
 

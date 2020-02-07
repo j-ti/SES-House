@@ -100,18 +100,21 @@ def forecasting(config_main, config_pv):
         trainY, trainPrediction, testY, validationY, valPrediction, testPrediction, timestamps, config_pv
     )
     plotPredictionPart(
+        config_pv,
         trainY[0],
         trainPrediction[0],
         "1st day of train set",
         timestamps[: config_pv.TIME_PER_DAY],
     )
     plotPredictionPart(
+        config_pv,
         validationY[0],
         valPrediction[0],
         "1st day of validation set",
         timestamps[len(trainX):len(trainX) + config_pv.TIME_PER_DAY],
     )
     plotPredictionPart(
+        config_pv,
         testY[0],
         testPrediction[0],
         "1st day of test set",

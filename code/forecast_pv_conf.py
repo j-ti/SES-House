@@ -17,7 +17,7 @@ class ForecastPvConfig:
         self.EPOCHS = 30
         self.LOOK_BACK = 24
         self.BATCH_SIZE = 30
-        self.DROPOUT = 0.1
+        self.DROPOUT = [0.1]
         self.DENSE = 1
         self.NEURONS = [128]
         self.PATIENCE = 5

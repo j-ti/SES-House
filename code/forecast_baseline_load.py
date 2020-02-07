@@ -1,44 +1,57 @@
 import sys
-from datetime import datetime
-from tensorflow import set_random_seed
 
-
-import numpy as np
-import pandas as pd
-from data import getPecanstreetData
-from util import constructTimeStamps
-
-from forecast import splitData, addMinutes, buildSet, train, saveModel, buildModel
 from forecast_load import getNormalizedParts
-from forecast_baseline import one_step_persistence_model, one_day_persistence_model
+from forecast import get_split_indexes
+from forecast_baseline import (
+    one_step_persistence_model,
+    one_day_persistence_model,
+    meanBaseline,
+    mean_baseline_one_day,
+    predict_zero_one_day,
+    predict_zero_one_step,
+    plot_test_set,
+    plot_days,
+    plot_baselines,
+)
 from forecast_conf import ForecastConfig
 from forecast_load_conf import ForecastLoadConfig
-
-from shutil import copyfile
-
-
-set_random_seed(ForecastConfig().SEED)
-np.random.seed(ForecastConfig().SEED)
 
 
 def main(argv):
     config = ForecastConfig()
     loadConfig = ForecastLoadConfig()
 
-    timestamps = constructTimeStamps(
-        datetime.strptime(config.BEGIN, "20%y-%m-%d %H:%M:%S"),
-        datetime.strptime(config.END, "20%y-%m-%d %H:%M:%S"),
-        datetime.strptime(config.STEPSIZE, "%H:%M:%S")
-        - datetime.strptime("00:00:00", "%H:%M:%S"),
+    train, validation, test, scaler = getNormalizedParts(
+        config, loadConfig, config.TIMESTAMPS
     )
 
-    train, validation, test, scaler = getNormalizedParts(config, loadConfig, timestamps)
+    train = train[:, 0]
+    validation = validation[:, 0]
+    test = test[:, 0]
 
-    one_step_persistence_model(validation)
+    _, end_validation = get_split_indexes(config)
+    test_timestamps = config.TIMESTAMPS[end_validation:]
+
+    # plot_test_set(config, test)
+    # plot_days(config, test[:96])
+    # plot_baselines(config, train, test[:96], test_timestamps[:96])
+
+    # print("Validation:")
+    # one_step_persistence_model(validation)
+    # one_day_persistence_model(config, validation)
+    # meanBaseline(config, train, validation)
+    # predict_zero_one_day(config, validation)
+    # predict_zero_one_step(validation)
+
+    print("Test:")
     one_step_persistence_model(test)
-
-    one_day_persistence_model(loadConfig, validation)
-    one_day_persistence_model(loadConfig, test)
+    one_day_persistence_model(config, test)
+    meanBaseline(config, train, test)
+    mean_baseline_one_day(config, train, test)
+    print("Train on test and predict for Test:")
+    meanBaseline(config, test, test)
+    predict_zero_one_day(config, test)
+    predict_zero_one_step(test)
 
 
 if __name__ == "__main__":
