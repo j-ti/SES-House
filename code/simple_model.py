@@ -41,7 +41,6 @@ class Configure:
         # Global
         self.goal = Goal(config["GLOBAL"]["goal"])
         self.loc_flag = "yes" == config["GLOBAL"]["loc"]
-        self.dataPdct = "yes" == config["GLOBAL"]["usePredicted"]
         self.loc_lat = float(config["GLOBAL"]["lat"])
         self.loc_lon = float(config["GLOBAL"]["lon"])
         self.loadResFlag = "yes" == config["GLOBAL"]["loadResFlag"]
@@ -133,10 +132,12 @@ class Configure:
         self.deltaStartUp = self.P_dg_min / self.startUpHour * self.stepsizeHour
 
         self.pvFile = config["PV"]["file"]
+        self.pvPdct = "yes" == config["PV"]["usePredicted"]
         self.pvScale = float(config["PV"]["scale"])
         self.windFile = config["WIND"]["file"]
         self.windScale = float(config["WIND"]["scale"])
         self.loadsFile = config["LOADS"]["file"]
+        self.loadPdct = "yes" == config["LOADS"]["usePredicted"]
         self.loadsScale = float(config["LOADS"]["scale"])
         self.dataFile = config["DATA_PS"]["file"]
         self.dataPSLoads = "yes" == config["DATA_PS"]["loads"]
@@ -629,7 +630,7 @@ def setUpDiesel(model, ini):
 
 
 def setUpPV(model, ini):
-    if ini.dataPdct:
+    if ini.pvPdct:
         pvPowerValues = (
                 getPecanstreetData(
                     ini.dataFile,
@@ -648,9 +649,6 @@ def setUpPV(model, ini):
             )
         )
         pvPowerValues = pvPowerValues[lookback]
-        import matplotlib.pyplot as plt
-        plt.plot(pvPowerValues)
-        plt.show()
         data = pd.DataFrame(pvPowerValues, index=ini.timestampsPredPV[-len(pvPowerValues):])
         pvPowerValues = resampleData(data, ini.timestamps)
     else:
@@ -695,7 +693,7 @@ def setUpPV(model, ini):
 
 
 def setUpFixedLoads(model, ini):
-    if ini.dataPdct:
+    if ini.loadPdct:
         loadValues = (
                 getPecanstreetData(
                     ini.dataFile,
