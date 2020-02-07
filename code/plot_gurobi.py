@@ -47,9 +47,9 @@ def plotting(varName, varVal, gridPrices, outputFolder, ini):
 
     dicoEnergy = {"batEnergys": [], "evEnergys": []}
 
-    step = int(len(ini.timestamps) / 10)
+    step = int(len(ini.timestamps) / 5)
     time = [
-        ini.timestamps[i].strftime("%m-%d %H:%M") for i in range(len(ini.timestamps))
+        ini.timestamps[i].strftime("%H:%M") for i in range(len(ini.timestamps))
     ][::step]
     tick = [i for i in range(len(ini.timestamps))][::step]
 
