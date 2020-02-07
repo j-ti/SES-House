@@ -1,5 +1,12 @@
+from forecast_conf import ForecastConfig
+
 class ForecastLoadConfig:
     def __init__(self):
+        self.BEGIN = ForecastConfig().BEGIN
+        self.END = ForecastConfig().END
+        self.STEPSIZE = ForecastConfig().STEPSIZE
+        self.TIMESTAMPS = ForecastConfig().TIMESTAMPS
+
         self.DATA_FILE = "./data/15minute_data_newyork_1222.csv"
         self.TIME_HEADER = "local_15min"
         self.DATAID = 1222

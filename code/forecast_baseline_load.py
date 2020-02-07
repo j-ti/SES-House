@@ -1,10 +1,9 @@
 import sys
 
 from forecast_load import getNormalizedParts
-from forecast import get_split_indexes
+from forecast import get_split_indexes, buildSet, loadModel
 from forecast_baseline import (
     one_step_persistence_model,
-    one_day_persistence_model,
     meanBaseline,
     mean_baseline_one_day,
     predict_zero_one_day,
@@ -12,6 +11,7 @@ from forecast_baseline import (
     plot_test_set,
     plot_days,
     plot_baselines,
+    plotLSTM_Base_Real,
 )
 from forecast_conf import ForecastConfig
 from forecast_load_conf import ForecastLoadConfig
@@ -25,9 +25,9 @@ def main(argv):
         config, loadConfig, config.TIMESTAMPS
     )
 
-    train = train[:, 0]
-    validation = validation[:, 0]
-    test = test[:, 0]
+    baseline_train = train[:, 0]
+    baseline_validation = validation[:, 0]
+    baseline_test = test[:, 0]
 
     _, end_validation = get_split_indexes(config)
     test_timestamps = config.TIMESTAMPS[end_validation:]
@@ -43,11 +43,19 @@ def main(argv):
     # predict_zero_one_day(config, validation)
     # predict_zero_one_step(validation)
 
+    test_x, test_y = buildSet(test, loadConfig.LOOK_BACK, loadConfig.OUTPUT_SIZE)
+
+    model = loadModel(loadConfig)
+    test_predict = model.predict(test_x)
+
+    plotLSTM_Base_Real(loadConfig, baseline_train, test_predict[0], "mean", test_y[0])
+    # plotLSTM_Base_Real(loadConfig, baseline_train, test_predict[0], "", test_y[0])
+
     print("Test:")
     one_step_persistence_model(test)
     one_day_persistence_model(config, test)
-    meanBaseline(config, train, test)
-    mean_baseline_one_day(config, train, test)
+    meanBaseline(config, baseline_train, test)
+    mean_baseline_one_day(config, baseline_train, test)
     print("Train on test and predict for Test:")
     meanBaseline(config, test, test)
     predict_zero_one_day(config, test)
