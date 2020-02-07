@@ -26,12 +26,12 @@ labelDico = {
     "evPowers": "EV Discharging",
     "batPowersNeg": "Bat. Charging",
     "evPowersNeg": "EV Charging",
-    "fixedLoads": "Loads",
+    "fixedLoads": "Fixed Loads",
     "fromGridPowers": "Grid In",
     "toGridPowers": "Grid Out",
     "dieselGenerators": "Diesel",
     "gridPrice": "Grid Price",
-    "ClothWasherPower":"silmon"
+    "ClothWasherPower":"Cloth Washer"
 }
 
 
@@ -255,7 +255,7 @@ def plotting_additive_all_powers_sym(
 
     # Devide in and out flows (esp. for batteries)
     # Selection list for in/out series in plotting order
-    selOut = ["fixedLoads", "batPowersNeg", "evPowersNeg", "toGridPowers"]
+    selOut = ["fixedLoads", "batPowersNeg", "evPowersNeg", "toGridPowers","ClothWasherPower"]
     selIn = [
         "PVPowers",
         "windPowers",
