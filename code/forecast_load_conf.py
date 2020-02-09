@@ -14,9 +14,10 @@ class ForecastLoadConfig:
 
         self.LOAD_MODEL = False
         self.NB_PLOT = 4
-        self.OUTPUT_FOLDER = "./output/forecast/load/60min/out24/bs50/lb20/"
-        self.MODEL_FILE = "./output/forecast/load/60min/out24/lb20/bs50/model.json"
-        self.MODEL_FILE_H5 = "./output/forecast/load/60min/out24/lb20/bs50/model.h5"
+        # self.OUTPUT_FOLDER = "./output/forecast/load/60min/out24/bs50/lb20/"
+        self.OUTPUT_FOLDER = "./output/forecast/load/sample-model-60min/"
+        self.MODEL_FILE = self.OUTPUT_FOLDER + "model.json"
+        self.MODEL_FILE_H5 = self.OUTPUT_FOLDER + "model.h5"
 
         self.APPLIANCES = ["car1", "heater1", "waterheater1", "drye1"]
         self.EPOCHS = 50

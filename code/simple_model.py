@@ -137,7 +137,7 @@ class Configure:
         self.windFile = config["WIND"]["file"]
         self.windScale = float(config["WIND"]["scale"])
         self.loadsFile = config["LOADS"]["file"]
-        self.loadPdct = "yes" == config["LOADS"]["usePredicted"]
+        self.loadsPdct = "yes" == config["LOADS"]["usePredicted"]
         self.loadsScale = float(config["LOADS"]["scale"])
         self.dataFile = config["DATA_PS"]["file"]
         self.dataPSLoads = "yes" == config["DATA_PS"]["loads"]
@@ -165,16 +165,24 @@ class Configure:
 def runSimpleModel(ini):
     model = gp.Model("simple-model")
 
-    pvVars = setUpPV(model, ini)
+    pvVars, pvVarsErr = setUpPV(model, ini)
     windVars = setUpWind(model, ini)
     batteryPowerVars = setUpBattery(model, ini)
     evPowerVars = setUpEv(model, ini)
-    fixedLoadVars = setUpFixedLoads(model, ini)
+    fixedLoadVars, loadsVarsErr = setUpFixedLoads(model, ini)
     dieselGeneratorsVars, dieselStatusVars = setUpDiesel(model, ini)
     fromGridVars, toGridVars = setUpGrid(model, ini)
     gridPrices = getPriceData(
         ini.costFileGrid, ini.timestamps, ini.priceDataDelta, ini.constantPrice
     )
+    if ini.pvPdct:
+        pvInclErr = 1
+    else:
+        pvInclErr = 0
+    if ini.loadsPdct:
+        loadsInclErr = 1
+    else:
+        loadsInclErr = 0
 
     model.addConstrs(
         (
@@ -184,7 +192,9 @@ def runSimpleModel(ini):
             + dieselGeneratorsVars.sum(i, "*")
             + batteryPowerVars.sum(i, "*")
             + evPowerVars.sum(i, "*")
+            + pvInclErr * pvVarsErr.sum(i, "*")
             == fixedLoadVars.sum(i, "*") + toGridVars.sum(i, "*")
+            + loadsInclErr * loadsVarsErr.sum(i, "*")
             for i in range(len(ini.timestamps))
         ),
         "power balance",
@@ -631,7 +641,7 @@ def setUpDiesel(model, ini):
 
 def setUpPV(model, ini):
     if ini.pvPdct:
-        pvPowerValues = (
+        pvPowerValuesReal = (
                 getPecanstreetData(
                     ini.dataFile,
                     ini.timeHeader,
@@ -645,12 +655,13 @@ def setUpPV(model, ini):
         print("PV data: use predicted values")
         pvPowerValues, lookback = (
             getPredictedPVValue(
-                pvPowerValues, ini.timestampsPredPV
+                pvPowerValuesReal, ini.timestampsPredPV
             )
         )
         pvPowerValues = pvPowerValues[lookback]
         data = pd.DataFrame(pvPowerValues, index=ini.timestampsPredPV[-len(pvPowerValues):])
         pvPowerValues = resampleData(data, ini.timestamps)
+        pvPowerValuesReal=pvPowerValuesReal[len(pvPowerValues):]
     else:
         if ini.loc_flag:
             print("PV data: use location and query from renewables.ninja API")
@@ -675,6 +686,7 @@ def setUpPV(model, ini):
                 )
             else:
                 pvPowerValues = getNinja(ini.pvFile, ini.timestamps) * ini.pvScale
+        pvPowerValuesReal = pvPowerValues
     assert len(pvPowerValues) == len(ini.timestamps)
 
     pvPowerValues = np.abs(pvPowerValues)
@@ -684,17 +696,25 @@ def setUpPV(model, ini):
     pvVars = model.addVars(
         len(ini.timestamps), 1, lb=0.0, vtype=GRB.CONTINUOUS, name="PVPowers"
     )
+    errPvVars = model.addVars(
+        len(ini.timestamps), 1, lb=-GRB.INFINITY, vtype=GRB.CONTINUOUS, name="errPv"
+    )
     model.addConstrs(
         (pvVars[i, 0] == pvPowerValues[i] for i in range(len(ini.timestamps))),
         "1st pv panel generation",
     )
-
-    return pvVars
+    errPvValues = [r - p for r, p in zip(pvPowerValuesReal, pvPowerValues)]
+    model.addConstrs(
+        (errPvVars[i, 0] == - errPvValues[i] for i in range(len(ini.timestamps))),
+        "pv power error",
+    )
+    print(pvPowerValuesReal)
+    return pvVars, errPvVars
 
 
 def setUpFixedLoads(model, ini):
-    if ini.loadPdct:
-        loadValues = (
+    if ini.loadsPdct:
+        loadValuesReal = (
                 getPecanstreetData(
                     ini.dataFile,
                     ini.timeHeader,
@@ -708,7 +728,7 @@ def setUpFixedLoads(model, ini):
         print("Load data: use predicted values")
         loadValues, lookback = (
             getPredictedLoadValue(
-                loadValues, ini.timestampsPredLoad, ini.dataDelta
+                loadValuesReal, ini.timestampsPredLoad, ini.dataDelta
             )
         )
         # the 0 index is not the value at midnight
@@ -737,12 +757,20 @@ def setUpFixedLoads(model, ini):
     fixedLoadVars = model.addVars(
         len(ini.timestamps), 1, lb=0.0, vtype=GRB.CONTINUOUS, name="fixedLoads"
     )
+    errLoadVars = model.addVars(
+        len(ini.timestamps), 1, lb=-GRB.INFINITY, vtype=GRB.CONTINUOUS, name="errLoads"
+    )
     model.addConstrs(
         (fixedLoadVars[i, 0] == loadValues[i] for i in range(len(ini.timestamps))),
         "power of fixed loads",
     )
+    errLoadValues = [r - p for r, p in zip(loadValuesReal[-len(loadValues):], loadValues)]
+    model.addConstrs(
+        (errLoadVars[i, 0] == errLoadValues[i] for i in range(len(ini.timestamps))),
+        "power of fixed loads",
+    )
 
-    return fixedLoadVars
+    return fixedLoadVars, errLoadVars
 
 
 def setUpWind(model, ini):
@@ -957,6 +985,7 @@ def plotResults(model, ini, gridPrices):
     for v in model.getVars():
         varN.append(v.varName)
         varX.append(v.x)
+
     plotting(varN, varX, gridPrices, outputFolder, ini)
 
 

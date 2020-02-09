@@ -16,6 +16,10 @@ colorDico = {
     "toGridPowers": "slateblue",
     "dieselGenerators": "dimgray",
     "gridPrice": "goldenrod",
+    "errPv": "yellow",
+    "errLoads": "pink",
+    "errPvNeg": "yellow",
+    "errLoadsNeg": "pink",
 }
 
 labelDico = {
@@ -30,6 +34,10 @@ labelDico = {
     "toGridPowers": "Grid Out",
     "dieselGenerators": "Diesel",
     "gridPrice": "Grid Price",
+    "errPv": "Pred. Err. PV",
+    "errLoads": "Pred. Err. Loads",
+    "errPvNeg": "Pred. Err. PV",
+    "errLoadsNeg": "Pred. Err. Loads",
 }
 
 
@@ -43,6 +51,8 @@ def plotting(varName, varVal, gridPrices, outputFolder, ini):
         "fromGridPowers": [],
         "toGridPowers": [],
         "dieselGenerators": [],
+        "errLoads": [],
+        "errPv": [],
     }
 
     dicoEnergy = {"batEnergys": [], "evEnergys": []}
@@ -76,10 +86,10 @@ def plotting(varName, varVal, gridPrices, outputFolder, ini):
         time,
         tick,
     )
-    plotting_all_powers(dico, outputFolder, time, tick)
+    plotting_all_powers(dico, outputFolder, time, tick, True)
     plotting_additive_all_powers(resultsDf, outputFolder, time, tick, "bar")
     plotting_additive_all_powers(resultsDf, outputFolder, time, tick, "area")
-    plotting_additive_all_powers_sym(resultsDf, outputFolder, time, tick, "bar", False)
+    plotting_additive_all_powers_sym(resultsDf, outputFolder, time, tick, "bar", True)
     plotting_additive_all_powers_sym(resultsDf, outputFolder, time, tick, "area")
     plotting_in_out_price(dico, outputFolder, gridPrices, time, tick)
     plotting_pie_gen_pow(dico, outputFolder)
@@ -93,6 +103,8 @@ def plotting_powers(dico, outputFolder, time, tick, showFlag=False):
     plt.plot(dico["PVPowers"], label="pv", color=colorDico["PVPowers"])
     plt.plot(dico["windPowers"], label="wind", color=colorDico["windPowers"])
     plt.plot(dico["fixedLoads"], label="Loads Power", color=colorDico["fixedLoads"])
+    plt.plot(dico["errPv"], label="pv", color=colorDico["errPv"])
+    plt.plot(dico["errLoads"], label="Loads Power", color=colorDico["errLoads"])
     plt.xticks(tick, time, rotation=20)
     plt.xlabel("Time")
     plt.ylabel("Output power - kW")
@@ -187,11 +199,11 @@ def plotting_additive_all_powers(
     # Devide in and out flows (esp. for batteries) and make them all positive
     negResults, resultsPd = resultsPd.clip(upper=0) * (-1), resultsPd.clip(lower=0)
     negResults.columns = [str(col) + "Neg" for col in negResults.columns]
-    resultsPd[["batPowersNeg", "evPowersNeg"]] = negResults[
-        ["batPowersNeg", "evPowersNeg"]
+    resultsPd[["batPowersNeg", "evPowersNeg", "errPvNeg", "errLoadsNeg"]] = negResults[
+        ["batPowersNeg", "evPowersNeg", "errPvNeg", "errLoadsNeg"]
     ]
     # selection list of series to be plotted as area-plot and in which order
-    selOut = ["fixedLoads", "batPowersNeg", "evPowersNeg", "toGridPowers"]
+    selOut = ["fixedLoads", "batPowersNeg", "evPowersNeg", "toGridPowers", "errPvNeg", "errLoadsNeg"]
     selArea = [
         "PVPowers",
         "windPowers",
@@ -199,13 +211,15 @@ def plotting_additive_all_powers(
         "evPowers",
         "dieselGenerators",
         "fromGridPowers",
+        "errPv",
+        "errLoads",
     ]
     # Colorscheme with selection lists
     inColors = list(map(colorDico.get, selArea))
     inColors = ["pink" if c is None else c for c in inColors]
     outColors = list(map(colorDico.get, selOut))
     outColors = ["pink" if c is None else c for c in outColors]
-    hatch = ["", "//", "--", ".."]
+    hatch = ["", "//", "--", "..","",""]
 
     # Plottting
     fig, ax = plt.subplots()
@@ -269,7 +283,7 @@ def plotting_additive_all_powers_sym(
 
     # Devide in and out flows (esp. for batteries)
     # Selection list for in/out series in plotting order
-    selOut = ["fixedLoads", "batPowersNeg", "evPowersNeg", "toGridPowers"]
+    selOut = ["fixedLoads", "batPowersNeg", "evPowersNeg", "toGridPowers", "errPvNeg", "errLoadsNeg"]
     selIn = [
         "dieselGenerators",
         "PVPowers",
@@ -277,11 +291,14 @@ def plotting_additive_all_powers_sym(
         "batPowers",
         "evPowers",
         "fromGridPowers",
+        "errPv",
+        "errLoads",
     ]
+    resultsPd["errLoads"] *= -1
     negResults, resultsPd = resultsPd.clip(upper=0), resultsPd.clip(lower=0)
     negResults.columns = [str(col) + "Neg" for col in negResults.columns]
-    resultsPd[["batPowersNeg", "evPowersNeg"]] = negResults[
-        ["batPowersNeg", "evPowersNeg"]
+    resultsPd[["batPowersNeg", "evPowersNeg", "errPvNeg", "errLoadsNeg"]] = negResults[
+        ["batPowersNeg", "evPowersNeg", "errPvNeg", "errLoadsNeg"]
     ]
     # make loads and toGrid values negative
     resultsPd[["fixedLoads", "toGridPowers"]] *= -1
