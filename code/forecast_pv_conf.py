@@ -3,15 +3,15 @@ class ForecastPvConfig:
         self.DATA_FILE = "./data/15minute_data_newyork.csv"
         self.TIME_HEADER = "local_15min"
         self.DATAID = 1222
-        self.OUTPUT_FOLDER = "./output/forecast/pv/model_48Out_30"
+        self.OUTPUT_FOLDER = "./output/forecast/pv/ts30_out48_lb24_bs15"
         self.BEGIN = conf.BEGIN
         self.END = conf.END
-        self.STEP_SIZE = "0030:00"
+        self.STEP_SIZE = "00:30:00"
         self.TIME_PER_DAY = 48
 
         self.LOAD_MODEL = True
-        self.MODEL_FILE = "./output/forecast/pv/model_48Out_30/model_48Out_30.json"
-        self.MODEL_FILE_H5 = "./output/forecast/pv/model_48Out_30/model_48Out_30.h5"
+        self.MODEL_FILE = "./output/forecast/pv/ts30_out48_lb24_bs15/model_ts30_out48_lb24_bs15.json"
+        self.MODEL_FILE_H5 = "./output/forecast/pv/ts30_out48_lb24_bs15/model_ts30_out48_lb24_bs15.h5"
 
         self.EPOCHS = 30
         self.LOOK_BACK = 24

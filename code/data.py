@@ -1,5 +1,5 @@
 import json
-from datetime import timedelta
+from datetime import timedelta, datetime
 
 import numpy as np
 import pandas as pd
@@ -11,12 +11,12 @@ from forecast import (
     add_day_of_week,
     add_weekend,
     loadModel,
-)
+    get_split_indexes)
 from forecast_conf import ForecastConfig
 from forecast_load_conf import ForecastLoadConfig
 from forecast_pv_conf import ForecastPvConfig
 from sklearn.preprocessing import MinMaxScaler
-from util import getStepsize, invertScaler
+from util import getStepsize, invertScaler, constructTimeStamps
 
 FROM_MEGAWATTHOURS_TO_KILOWATTHOURS = 1000
 
@@ -365,9 +365,21 @@ def _computeIntRelation(stepsize1, stepsize2):
 
 
 # pvValue is at least 3 days
-def getPredictedPVValue(pvValue, timestamps):
+def getPredictedPVValue(pvValue, timestamps, delta):
     config_main = ForecastConfig()
     config_pv = ForecastPvConfig(config_main)
+
+    config_main.TIMESTAMPS = constructTimeStamps(
+        datetime.strptime(config_pv.BEGIN, "20%y-%m-%d %H:%M:%S"),
+        datetime.strptime(config_pv.END, "20%y-%m-%d %H:%M:%S"),
+        datetime.strptime(config_pv.STEP_SIZE, "%H:%M:%S") - datetime.strptime("00:00:00", "%H:%M:%S")
+    )
+    _, endValidation = get_split_indexes(config_main)
+    # we drop the year
+    a = datetime.strptime(timestamps[-1].strftime("%m-%d"), "%m-%d")
+    b = datetime.strptime(config_main.TIMESTAMPS[endValidation].strftime("%m-%d"), "%m-%d")
+    assert (a - b).days > 0
+
     df = addMinutes(pvValue)
     df = addMonthOfYear(df, timestamps)
 
@@ -394,10 +406,22 @@ def getPredictedPVValue(pvValue, timestamps):
 
 # loadsData is at least 3 days
 def getPredictedLoadValue(loadsData, timestamps, timedelta):
+    config = ForecastConfig()
     loadConfig = ForecastLoadConfig()
     input_data = addMinutes(loadsData)
     input_data = add_day_of_week(input_data)
     input_data = add_weekend(input_data)
+
+    config.TIMESTAMPS = constructTimeStamps(
+        datetime.strptime(loadConfig.BEGIN, "20%y-%m-%d %H:%M:%S"),
+        datetime.strptime(loadConfig.END, "20%y-%m-%d %H:%M:%S"),
+        datetime.strptime(loadConfig.STEPSIZE, "%H:%M:%S") - datetime.strptime("00:00:00", "%H:%M:%S")
+    )
+    _, endValidation = get_split_indexes(config)
+    # we drop the year
+    a = datetime.strptime(timestamps[-1].strftime("%m-%d"), "%m-%d")
+    b = datetime.strptime(config.TIMESTAMPS[endValidation].strftime("%m-%d"), "%m-%d")
+    assert (a - b).days > 0
 
     for load in loadConfig.APPLIANCES:
         appliance_data = getPecanstreetData(
