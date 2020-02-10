@@ -5,14 +5,12 @@ import os
 import sys
 from datetime import datetime
 from enum import Enum
-from shutil import copyfile
-import numpy as np
-import pandas as pd
 from itertools import product
-
-import numpy as np
+from shutil import copyfile
 
 import gurobipy as gp
+import numpy as np
+import pandas as pd
 from data import (
     getNinja,
     getNinjaPvApi,
@@ -94,6 +92,10 @@ class Configure:
         self.stepsize = getStepsize(self.timestamps)
         self.stepsizeHour = self.stepsize.total_seconds() / 3600
         self.stepsizeMinute = self.stepsize.total_seconds() / 60
+        # we add +1 because we are between 00:00 and 23:45 so < 1 day
+        self.nbDay = (datetime.strptime(config["TIME"]["end"], "20%y-%m-%d %H:%M:%S")
+                      - datetime.strptime(config["TIME"]["start"], "20%y-%m-%d %H:%M:%S")).days \
+                     + 1
 
         # Generators
         self.P_dg_max = float(config["DIESEL"]["P_dg_max"])
@@ -289,6 +291,7 @@ def calcBatChargeLoss(ini, batteryPowerVars):
         * ini.stepsizeHour
         for i in range(len(ini.timestamps))
     )
+
 
 def calcErrCost(ini, pvPowerVars, fixedLoadsVars, prices):
     return calcGridCost(ini, pvPowerVars, fixedLoadsVars, prices)
@@ -680,10 +683,12 @@ def setUpPV(model, ini):
                 pvPowerValuesReal, ini.timestampsPredPV, ini.dataDelta
             )
         )
-        pvPowerValues = pvPowerValues[lookback]
-        data = pd.DataFrame(pvPowerValues, index=ini.timestampsPredPV[-len(pvPowerValues):])
-        pvPowerValues = resampleData(data, ini.timestamps)
+        pvPowerValuesConcat = []
+        for i in range(0, ini.nbDay):
+            pvPowerValuesConcat.extend(pvPowerValues[(lookback % out) * (i + 1)])
 
+        data = pd.DataFrame(pvPowerValuesConcat, index=ini.timestampsPredPV[-len(pvPowerValuesConcat):])
+        pvPowerValues = resampleData(data, ini.timestamps)
         dataReal = pd.DataFrame(pvPowerValuesReal, index=ini.timestampsPredPV)
         dataReal = dataReal.loc[ini.timestampsPredPV[-out:]]
         pvPowerValuesReal = resampleData(dataReal, ini.timestamps)
@@ -735,7 +740,7 @@ def setUpPV(model, ini):
     #     "pv power error",
     # )
 
-    return pvVars, errPvValues # errPvVars
+    return pvVars, errPvValues  # errPvVars
 
 
 def setUpFixedLoads(model, ini):
@@ -758,8 +763,10 @@ def setUpFixedLoads(model, ini):
             )
         )
         # the 0 index is not the value at midnight
-        loadValues = loadValues[lookback]
-        data = pd.DataFrame(loadValues, index=ini.timestampsPredLoad[-len(loadValues):])
+        loadValuesConcat = []
+        for i in range(0, ini.nbDay):
+            loadValuesConcat.extend(loadValues[(lookback % out) * (i + 1)])
+        data = pd.DataFrame(loadValuesConcat, index=ini.timestampsPredLoad[-len(loadValuesConcat):])
         loadValues = resampleData(data, ini.timestamps)
     else:
         if ini.dataPSLoads:
@@ -798,7 +805,7 @@ def setUpFixedLoads(model, ini):
     #     "power of fixed loads",
     # )
 
-    return fixedLoadVars, errLoadValues # errLoadVars
+    return fixedLoadVars, errLoadValues  # errLoadVars
 
 
 def setUpWind(model, ini):
