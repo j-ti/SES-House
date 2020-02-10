@@ -10,8 +10,11 @@ class ForecastPvConfig:
         self.TIME_PER_DAY = 48
 
         self.LOAD_MODEL = True
-        self.MODEL_FILE = "./output/forecast/pv/ts30_out48_lb24_bs15/model_ts30_out48_lb24_bs15.json"
-        self.MODEL_FILE_H5 = "./output/forecast/pv/ts30_out48_lb24_bs15/model_ts30_out48_lb24_bs15.h5"
+        self.MODEL_ID_SAMPLES = ["ts60_out24_lb24_bs15", "ts30_out48_lb24_bs15", "ts15_out96_lb24_bs15"]
+        self.MODEL_ID = self.MODEL_ID_SAMPLES[1]
+        self.OUTPUT_FOLDER = "./output/forecast/pv/" + self.MODEL_ID + "/"
+        self.MODEL_FILE = self.OUTPUT_FOLDER + "model_" + self.MODEL_ID + ".json"
+        self.MODEL_FILE_H5 = self.OUTPUT_FOLDER + "model_" + self.MODEL_ID + ".h5"
 
         self.EPOCHS = 30
         self.LOOK_BACK = 24

@@ -25,13 +25,13 @@ class NetworkException(Exception):
     pass
 
 
-def getNinja(filePath, timestamps):
+def getNinja(filePath, timestamps, offset=timedelta(days=0)):
     with open(filePath, "r", encoding="utf-8") as dataFile:
         [dataFile.readline() for i in range(3)]
         data = pd.read_csv(
             dataFile, parse_dates=["time", "local_time"], index_col="local_time"
         )
-        data = data.loc[timestamps[0] : timestamps[-1] + getStepsize(timestamps)]
+        data = data.loc[timestamps[0] + offset: timestamps[-1] + offset + getStepsize(timestamps)]
         origStepsize = getStepsize(data.index)
         wantedStepsize = getStepsize(timestamps)
         if origStepsize > wantedStepsize:
@@ -42,7 +42,8 @@ def getNinja(filePath, timestamps):
                 origStepsize, wantedStepsize, timestamps, data
             )
             data = data.resample(wantedStepsize).mean()
-        data = data.loc[timestamps[0] : timestamps[-1]]
+        data = data.loc[timestamps[0] + offset : timestamps[-1] + offset]
+
         return data["electricity"]
 
 
@@ -376,7 +377,7 @@ def getPredictedPVValue(pvValue, timestamps, delta):
     )
     _, endValidation = get_split_indexes(config_main)
     # we drop the year
-    a = datetime.strptime(timestamps[-1].strftime("%m-%d"), "%m-%d")
+    a = datetime.strptime(timestamps[0].strftime("%m-%d"), "%m-%d")
     b = datetime.strptime(config_main.TIMESTAMPS[endValidation].strftime("%m-%d"), "%m-%d")
     assert (a - b).days > 0
 
@@ -401,7 +402,8 @@ def getPredictedPVValue(pvValue, timestamps, delta):
     model = loadModel(config_pv)
     res = model.predict(x)
     res = invertScaler(res, scaler)
-    return res, config_pv.LOOK_BACK
+
+    return res, config_pv.LOOK_BACK, config_pv.OUTPUT_SIZE
 
 
 # loadsData is at least 3 days
@@ -419,7 +421,7 @@ def getPredictedLoadValue(loadsData, timestamps, timedelta):
     )
     _, endValidation = get_split_indexes(config)
     # we drop the year
-    a = datetime.strptime(timestamps[-1].strftime("%m-%d"), "%m-%d")
+    a = datetime.strptime(timestamps[0].strftime("%m-%d"), "%m-%d")
     b = datetime.strptime(config.TIMESTAMPS[endValidation].strftime("%m-%d"), "%m-%d")
     assert (a - b).days > 0
 
@@ -451,4 +453,4 @@ def getPredictedLoadValue(loadsData, timestamps, timedelta):
     model = loadModel(loadConfig)
     res = model.predict(x)
     res = invertScaler(res, scaler)
-    return res, loadConfig.LOOK_BACK
+    return res, loadConfig.LOOK_BACK, loadConfig.OUTPUT_SIZE

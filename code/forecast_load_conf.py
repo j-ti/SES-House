@@ -10,13 +10,15 @@ class ForecastLoadConfig:
         self.DATA_FILE = "./data/15minute_data_newyork_1222.csv"
         self.TIME_HEADER = "local_15min"
         self.DATAID = 1222
-        self.OUTPUT_FOLDER = "./output/forecast/load/60min/out24/bs50/lb20/"
+        #self.OUTPUT_FOLDER = "./output/forecast/load/60min/out24/bs50/lb20/"
 
         self.LOAD_MODEL = False
         self.NB_PLOT = 4
-        self.OUTPUT_FOLDER = "./output/forecast/load/60min/out24/bs50/lb20/"
-        self.MODEL_FILE = "./output/forecast/load/60min/out24/lb20/bs50/model.json"
-        self.MODEL_FILE_H5 = "./output/forecast/load/60min/out24/lb20/bs50/model.h5"
+
+        self.MODEL_ID = "ts60_out24_lb20_bs100"
+        self.OUTPUT_FOLDER = "./output/forecast/load/" + self.MODEL_ID + "/"
+        self.MODEL_FILE = self.OUTPUT_FOLDER + "model_" + self.MODEL_ID + ".json"
+        self.MODEL_FILE_H5 = self.OUTPUT_FOLDER + "model_" + self.MODEL_ID + ".h5"
 
         self.APPLIANCES = ["car1", "heater1", "waterheater1", "drye1"]
         self.EPOCHS = 50
