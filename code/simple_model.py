@@ -242,7 +242,7 @@ def runSimpleModel(ini):
         batteryPowerVars,
     )
     plotResults(model, ini, gridPrices)
-    return getObjectiveResults(
+    objectiveResult = getObjectiveResults(
         ini,
         fromGridVars,
         toGridVars,
@@ -251,6 +251,8 @@ def runSimpleModel(ini):
         dieselStatusVars,
         batteryPowerVars,
     )
+
+    return objectiveResult, gridPrices, extractResults(model)
 
 
 def calcDieselCost(ini, dieselGeneratorsVars, dieselStatusVars):
@@ -1017,6 +1019,16 @@ def plotResults(model, ini, gridPrices):
     plotting(varN, varX, gridPrices, outputFolder, ini)
 
 
+def extractResults(model):
+    varN = []
+    varX = []
+    for v in model.getVars():
+        varN.append(v.varName)
+        varX.append(v.x)
+
+    return varN, varX
+
+
 def copyConfigFile(filepath, outputFolder):
     copyfile(filepath, os.path.join(outputFolder, "conf.ini"))
 
@@ -1065,11 +1077,11 @@ def main(argv):
         except:
             print("No resultsGoal.npy found. Continue without loading results.")
             resultsGoals = np.full(
-                (len(goalsRange), len(batRangeEmax), len(loadRangeScale), 4), None
+                (len(goalsRange), len(batRangeEmax), len(loadRangeScale), 7), None
             )
     else:
         resultsGoals = np.full(
-            (len(goalsRange), len(batRangeEmax), len(loadRangeScale), 4), None
+            (len(goalsRange), len(batRangeEmax), len(loadRangeScale), 7), None
         )
 
     # Only update the results selected in update Results with a True value
@@ -1090,12 +1102,18 @@ def main(argv):
                 ) or ini.calcAllFlag:
                     outputFolder = "{}{}_BE{}_L{}/".format(baseOutputFolder, g, be, l)
                     os.makedirs(outputFolder)
-                    resultsGoals[ig, ibe, il, :] = np.array(runSimpleModel(ini))[:]
+                    objectiveResults, gridPrices, [varN, varX] = runSimpleModel(ini)
+                    resultsGoals[ig, ibe, il, 0:4] = np.array(objectiveResults)[:]
+                    resultsGoals[ig, ibe, il, 4] = gridPrices
+                    resultsGoals[ig, ibe, il, 5] = varN
+                    resultsGoals[ig, ibe, il, 6] = varX
+
 
     np.save(os.path.join(baseOutputFolder, "resultsGoal.npy"), resultsGoals)
-    dfResults = pd.DataFrame(resultsGoals.reshape(27, 4), index=pd.MultiIndex.from_frame(idx),
-                             columns=["COST", "GGE", "GGEsq", "GRID_INDEPENDENCE"])
+    dfResults = pd.DataFrame(resultsGoals.reshape(27, 7), index=pd.MultiIndex.from_frame(idx),
+                             columns=["COST", "GGE", "GGEsq", "GRID_INDEPENDENCE", "gridPrices", "varN", "varX"])
     print(dfResults)
+    #plotting(dfResults[updateResults,'varN'], varX, gridPrices, outputFolder, ini)
     # work in Progress: plot_parameter_variation()
 
 
