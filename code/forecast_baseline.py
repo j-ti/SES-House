@@ -125,8 +125,9 @@ def mean_baseline_one_day(config, train, test):
     predictions = np.full(real.shape, np.nan)
     for i in range(len(real)):
         predictions[i] = means
+        means = np.roll(means, -1)
         real[i] = test[i + times_per_day: i + 2 * times_per_day]
-    mse = mean_squared_error(predictions, real)
+    mse = mean_squared_error(real, predictions)
     print("mean baseline 1 day mse: ", mse)
     return mse
 
