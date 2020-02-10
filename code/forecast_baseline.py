@@ -158,7 +158,8 @@ def one_step_persistence_model(part):
     print("1 Step Persistence Model MSE: ", mse)
 
 
-def plotLSTM_Base_Real(config, train, lstm_predict, base, real) :
+def plotLSTM_Base_Real(config, train, lstm_predict, base, real):
+    times_per_day = get_timestamps_per_day(config)
     plt.plot(lstm_predict, label="LSTM prediction")
     plt.plot(real, label="real")
     if base == "mean" :
@@ -168,7 +169,7 @@ def plotLSTM_Base_Real(config, train, lstm_predict, base, real) :
         plt.plot(x, real, label="next value persistence model")
     plt.legend()
     time = [0, 5, 10, 15, 20]
-    ticks = np.array(time) * 1
+    ticks = np.array(time) * int(times_per_day / 24)
     time = [datetime.strftime(j, "%H:%M") for j in [datetime.strptime(str(i), "%H") for i in time]]
     plt.xticks(ticks, time)
     plt.xlabel("Time")
