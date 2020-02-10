@@ -24,7 +24,7 @@ def dataImport(config_main, config_pv):
         config_pv.DATA_FILE, config_pv.TIME_HEADER, config_pv.DATAID, "solar", timestamps
     )
     df = addMinutes(df)
-    df = addMonthOfYear(df, timestamps)
+    df = addMonthOfYear(df)
 
     return df, np.array(timestamps)
 

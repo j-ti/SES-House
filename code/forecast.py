@@ -63,9 +63,9 @@ def add_weekend(data):
     return pd.concat([data, is_weekend], axis=1)
 
 
-def addMonthOfYear(data, timestamps):
+def addMonthOfYear(data):
     months = pd.Series(
-        [timestamps[i].month for i in range(len(timestamps))], index=data.index
+        [i.month for i in data.index], index=data.index
     )
     return pd.concat([data, months], axis=1)
 
