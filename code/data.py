@@ -377,7 +377,7 @@ def getPredictedPVValue(pvValue, timestamps, delta):
     )
     _, endValidation = get_split_indexes(config_main)
     # we drop the year
-    a = datetime.strptime(timestamps[-1].strftime("%m-%d"), "%m-%d")
+    a = datetime.strptime(timestamps[0].strftime("%m-%d"), "%m-%d")
     b = datetime.strptime(config_main.TIMESTAMPS[endValidation].strftime("%m-%d"), "%m-%d")
     assert (a - b).days > 0
 
@@ -421,7 +421,7 @@ def getPredictedLoadValue(loadsData, timestamps, timedelta):
     )
     _, endValidation = get_split_indexes(config)
     # we drop the year
-    a = datetime.strptime(timestamps[-1].strftime("%m-%d"), "%m-%d")
+    a = datetime.strptime(timestamps[0].strftime("%m-%d"), "%m-%d")
     b = datetime.strptime(config.TIMESTAMPS[endValidation].strftime("%m-%d"), "%m-%d")
     assert (a - b).days > 0
 
