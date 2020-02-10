@@ -1219,6 +1219,11 @@ def main(argv):
         ],
     ).round(3)
     with pd.option_context("display.max_rows", 99, "display.max_columns", 12):
+    dfResults = pd.DataFrame(resultsGoals.reshape(27, 10), index=pd.MultiIndex.from_frame(idx),
+                             columns=["COST", "GGE", "GGEsq", "GRID_INDEPENDENCE", "ERROR_COST", "FINAL_COST",
+                                      "ERROR_CO2", "FINAL_C02", "ERROR_IND", "FINAL_IND"])
+    dfResults = dfResults.round(3)
+    with pd.option_context('display.max_rows', 99, 'display.max_columns', 12):
         print(dfResults)
 
     dfResults.to_csv(baseOutputFolder + "resultDataframe.csv")
