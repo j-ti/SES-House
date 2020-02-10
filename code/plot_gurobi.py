@@ -89,7 +89,7 @@ def plotting(varName, varVal, gridPrices, outputFolder, ini):
     plotting_all_powers(dico, outputFolder, time, tick)
     plotting_additive_all_powers(resultsDf, outputFolder, time, tick, "bar")
     plotting_additive_all_powers(resultsDf, outputFolder, time, tick, "area")
-    plotting_additive_all_powers_sym(resultsDf, outputFolder, time, tick, "bar", True)
+    plotting_additive_all_powers_sym(resultsDf, outputFolder, time, tick, "bar")
     plotting_additive_all_powers_sym(resultsDf, outputFolder, time, tick, "area")
     plotting_in_out_price(dico, outputFolder, gridPrices, time, tick)
     plotting_pie_gen_pow(dico, outputFolder)
