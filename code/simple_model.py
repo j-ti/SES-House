@@ -136,6 +136,18 @@ class Configure:
         self.pvScale = float(config["PV"]["scale"])
         self.windFile = config["WIND"]["file"]
         self.windScale = float(config["WIND"]["scale"])
+        self.windStart = datetime.strptime(
+            config["WIND"]["windStart"], "20%y-%m-%d %H:%M:%S"
+        )
+        self.windDelta = self.windStart - datetime.strptime(
+            config["TIME"]["start"], "20%y-%m-%d %H:%M:%S"
+        )
+        self.pvStart = datetime.strptime(
+            config["PV"]["pvStart"], "20%y-%m-%d %H:%M:%S"
+        )
+        self.pvDelta = self.pvStart - datetime.strptime(
+            config["TIME"]["start"], "20%y-%m-%d %H:%M:%S"
+        )
         self.loadsFile = config["LOADS"]["file"]
         self.loadsPdct = "yes" == config["LOADS"]["usePredicted"]
         self.loadsScale = float(config["LOADS"]["scale"])
@@ -155,7 +167,7 @@ class Configure:
         self.priceDataStart = datetime.strptime(
             config["COST"]["priceDataStart"], "20%y-%m-%d %H:%M:%S"
         )
-        self.priceDataDelta = self.dataStart - datetime.strptime(
+        self.priceDataDelta = self.priceDataStart - datetime.strptime(
             config["TIME"]["start"], "20%y-%m-%d %H:%M:%S"
         )
         self.co2Grid = float(config["CO2"]["grid_CO2"])
@@ -273,6 +285,9 @@ def calcBatChargeLoss(ini, batteryPowerVars):
         for i in range(len(ini.timestamps))
     )
 
+def calcErrCost(ini, pvPowerVars, fixedLoadsVars, prices):
+    return calcGridCost(ini, pvPowerVars, fixedLoadsVars, prices)
+
 
 def calcGridCost(ini, fromGridVars, toGridVars, prices):
     return sum(
@@ -300,6 +315,8 @@ def calcMinCostObjective(
         return dieselObjExp + gridCostObjExp + batCostObjExp
     elif type == "True":
         return dieselObjExp + gridCostObjExp
+    elif type == "WithErr":
+        return dieselObjExp + gridCostObjExp + calcErrCost(ini, pvPowerVars, fixedLoadsVars, prices)
 
 
 def calcGreenhouseObjective(
@@ -653,15 +670,20 @@ def setUpPV(model, ini):
                 * ini.pvScale
         )
         print("PV data: use predicted values")
-        pvPowerValues, lookback = (
+        pvPowerValues, lookback, out = (
             getPredictedPVValue(
-                pvPowerValues, ini.timestampsPredPV, ini.dataDelta
+                pvPowerValuesReal, ini.timestampsPredPV, ini.dataDelta
             )
         )
         pvPowerValues = pvPowerValues[lookback]
         data = pd.DataFrame(pvPowerValues, index=ini.timestampsPredPV[-len(pvPowerValues):])
+
+        dataReal = pd.DataFrame(pvPowerValuesReal, index=ini.timestampsPredPV)
+        dataReal = dataReal.loc[ini.timestampsPredPV[-len(pvPowerValues):]]
+        pvPowerValuesReal = resampleData(dataReal, ini.timestamps)
+
         pvPowerValues = resampleData(data, ini.timestamps)
-        pvPowerValuesReal=pvPowerValuesReal[len(pvPowerValues):]
+
     else:
         if ini.loc_flag:
             print("PV data: use location and query from renewables.ninja API")
@@ -708,7 +730,7 @@ def setUpPV(model, ini):
         (errPvVars[i, 0] == - errPvValues[i] for i in range(len(ini.timestamps))),
         "pv power error",
     )
-    print(pvPowerValuesReal)
+
     return pvVars, errPvVars
 
 
@@ -726,7 +748,7 @@ def setUpFixedLoads(model, ini):
                 * ini.loadsScale
         )
         print("Load data: use predicted values")
-        loadValues, lookback = (
+        loadValues, lookback, out = (
             getPredictedLoadValue(
                 loadValuesReal, ini.timestampsPredLoad, ini.dataDelta
             )
@@ -750,6 +772,7 @@ def setUpFixedLoads(model, ini):
             )
         else:
             loadValues = getLoadsData(ini.loadsFile, ini.timestamps) * ini.loadsScale
+        loadValuesReal = loadValues
 
     assert len(loadValues) == len(ini.timestamps)
     assert all(i >= 0 for i in loadValues)
@@ -786,7 +809,7 @@ def setUpWind(model, ini):
         windPowerValues = windPowerValues.values * ini.windScale
     else:
         print("Wind data: use sample files")
-        windPowerValues = getNinja(ini.windFile, ini.timestamps) * ini.windScale
+        windPowerValues = getNinja(ini.windFile, ini.timestamps, ini.windDelta) * ini.windScale
 
     assert len(windPowerValues) == len(ini.timestamps)
     model.addConstrs(
