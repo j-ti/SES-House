@@ -682,7 +682,7 @@ def setUpPV(model, ini):
                 pvPowerValuesReal, ini.timestampsPredPV, ini.dataDelta
             )
         )
-        pvPowerValues = pvPowerValues[lookback]
+        pvPowerValues = pvPowerValues[lookback % out]
         data = pd.DataFrame(pvPowerValues, index=ini.timestampsPredPV[-len(pvPowerValues):])
         pvPowerValues = resampleData(data, ini.timestamps)
 
