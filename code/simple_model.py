@@ -133,6 +133,7 @@ class Configure:
 
         self.pvFile = config["PV"]["file"]
         self.pvPdct = "yes" == config["PV"]["usePredicted"]
+        self.showErr = "yes" == config["GLOBAL"]["showErr"]
         self.pvScale = float(config["PV"]["scale"])
         self.windFile = config["WIND"]["file"]
         self.windScale = float(config["WIND"]["scale"])
@@ -187,13 +188,17 @@ def runSimpleModel(ini):
     gridPrices = getPriceData(
         ini.costFileGrid, ini.timestamps, ini.priceDataDelta, ini.constantPrice
     )
-    if ini.pvPdct:
-        pvInclErr = 1
+    if ini.showErr:
+        if ini.pvPdct:
+            pvInclErr = 1
+        else:
+            pvInclErr = 0
+        if ini.loadsPdct:
+            loadsInclErr = 1
+        else:
+            loadsInclErr = 0
     else:
         pvInclErr = 0
-    if ini.loadsPdct:
-        loadsInclErr = 1
-    else:
         loadsInclErr = 0
 
     model.addConstrs(
@@ -204,9 +209,9 @@ def runSimpleModel(ini):
             + dieselGeneratorsVars.sum(i, "*")
             + batteryPowerVars.sum(i, "*")
             + evPowerVars.sum(i, "*")
-            + pvInclErr * pvVarsErr.sum(i, "*")
+            # + pvInclErr * pvVarsErr.sum(i, "*")
             == fixedLoadVars.sum(i, "*") + toGridVars.sum(i, "*")
-            + loadsInclErr * loadsVarsErr.sum(i, "*")
+            # + loadsInclErr * loadsVarsErr.sum(i, "*")
             for i in range(len(ini.timestamps))
         ),
         "power balance",
@@ -677,13 +682,11 @@ def setUpPV(model, ini):
         )
         pvPowerValues = pvPowerValues[lookback]
         data = pd.DataFrame(pvPowerValues, index=ini.timestampsPredPV[-len(pvPowerValues):])
-
-        dataReal = pd.DataFrame(pvPowerValuesReal, index=ini.timestampsPredPV)
-        dataReal = dataReal.loc[ini.timestampsPredPV[-len(pvPowerValues):]]
-        pvPowerValuesReal = resampleData(dataReal, ini.timestamps)
-
         pvPowerValues = resampleData(data, ini.timestamps)
 
+        dataReal = pd.DataFrame(pvPowerValuesReal, index=ini.timestampsPredPV)
+        dataReal = dataReal.loc[ini.timestampsPredPV[-out:]]
+        pvPowerValuesReal = resampleData(dataReal, ini.timestamps)
     else:
         if ini.loc_flag:
             print("PV data: use location and query from renewables.ninja API")
@@ -718,20 +721,21 @@ def setUpPV(model, ini):
     pvVars = model.addVars(
         len(ini.timestamps), 1, lb=0.0, vtype=GRB.CONTINUOUS, name="PVPowers"
     )
-    errPvVars = model.addVars(
-        len(ini.timestamps), 1, lb=-GRB.INFINITY, vtype=GRB.CONTINUOUS, name="errPv"
-    )
     model.addConstrs(
         (pvVars[i, 0] == pvPowerValues[i] for i in range(len(ini.timestamps))),
         "1st pv panel generation",
     )
-    errPvValues = [r - p for r, p in zip(pvPowerValuesReal, pvPowerValues)]
-    model.addConstrs(
-        (errPvVars[i, 0] == - errPvValues[i] for i in range(len(ini.timestamps))),
-        "pv power error",
-    )
 
-    return pvVars, errPvVars
+    errPvValues = [r - p for r, p in zip(pvPowerValuesReal, pvPowerValues)]
+    # errPvVars = model.addVars(
+    #     len(ini.timestamps), 1, lb=-GRB.INFINITY, vtype=GRB.CONTINUOUS, name="errPv"
+    # )
+    # model.addConstrs(
+    #     (errPvVars[i, 0] == - errPvValues[i] for i in range(len(ini.timestamps))),
+    #     "pv power error",
+    # )
+
+    return pvVars, errPvValues # errPvVars
 
 
 def setUpFixedLoads(model, ini):
@@ -780,20 +784,21 @@ def setUpFixedLoads(model, ini):
     fixedLoadVars = model.addVars(
         len(ini.timestamps), 1, lb=0.0, vtype=GRB.CONTINUOUS, name="fixedLoads"
     )
-    errLoadVars = model.addVars(
-        len(ini.timestamps), 1, lb=-GRB.INFINITY, vtype=GRB.CONTINUOUS, name="errLoads"
-    )
     model.addConstrs(
         (fixedLoadVars[i, 0] == loadValues[i] for i in range(len(ini.timestamps))),
         "power of fixed loads",
     )
-    errLoadValues = [r - p for r, p in zip(loadValuesReal[-len(loadValues):], loadValues)]
-    model.addConstrs(
-        (errLoadVars[i, 0] == errLoadValues[i] for i in range(len(ini.timestamps))),
-        "power of fixed loads",
-    )
 
-    return fixedLoadVars, errLoadVars
+    errLoadValues = [r - p for r, p in zip(loadValuesReal[-len(loadValues):], loadValues)]
+    # errLoadVars = model.addVars(
+    #     len(ini.timestamps), 1, lb=-GRB.INFINITY, vtype=GRB.CONTINUOUS, name="errLoads"
+    # )
+    # model.addConstrs(
+    #     (errLoadVars[i, 0] == errLoadValues[i] for i in range(len(ini.timestamps))),
+    #     "power of fixed loads",
+    # )
+
+    return fixedLoadVars, errLoadValues # errLoadVars
 
 
 def setUpWind(model, ini):
