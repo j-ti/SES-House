@@ -102,8 +102,8 @@ def buildModel(config, trainXShape):
         model.add(LSTM(config.NEURONS[-1]))
         model.add(Dropout(config.DROPOUT[-1]))
 
-    model.add(Activation(config.ACTIVATION_FUNCTION))
     model.add(Dense(config.OUTPUT_SIZE))
+    model.add(Activation(config.ACTIVATION_FUNCTION))
 
     if config.OPTIMIZE_FUNCTION == "adam":
         optimizer = optimizers.Adam(lr=config.LEARNING_RATE)
