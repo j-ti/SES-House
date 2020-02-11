@@ -86,8 +86,6 @@ def forecasting(config_main, config_pv):
 
     df_train, df_validation, df_test, scaler = getParts(df, config_main, config_pv)
 
-    nbFeatures = df_train.shape[1]
-
     # here we have numpy array
     trainX, trainY = buildSet(
         np.array(df_train), config_pv.LOOK_BACK, config_pv.OUTPUT_SIZE

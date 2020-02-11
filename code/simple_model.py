@@ -1148,9 +1148,7 @@ def main(argv):
     ]
     batRangeEmax = [0, 10, 20]
     loadRangeScale = [0, 1, 2]
-    cases = np.array([goalsRange, batRangeEmax, loadRangeScale])
 
-    casesDf = pd.DataFrame(cases.T, columns=["goals", "E_bat_mas", "loadsScale"])
     idx = pd.DataFrame(
         list(
             [
@@ -1169,7 +1167,7 @@ def main(argv):
         try:
             resultsGoals = np.load("resultsGoal.npy", allow_pickle=True)
             print("Loaded Results")
-        except:
+        except IOError:
             print("No resultsGoal.npy found. Continue without loading results.")
             resultsGoals = np.full(
                 (len(goalsRange), len(batRangeEmax), len(loadRangeScale), 13), None

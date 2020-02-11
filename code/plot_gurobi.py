@@ -196,7 +196,7 @@ def plotting_all_powers(dico, outputFolder, time, tick, showFlag=False):
 def plotting_additive_all_powers(
     resultsPd, outputFolder, time, tick, kindPlot="area", showFlag=False
 ):
-    if kindPlot is "bar":
+    if kindPlot == "bar":
         style = "steps-mid"
         step = "mid"
         kwargs = {"width": 1.0}
@@ -286,13 +286,11 @@ def plotting_additive_all_powers(
 def plotting_additive_all_powers_sym(
     resultsPd, outputFolder, time, tick, kindPlot="area", showFlag=False
 ):
-    if kindPlot is "bar":
+    if kindPlot == "bar":
         style = "steps-mid"
-        step = "mid"
         kwargs = {"width": 1.0}
     else:
         style = "default"
-        step = None
         kwargs = {}
 
     # Devide in and out flows (esp. for batteries)
@@ -327,7 +325,6 @@ def plotting_additive_all_powers_sym(
     inColors = ["pink" if c is None else c for c in inColors]
     outColors = list(map(colorDico.get, selOut))
     outColors = ["pink" if c is None else c for c in outColors]
-    hatch = ["", "//", "--", ".."]
 
     # Plottting
     fig, ax = plt.subplots()

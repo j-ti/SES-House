@@ -279,7 +279,6 @@ def get_following_days(config, matrix_values):
 
 
 def plot_multiple_days(config, loadConfig, test, predicts, timestamps):
-    timestamps_per_day = get_timestamps_per_day(config)
     predicts = get_following_days(config, predicts)
 
     plt.plot(range(len(test)), test, label="test set")
