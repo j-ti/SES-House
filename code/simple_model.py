@@ -1198,8 +1198,8 @@ def main(argv):
                     resultsGoals[ig, ibe, il, 11] = varN
                     resultsGoals[ig, ibe, il, 12] = varX
 
-                    res = np.array(runSimpleModel(ini))
-                    resultsGoals[ig, ibe, il, :] = res[:]
+                    #res = np.array(runSimpleModel(ini))
+                    #resultsGoals[ig, ibe, il, :] = res[:]
 
     np.save(os.path.join(baseOutputFolder, "resultsGoal.npy"), resultsGoals)
     dfResults = pd.DataFrame(resultsGoals.reshape(27, 13), index=pd.MultiIndex.from_frame(idx),
@@ -1213,8 +1213,8 @@ def main(argv):
 
 
     np.save(os.path.join(baseOutputFolder, "resultsGoal.npy"), resultsGoals)
-    dfResults = pd.DataFrame(resultsGoals.reshape(27, 7), index=pd.MultiIndex.from_frame(idx),
-                             columns=["COST", "GGE", "GGEsq", "GRID_INDEPENDENCE", "gridPrices", "varN", "varX"])
+    #dfResults = pd.DataFrame(resultsGoals.reshape(27, 7), index=pd.MultiIndex.from_frame(idx),
+    #                         columns=["COST", "GGE", "GGEsq", "GRID_INDEPENDENCE", "gridPrices", "varN", "varX"])
 
     # Experimental AREA ------------------------------------------------------------------------
     print(dfResults)
