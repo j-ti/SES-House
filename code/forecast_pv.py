@@ -4,10 +4,26 @@ from datetime import datetime
 
 import numpy as np
 from data import getPecanstreetData
-from forecast import splitData, buildSet, evalModel, loadModel, saveModel, train, addMinutes, addMonthOfYear, buildModel
+from forecast import (
+    splitData,
+    buildSet,
+    evalModel,
+    loadModel,
+    saveModel,
+    train,
+    addMinutes,
+    addMonthOfYear,
+    buildModel,
+)
 from forecast_conf import ForecastConfig
 from forecast_pv_conf import ForecastPvConfig
-from plot_forecast import plotHistory, plotPrediction, plotEcart, plotPredictionPart, plotPredictionPartMult
+from plot_forecast import (
+    plotHistory,
+    plotPrediction,
+    plotEcart,
+    plotPredictionPart,
+    plotPredictionPartMult,
+)
 from sklearn.metrics import mean_squared_error, mean_absolute_error
 from sklearn.preprocessing import MinMaxScaler
 from util import constructTimeStamps, mean_absolute_percentage_error
@@ -17,11 +33,16 @@ def dataImport(config_main, config_pv):
     timestamps = constructTimeStamps(
         datetime.strptime(config_pv.BEGIN, "20%y-%m-%d %H:%M:%S"),
         datetime.strptime(config_pv.END, "20%y-%m-%d %H:%M:%S"),
-        datetime.strptime(config_pv.STEP_SIZE, "%H:%M:%S") - datetime.strptime("00:00:00", "%H:%M:%S")
+        datetime.strptime(config_pv.STEP_SIZE, "%H:%M:%S")
+        - datetime.strptime("00:00:00", "%H:%M:%S"),
     )
     # input datas : uncontrollable resource : solar production
     df = getPecanstreetData(
-        config_pv.DATA_FILE, config_pv.TIME_HEADER, config_pv.DATAID, "solar", timestamps
+        config_pv.DATA_FILE,
+        config_pv.TIME_HEADER,
+        config_pv.DATAID,
+        "solar",
+        timestamps,
     )
     df = addMinutes(df)
     df = addMonthOfYear(df)
@@ -69,9 +90,15 @@ def forecasting(config_main, config_pv):
     nbFeatures = df_train.shape[1]
 
     # here we have numpy array
-    trainX, trainY = buildSet(np.array(df_train), config_pv.LOOK_BACK, config_pv.OUTPUT_SIZE)
-    validationX, validationY = buildSet(np.array(df_validation), config_pv.LOOK_BACK, config_pv.OUTPUT_SIZE)
-    testX, testY = buildSet(np.array(df_test), config_pv.LOOK_BACK, config_pv.OUTPUT_SIZE)
+    trainX, trainY = buildSet(
+        np.array(df_train), config_pv.LOOK_BACK, config_pv.OUTPUT_SIZE
+    )
+    validationX, validationY = buildSet(
+        np.array(df_validation), config_pv.LOOK_BACK, config_pv.OUTPUT_SIZE
+    )
+    testX, testY = buildSet(
+        np.array(df_test), config_pv.LOOK_BACK, config_pv.OUTPUT_SIZE
+    )
 
     # plotInputDay(timestamps, trainY[:, 0], config_pv)
 
@@ -79,7 +106,9 @@ def forecasting(config_main, config_pv):
         model = loadModel(config_pv)
         history = None
     else:
-        model, history = buildModelPv(trainX, trainY, validationX, validationY, config_pv)
+        model, history = buildModelPv(
+            trainX, trainY, validationX, validationY, config_pv
+        )
 
     evalModel(model, testX, testY)
 
@@ -92,31 +121,45 @@ def forecasting(config_main, config_pv):
         plotHistory(config_pv, history)
 
     plotPrediction(
-        trainY, trainPrediction, testY, validationY, valPrediction, testPrediction, timestamps, config_pv
+        trainY,
+        trainPrediction,
+        testY,
+        validationY,
+        valPrediction,
+        testPrediction,
+        timestamps,
+        config_pv,
     )
     plotPredictionPart(
         config_pv,
         trainY[24],
         trainPrediction[24],
         "1st day of train set",
-        timestamps[24: config_pv.TIME_PER_DAY+24],
-        "train"
+        timestamps[24 : config_pv.TIME_PER_DAY + 24],
+        "train",
     )
     plotPredictionPart(
         config_pv,
         validationY[24],
         valPrediction[24],
         "3rd day of validation set",
-        timestamps[len(trainX)+24:len(trainX)+24 + config_pv.TIME_PER_DAY],
-        "validation"
+        timestamps[len(trainX) + 24 : len(trainX) + 24 + config_pv.TIME_PER_DAY],
+        "validation",
     )
     plotPredictionPart(
         config_pv,
         testY[24],
         testPrediction[24],
         "1st day of test set",
-        timestamps[len(trainX) + len(validationX)+24: len(trainX)+24 + len(validationX) + config_pv.TIME_PER_DAY],
-        "test"
+        timestamps[
+            len(trainX)
+            + len(validationX)
+            + 24 : len(trainX)
+            + 24
+            + len(validationX)
+            + config_pv.TIME_PER_DAY
+        ],
+        "test",
     )
     # plotPredictionPartMult(
     #     config_pv,
@@ -135,7 +178,7 @@ def forecasting(config_main, config_pv):
         testY,
         testPrediction,
         timestamps,
-        config_pv
+        config_pv,
     )
     # printing error
     for _ in [1]:
@@ -207,5 +250,5 @@ def main(argv):
 
 
 if __name__ == "__main__":
-    os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
+    os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
     main(sys.argv)

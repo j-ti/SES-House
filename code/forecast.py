@@ -45,9 +45,7 @@ def addMinutes(data):
 
 
 def add0(data):
-    zeros = pd.Series(
-        [0 for i in data.index], index=data.index
-    )
+    zeros = pd.Series([0 for i in data.index], index=data.index)
     return pd.concat([data, zeros], axis=1)
 
 
@@ -64,9 +62,7 @@ def add_weekend(data):
 
 
 def addMonthOfYear(data):
-    months = pd.Series(
-        [i.month for i in data.index], index=data.index
-    )
+    months = pd.Series([i.month for i in data.index], index=data.index)
     return pd.concat([data, months], axis=1)
 
 
@@ -144,7 +140,9 @@ def loadModel(config):
 
     # evaluate loaded model
     loaded_model.compile(
-        loss=config.LOSS_FUNCTION, optimizer=config.OPTIMIZE_FUNCTION, metrics=["accuracy"]
+        loss=config.LOSS_FUNCTION,
+        optimizer=config.OPTIMIZE_FUNCTION,
+        metrics=["accuracy"],
     )
     return loaded_model
 

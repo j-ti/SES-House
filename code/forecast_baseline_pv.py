@@ -4,8 +4,14 @@ from datetime import datetime
 import numpy as np
 from data import getPecanstreetData
 from forecast import splitData, loadModel, buildSet, addMinutes, addMonthOfYear
-from forecast_baseline import one_step_persistence_model, meanBaseline, predict_zero_one_day, \
-    predict_zero_one_step, plot_baselines, plotLSTM_Base_Real
+from forecast_baseline import (
+    one_step_persistence_model,
+    meanBaseline,
+    predict_zero_one_day,
+    predict_zero_one_step,
+    plot_baselines,
+    plotLSTM_Base_Real,
+)
 from forecast_conf import ForecastConfig
 from forecast_pv_conf import ForecastPvConfig
 from sklearn.preprocessing import MinMaxScaler
@@ -24,7 +30,8 @@ def main(argv):
     timestamps = constructTimeStamps(
         datetime.strptime(pvConfig.BEGIN, "20%y-%m-%d %H:%M:%S"),
         datetime.strptime(pvConfig.END, "20%y-%m-%d %H:%M:%S"),
-        datetime.strptime(pvConfig.STEP_SIZE, "%H:%M:%S") - datetime.strptime("00:00:00", "%H:%M:%S")
+        datetime.strptime(pvConfig.STEP_SIZE, "%H:%M:%S")
+        - datetime.strptime("00:00:00", "%H:%M:%S"),
     )
 
     config.TIMESTAMPS = timestamps
@@ -58,12 +65,11 @@ def main(argv):
     df_validation = np.array([df_validation[i, 0] for i in range(len(df_validation))])
     df_test = np.array([df_test[i, 0] for i in range(len(df_test))])
 
-
-
     model = loadModel(pvConfig)
     testPredictY = model.predict(X)
 
     import matplotlib.pyplot as plt
+
     plt.plot(df_test[:100])
     plt.show()
     plt.plot(y[0])

@@ -10,7 +10,11 @@ class ForecastPvConfig:
         self.TIME_PER_DAY = 24
 
         self.LOAD_MODEL = True
-        self.MODEL_ID_SAMPLES = ["ts60_out24_lb24_bs15", "ts30_out48_lb24_bs15", "ts15_out96_lb24_bs15"]
+        self.MODEL_ID_SAMPLES = [
+            "ts60_out24_lb24_bs15",
+            "ts30_out48_lb24_bs15",
+            "ts15_out96_lb24_bs15",
+        ]
         self.MODEL_ID = self.MODEL_ID_SAMPLES[0]
         self.OUTPUT_FOLDER = "./output/forecast/pv/" + self.MODEL_ID + "/"
         self.MODEL_FILE = self.OUTPUT_FOLDER + "model_" + self.MODEL_ID + ".json"
@@ -28,6 +32,6 @@ class ForecastPvConfig:
         self.ACTIVATION_FUNCTION = "relu"
         self.LOSS_FUNCTION = "mean_squared_error"
         self.OPTIMIZE_FUNCTION = "adam"
-        self.LEARNING_RATE=0.001
+        self.LEARNING_RATE = 0.001
 
         self.NB_PLOT = 4

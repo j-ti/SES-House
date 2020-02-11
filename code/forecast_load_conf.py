@@ -1,5 +1,6 @@
 from forecast_conf import ForecastConfig
 
+
 class ForecastLoadConfig:
     def __init__(self):
         self.BEGIN = ForecastConfig().BEGIN
@@ -10,7 +11,7 @@ class ForecastLoadConfig:
         self.DATA_FILE = "./data/15minute_data_newyork_1222.csv"
         self.TIME_HEADER = "local_15min"
         self.DATAID = 1222
-        #self.OUTPUT_FOLDER = "./output/forecast/load/60min/out24/bs50/lb20/"
+        # self.OUTPUT_FOLDER = "./output/forecast/load/60min/out24/bs50/lb20/"
 
         self.LOAD_MODEL = False
         self.NB_PLOT = 4
@@ -32,4 +33,4 @@ class ForecastLoadConfig:
         self.ACTIVATION_FUNCTION = "relu"
         self.LOSS_FUNCTION = "mean_squared_error"
         self.OPTIMIZE_FUNCTION = "adam"
-        self.LEARNING_RATE=0.0001
+        self.LEARNING_RATE = 0.0001

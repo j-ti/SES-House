@@ -6,11 +6,22 @@ from util import makeTick, getMeanSdDay
 outputFolder = ""
 
 
-def plotPrediction(train_y, train_predict_y, val_y, val_predict_y, test_y, test_predict_y, timestamps, config):
+def plotPrediction(
+    train_y,
+    train_predict_y,
+    val_y,
+    val_predict_y,
+    test_y,
+    test_predict_y,
+    timestamps,
+    config,
+):
     y1, y1b = [], []
     time = []
 
-    for i in range(min((len(train_predict_y) // config.OUTPUT_SIZE) - 1, config.NB_PLOT)):
+    for i in range(
+        min((len(train_predict_y) // config.OUTPUT_SIZE) - 1, config.NB_PLOT)
+    ):
         y1.extend(train_y[i * config.OUTPUT_SIZE])
         y1b.extend(train_predict_y[i * config.OUTPUT_SIZE])
         time.append(timestamps[i * config.OUTPUT_SIZE])
@@ -22,12 +33,25 @@ def plotPrediction(train_y, train_predict_y, val_y, val_predict_y, test_y, test_
         time.append(timestamps[len(train_predict_y) + i * config.OUTPUT_SIZE])
 
     y3, y3b = [], []
-    for i in range(min((len(test_predict_y) // config.OUTPUT_SIZE) - 1, config.NB_PLOT)):
+    for i in range(
+        min((len(test_predict_y) // config.OUTPUT_SIZE) - 1, config.NB_PLOT)
+    ):
         y3.extend(test_y[i * config.OUTPUT_SIZE])
         y3b.extend(test_predict_y[i * config.OUTPUT_SIZE])
-        time.append(timestamps[len(train_predict_y) + len(val_predict_y) + i * config.OUTPUT_SIZE])
+        time.append(
+            timestamps[
+                len(train_predict_y) + len(val_predict_y) + i * config.OUTPUT_SIZE
+            ]
+        )
 
-    y1, y1b, y2, y2b, y3, y3b = np.array(y1), np.array(y1b), np.array(y2), np.array(y2b), np.array(y3), np.array(y3b)
+    y1, y1b, y2, y2b, y3, y3b = (
+        np.array(y1),
+        np.array(y1b),
+        np.array(y2),
+        np.array(y2b),
+        np.array(y3),
+        np.array(y3b),
+    )
     x1 = np.array(list(range(len(y1))))
     x2 = np.array(list(range(len(y2)))) + len(x1)
     x3 = np.array(list(range(len(y3)))) + len(x1) + len(x2)
@@ -165,11 +189,22 @@ def plotHistory(config, history):
     plt.show()
 
 
-def plotEcart(train_y, train_predict_y, val_y, val_predict_y, test_y, test_predict_y, timestamps, config):
+def plotEcart(
+    train_y,
+    train_predict_y,
+    val_y,
+    val_predict_y,
+    test_y,
+    test_predict_y,
+    timestamps,
+    config,
+):
     time, tick = makeTick(timestamps)
 
     y1, y1b = [], []
-    for i in range(min((len(train_predict_y) // config.OUTPUT_SIZE) - 1, config.NB_PLOT)):
+    for i in range(
+        min((len(train_predict_y) // config.OUTPUT_SIZE) - 1, config.NB_PLOT)
+    ):
         y1.extend(train_y[i * config.OUTPUT_SIZE])
         y1b.extend(train_predict_y[i * config.OUTPUT_SIZE])
 
@@ -179,11 +214,20 @@ def plotEcart(train_y, train_predict_y, val_y, val_predict_y, test_y, test_predi
         y2b.extend(val_predict_y[i * config.OUTPUT_SIZE])
 
     y3, y3b = [], []
-    for i in range(min((len(test_predict_y) // config.OUTPUT_SIZE) - 1, config.NB_PLOT)):
+    for i in range(
+        min((len(test_predict_y) // config.OUTPUT_SIZE) - 1, config.NB_PLOT)
+    ):
         y3.extend(test_y[i * config.OUTPUT_SIZE])
         y3b.extend(test_predict_y[i * config.OUTPUT_SIZE])
 
-    y1, y1b, y2, y2b, y3, y3b = np.array(y1), np.array(y1b), np.array(y2), np.array(y2b), np.array(y3), np.array(y3b)
+    y1, y1b, y2, y2b, y3, y3b = (
+        np.array(y1),
+        np.array(y1b),
+        np.array(y2),
+        np.array(y2b),
+        np.array(y3),
+        np.array(y3b),
+    )
 
     y1 = [y1[i] - y1b[i] for i in range(len(y1))]
     y2 = [y2[i] - y2b[i] for i in range(len(y2))]
@@ -207,8 +251,8 @@ def plotPredictionPartMult(config, real, allPredicted, nameOfSet, timestamps, na
     time, tick = makeTick(timestamps, "%H:%M")
     x1 = np.array(list(range(len(real))))
     mark = [allPredicted[i][0] for i in range(config.TIME_PER_DAY)]
-    plt.plot(x1, real, 'o-', label="actual " + nameOfSet, color="green")
-    plt.plot(x1, mark, 'x')
+    plt.plot(x1, real, "o-", label="actual " + nameOfSet, color="green")
+    plt.plot(x1, mark, "x")
     for i in range(config.TIME_PER_DAY):
         plt.plot(x1 + i, allPredicted[i], linewidth=0.4)
     # plt.xticks(tick, time, rotation=20)
@@ -219,6 +263,7 @@ def plotPredictionPartMult(config, real, allPredicted, nameOfSet, timestamps, na
     plt.tight_layout()
     plt.savefig(config.OUTPUT_FOLDER + "/prediction_all-" + name + ".png")
     plt.show()
+
 
 def get_following_days(config, matrix_values):
     times_per_day = get_timestamps_per_day(config)

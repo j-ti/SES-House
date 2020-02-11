@@ -120,7 +120,7 @@ def main(argv):
             validation_prediction[1, :],
             "1st day of validation set",
             validation_y_timestamps[: loadConfig.OUTPUT_SIZE],
-            "paramtuning1"
+            "paramtuning1",
         )
     else:
         model = loadModel(loadConfig)
@@ -155,7 +155,7 @@ def main(argv):
             test_prediction[1, :],
             "1st day of test set",
             test_y_timestamps[: loadConfig.OUTPUT_SIZE],
-            "paramtuning2"
+            "paramtuning2",
         )
 
 

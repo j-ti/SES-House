@@ -11,7 +11,8 @@ from forecast import (
     add_day_of_week,
     add_weekend,
     loadModel,
-    get_split_indexes)
+    get_split_indexes,
+)
 from forecast_conf import ForecastConfig
 from forecast_load_conf import ForecastLoadConfig
 from forecast_pv_conf import ForecastPvConfig
@@ -31,7 +32,9 @@ def getNinja(filePath, timestamps, offset=timedelta(days=0)):
         data = pd.read_csv(
             dataFile, parse_dates=["time", "local_time"], index_col="local_time"
         )
-        data = data.loc[timestamps[0] + offset: timestamps[-1] + offset + getStepsize(timestamps)]
+        data = data.loc[
+            timestamps[0] + offset : timestamps[-1] + offset + getStepsize(timestamps)
+        ]
         origStepsize = getStepsize(data.index)
         wantedStepsize = getStepsize(timestamps)
         if origStepsize > wantedStepsize:
@@ -373,16 +376,19 @@ def getPredictedPVValue(pvValue, timestamps, delta):
     config_main.TIMESTAMPS = constructTimeStamps(
         datetime.strptime(config_pv.BEGIN, "20%y-%m-%d %H:%M:%S"),
         datetime.strptime(config_pv.END, "20%y-%m-%d %H:%M:%S"),
-        datetime.strptime(config_pv.STEP_SIZE, "%H:%M:%S") - datetime.strptime("00:00:00", "%H:%M:%S")
+        datetime.strptime(config_pv.STEP_SIZE, "%H:%M:%S")
+        - datetime.strptime("00:00:00", "%H:%M:%S"),
     )
     _, endValidation = get_split_indexes(config_main)
     # we drop the year
     a = datetime.strptime(timestamps[0].strftime("%m-%d"), "%m-%d")
-    b = datetime.strptime(config_main.TIMESTAMPS[endValidation].strftime("%m-%d"), "%m-%d")
+    b = datetime.strptime(
+        config_main.TIMESTAMPS[endValidation].strftime("%m-%d"), "%m-%d"
+    )
     assert (a - b).days > 0
 
     df = addMinutes(pvValue)
-    df = addMonthOfYear(df)#, timestamps)
+    df = addMonthOfYear(df)  # , timestamps)
 
     valMin = df.iloc[0, -1]
     df.iloc[0, -1] = 0
@@ -417,7 +423,8 @@ def getPredictedLoadValue(loadsData, timestamps, timedelta):
     config.TIMESTAMPS = constructTimeStamps(
         datetime.strptime(loadConfig.BEGIN, "20%y-%m-%d %H:%M:%S"),
         datetime.strptime(loadConfig.END, "20%y-%m-%d %H:%M:%S"),
-        datetime.strptime(loadConfig.STEPSIZE, "%H:%M:%S") - datetime.strptime("00:00:00", "%H:%M:%S")
+        datetime.strptime(loadConfig.STEPSIZE, "%H:%M:%S")
+        - datetime.strptime("00:00:00", "%H:%M:%S"),
     )
     _, endValidation = get_split_indexes(config)
     # we drop the year
