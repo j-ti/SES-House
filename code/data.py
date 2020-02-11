@@ -382,7 +382,7 @@ def getPredictedPVValue(pvValue, timestamps, delta):
     assert (a - b).days > 0
 
     df = addMinutes(pvValue)
-    df = addMonthOfYear(df, timestamps)
+    df = addMonthOfYear(df)#, timestamps)
 
     valMin = df.iloc[0, -1]
     df.iloc[0, -1] = 0
