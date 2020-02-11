@@ -299,10 +299,6 @@ def calcBatChargeLoss(ini, batteryPowerVars):
     )
 
 
-def calcErrCost(ini, pvPowerVars, fixedLoadsVars, prices):
-    return calcGridCost(ini, pvPowerVars, fixedLoadsVars, prices)
-
-
 def calcErrObjClassic(model, ini, objValue):
     varName = []
     varVal = []
@@ -377,12 +373,6 @@ def calcMinCostObjective(
         return dieselObjExp + gridCostObjExp + batCostObjExp
     elif type == "True":
         return dieselObjExp + gridCostObjExp
-    elif type == "WithErr":
-        return (
-            dieselObjExp
-            + gridCostObjExp
-            + calcErrCost(ini, pvPowerVars, fixedLoadsVars, prices)
-        )
 
 
 def calcGreenhouseObjective(
