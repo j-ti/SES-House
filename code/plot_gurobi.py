@@ -41,7 +41,7 @@ labelDico = {
 }
 
 
-def plotting(varName, varVal, gridPrices, outputFolder, ini):
+def plotting(varName, varVal, gridPrices, outputFolder, ini, plotList):
     dico = {
         "PVPowers": [],
         "windPowers": [],
@@ -76,7 +76,7 @@ def plotting(varName, varVal, gridPrices, outputFolder, ini):
     resultsDf = pd.DataFrame.from_dict(dict(dico), orient="columns")
 
     plt.style.use("bmh")
-    plotting_powers(dico, outputFolder, time, tick)
+    plotting_powers(dico, outputFolder, time, tick, plotList[0])
     plotting_energys(
         dicoEnergy,
         ini.E_bat_max,
@@ -85,16 +85,17 @@ def plotting(varName, varVal, gridPrices, outputFolder, ini):
         outputFolder,
         time,
         tick,
+        plotList[1],
     )
-    plotting_all_powers(dico, outputFolder, time, tick)
-    plotting_additive_all_powers(resultsDf, outputFolder, time, tick, "bar")
-    plotting_additive_all_powers(resultsDf, outputFolder, time, tick, "area")
-    plotting_additive_all_powers_sym(resultsDf, outputFolder, time, tick, "bar")
-    plotting_additive_all_powers_sym(resultsDf, outputFolder, time, tick, "area")
-    plotting_in_out_price(dico, outputFolder, gridPrices, time, tick)
-    plotting_pie_gen_pow(dico, outputFolder)
-    plotting_bar_in_out(dico, outputFolder)
-    plotting_bar_all_powers(dico, outputFolder)
+    plotting_all_powers(dico, outputFolder, time, tick, plotList[2])
+    plotting_additive_all_powers(resultsDf, outputFolder, time, tick, "bar", plotList[3])
+    plotting_additive_all_powers(resultsDf, outputFolder, time, tick, "area", plotList[4])
+    plotting_additive_all_powers_sym(resultsDf, outputFolder, time, tick, "bar", plotList[5])
+    plotting_additive_all_powers_sym(resultsDf, outputFolder, time, tick, "area", plotList[6])
+    plotting_in_out_price(dico, outputFolder, gridPrices, time, tick, plotList[7])
+    plotting_pie_gen_pow(dico, outputFolder, plotList[8])
+    plotting_bar_in_out(dico, outputFolder, plotList[9])
+    plotting_bar_all_powers(dico, outputFolder, plotList[10])
 
 
 # Plotting PV power, wind power and fixed loads power.
