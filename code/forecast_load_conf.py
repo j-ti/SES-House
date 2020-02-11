@@ -15,15 +15,15 @@ class ForecastLoadConfig:
         self.LOAD_MODEL = False
         self.NB_PLOT = 4
 
-        self.MODEL_ID = "ts60_out24_lb20_bs100"
+        self.MODEL_ID = "ts30_out48_lb48_bs100_1"
         self.OUTPUT_FOLDER = "./output/forecast/load/" + self.MODEL_ID + "/"
         self.MODEL_FILE = self.OUTPUT_FOLDER + "model_" + self.MODEL_ID + ".json"
         self.MODEL_FILE_H5 = self.OUTPUT_FOLDER + "model_" + self.MODEL_ID + ".h5"
 
         self.APPLIANCES = ["car1", "heater1", "waterheater1", "drye1"]
         self.EPOCHS = 50
-        self.LOOK_BACK = 20
-        self.OUTPUT_SIZE = 24
+        self.LOOK_BACK = 48
+        self.OUTPUT_SIZE = 48
         self.BATCH_SIZE = 50
         self.PATIENCE = 10
         self.MIN_DELTA = 0.00001
