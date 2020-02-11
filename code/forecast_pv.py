@@ -17,12 +17,7 @@ from forecast import (
 )
 from forecast_conf import ForecastConfig
 from forecast_pv_conf import ForecastPvConfig
-from plot_forecast import (
-    plotHistory,
-    plotPrediction,
-    plotEcart,
-    plotPredictionPart,
-)
+from plot_forecast import plotHistory, plotPrediction, plotEcart, plotPredictionPart
 from sklearn.metrics import mean_squared_error, mean_absolute_error
 from sklearn.preprocessing import MinMaxScaler
 from util import constructTimeStamps, mean_absolute_percentage_error
