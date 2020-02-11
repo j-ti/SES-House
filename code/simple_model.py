@@ -9,8 +9,7 @@ from shutil import copyfile
 import numpy as np
 import pandas as pd
 from itertools import product
-
-import numpy as np
+import matplotlib.pyplot as plt
 
 import gurobipy as gp
 from data import (
@@ -1016,7 +1015,7 @@ def plotResults(model, ini, gridPrices):
         varN.append(v.varName)
         varX.append(v.x)
 
-    plotting(varN, varX, gridPrices, outputFolder, ini)
+    plotting(varN, varX, gridPrices, outputFolder, ini, [False]*11)
 
 
 def extractResults(model):
@@ -1068,6 +1067,7 @@ def main(argv):
         ),
         columns=["goals", "E_bat_mas", "loadsScale"],
     )
+    casesArr = np.array(idx).reshape(3, 3, 3, 3)
 
     if ini.loadResFlag:
         # try to load previous results
@@ -1112,8 +1112,24 @@ def main(argv):
     np.save(os.path.join(baseOutputFolder, "resultsGoal.npy"), resultsGoals)
     dfResults = pd.DataFrame(resultsGoals.reshape(27, 7), index=pd.MultiIndex.from_frame(idx),
                              columns=["COST", "GGE", "GGEsq", "GRID_INDEPENDENCE", "gridPrices", "varN", "varX"])
+
+    # Experimental AREA ------------------------------------------------------------------------
     print(dfResults)
-    #plotting(dfResults[updateResults,'varN'], varX, gridPrices, outputFolder, ini)
+    plotList = [False] * 11
+    plotList[5] = True
+    print(casesArr[0,1,1])
+    c = 4
+    # Plot goals over varying parameter
+    #from plot_parameter_variation import plot_parameter_variation
+    #plot_parameter_variation(resultsGoals, goalsRange, batRangeEmax, loadRangeScale, baseOutputFolder)
+    print(dfResults.loc[casesArr[0,1,1]])
+    print(dfResults.loc[(Goal('MINIMIZE_COST'), 10, 1)])
+
+    #from plot_gurobi import plotInteractive
+    #plotInteractive(dfResults,outputFolder,ini)
+
+    plotting(dfResults['varN'].values[c], dfResults['varX'].values[c], dfResults['gridPrices'].values[c], outputFolder, ini, plotList)
+    #plotting_additive_all_powers_sym(resultsDf, outputFolder, time, tick, "bar", plotList[5])
     # work in Progress: plot_parameter_variation()
 
 
