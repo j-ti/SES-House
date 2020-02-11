@@ -34,7 +34,7 @@ def main(argv):
         pvConfig.DATA_FILE, pvConfig.TIME_HEADER, pvConfig.DATAID, "solar", timestamps
     )
     df = addMinutes(df)
-    df = addMonthOfYear(df, timestamps)
+    df = addMonthOfYear(df)
 
     df_train, df_validation, df_test = splitData(config, df)
 

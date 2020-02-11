@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from forecast import get_timestamps_per_day
 from sklearn.metrics import mean_squared_error
-from util import makeTick
+from util import makeTick, getStepsize
 
 
 def getMeanSdDayBaseline(config, data):
@@ -125,8 +125,9 @@ def mean_baseline_one_day(config, train, test):
     predictions = np.full(real.shape, np.nan)
     for i in range(len(real)):
         predictions[i] = means
+        means = np.roll(means, -1)
         real[i] = test[i + times_per_day: i + 2 * times_per_day]
-    mse = mean_squared_error(predictions, real)
+    mse = mean_squared_error(real, predictions)
     print("mean baseline 1 day mse: ", mse)
     return mse
 
@@ -158,7 +159,8 @@ def one_step_persistence_model(part):
     print("1 Step Persistence Model MSE: ", mse)
 
 
-def plotLSTM_Base_Real(config, train, lstm_predict, base, real) :
+def plotLSTM_Base_Real(config, train, lstm_predict, base, real):
+    times_per_day = get_timestamps_per_day(config)
     plt.plot(lstm_predict, label="LSTM prediction")
     plt.plot(real, label="real")
     if base == "mean" :
@@ -168,10 +170,11 @@ def plotLSTM_Base_Real(config, train, lstm_predict, base, real) :
         plt.plot(x, real, label="next value persistence model")
     plt.legend()
     time = [0, 5, 10, 15, 20]
-    ticks = np.array(time) * 1
+    ticks = np.array(time) * int(times_per_day / 24)
     time = [datetime.strftime(j, "%H:%M") for j in [datetime.strptime(str(i), "%H") for i in time]]
     plt.xticks(ticks, time)
-    plt.xlabel("Time")
+    minutes = int(getStepsize(config.TIMESTAMPS).seconds / 60)
+    plt.xlabel("Time - {} min stepsize".format(minutes))
     plt.ylabel("Normalized Output Power")
     plt.savefig(config.OUTPUT_FOLDER + "/plot_lstm_" + base + "_real.png")
     plt.show()

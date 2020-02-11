@@ -49,7 +49,7 @@ def main(argv):
     test_predict = model.predict(test_x)
 
     plotLSTM_Base_Real(loadConfig, baseline_train, test_predict[0], "mean", test_y[0])
-    # plotLSTM_Base_Real(loadConfig, baseline_train, test_predict[0], "", test_y[0])
+    plotLSTM_Base_Real(loadConfig, baseline_train, test_predict[:48], "", test_y[:48])
 
     print("Test:")
     one_step_persistence_model(test)

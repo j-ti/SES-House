@@ -63,9 +63,9 @@ def add_weekend(data):
     return pd.concat([data, is_weekend], axis=1)
 
 
-def addMonthOfYear(data, timestamps):
+def addMonthOfYear(data):
     months = pd.Series(
-        [timestamps[i].month for i in range(len(timestamps))], index=data.index
+        [i.month for i in data.index], index=data.index
     )
     return pd.concat([data, months], axis=1)
 
@@ -102,8 +102,11 @@ def buildModel(config, trainXShape):
         model.add(LSTM(config.NEURONS[-1]))
         model.add(Dropout(config.DROPOUT[-1]))
 
+    model.add(Dense(config.NEURONS[-1]))
     model.add(Activation(config.ACTIVATION_FUNCTION))
+
     model.add(Dense(config.OUTPUT_SIZE))
+    model.add(Activation(config.ACTIVATION_FUNCTION))
 
     if config.OPTIMIZE_FUNCTION == "adam":
         optimizer = optimizers.Adam(lr=config.LEARNING_RATE)
