@@ -1,8 +1,6 @@
 import os
 import sys
-from tensorflow import set_random_seed
 
-import numpy as np
 import pandas as pd
 from data import getPecanstreetData
 from sklearn.preprocessing import MinMaxScaler

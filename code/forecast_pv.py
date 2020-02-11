@@ -22,7 +22,6 @@ from plot_forecast import (
     plotPrediction,
     plotEcart,
     plotPredictionPart,
-    plotPredictionPartMult,
 )
 from sklearn.metrics import mean_squared_error, mean_absolute_error
 from sklearn.preprocessing import MinMaxScaler

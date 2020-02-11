@@ -9,7 +9,6 @@ from forecast_baseline import (
     meanBaseline,
     predict_zero_one_day,
     predict_zero_one_step,
-    plot_baselines,
     plotLSTM_Base_Real,
 )
 from forecast_conf import ForecastConfig

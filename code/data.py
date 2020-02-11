@@ -7,7 +7,6 @@ import requests
 from forecast import (
     addMinutes,
     addMonthOfYear,
-    buildSet,
     add_day_of_week,
     add_weekend,
     loadModel,
