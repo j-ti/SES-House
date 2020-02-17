@@ -191,18 +191,6 @@ def runSimpleModel(ini):
     gridPrices = getPriceData(
         ini.costFileGrid, ini.timestamps, ini.priceDataDelta, ini.constantPrice
     )
-    if ini.showErr:
-        if ini.pvPdct:
-            pvInclErr = 1
-        else:
-            pvInclErr = 0
-        if ini.loadsPdct:
-            loadsInclErr = 1
-        else:
-            loadsInclErr = 0
-    else:
-        pvInclErr = 0
-        loadsInclErr = 0
 
     model.addConstrs(
         (
@@ -212,9 +200,7 @@ def runSimpleModel(ini):
             + dieselGeneratorsVars.sum(i, "*")
             + batteryPowerVars.sum(i, "*")
             + evPowerVars.sum(i, "*")
-            # + pvInclErr * pvVarsErr.sum(i, "*")
             == fixedLoadVars.sum(i, "*") + toGridVars.sum(i, "*")
-            # + loadsInclErr * loadsVarsErr.sum(i, "*")
             for i in range(len(ini.timestamps))
         ),
         "power balance",
@@ -299,10 +285,6 @@ def calcBatChargeLoss(ini, batteryPowerVars):
     )
 
 
-def calcErrCost(ini, pvPowerVars, fixedLoadsVars, prices):
-    return calcGridCost(ini, pvPowerVars, fixedLoadsVars, prices)
-
-
 def calcErrObjClassic(model, ini, objValue):
     varName = []
     varVal = []
@@ -377,12 +359,6 @@ def calcMinCostObjective(
         return dieselObjExp + gridCostObjExp + batCostObjExp
     elif type == "True":
         return dieselObjExp + gridCostObjExp
-    elif type == "WithErr":
-        return (
-            dieselObjExp
-            + gridCostObjExp
-            + calcErrCost(ini, pvPowerVars, fixedLoadsVars, prices)
-        )
 
 
 def calcGreenhouseObjective(
