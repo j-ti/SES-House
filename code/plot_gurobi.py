@@ -208,12 +208,7 @@ def plotting_additive_all_powers(
         ["batPowersNeg", "evPowersNeg"]
     ]
     # selection list of series to be plotted as area-plot and in which order
-    selOut = [
-        "fixedLoads",
-        "batPowersNeg",
-        "evPowersNeg",
-        "toGridPowers",
-    ]
+    selOut = ["fixedLoads", "batPowersNeg", "evPowersNeg", "toGridPowers"]
     selArea = [
         "PVPowers",
         "windPowers",
@@ -289,12 +284,7 @@ def plotting_additive_all_powers_sym(
 
     # Devide in and out flows (esp. for batteries)
     # Selection list for in/out series in plotting order
-    selOut = [
-        "fixedLoads",
-        "batPowersNeg",
-        "evPowersNeg",
-        "toGridPowers",
-    ]
+    selOut = ["fixedLoads", "batPowersNeg", "evPowersNeg", "toGridPowers"]
     selIn = [
         "dieselGenerators",
         "PVPowers",
