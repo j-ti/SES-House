@@ -51,8 +51,6 @@ def plotting(varName, varVal, gridPrices, outputFolder, ini, plotList):
         "fromGridPowers": [],
         "toGridPowers": [],
         "dieselGenerators": [],
-        # "errLoads": [],
-        # "errPv": [],
     }
 
     dicoEnergy = {"batEnergys": [], "evEnergys": []}
@@ -112,8 +110,6 @@ def plotting_powers(dico, outputFolder, time, tick, showFlag=False):
     plt.plot(dico["PVPowers"], label="pv", color=colorDico["PVPowers"])
     plt.plot(dico["windPowers"], label="wind", color=colorDico["windPowers"])
     plt.plot(dico["fixedLoads"], label="Loads Power", color=colorDico["fixedLoads"])
-    # plt.plot(dico["errPv"], label="pv", color=colorDico["errPv"])
-    # plt.plot(dico["errLoads"], label="Loads Power", color=colorDico["errLoads"])
     plt.xticks(tick, time, rotation=20)
     plt.xlabel("Time")
     plt.ylabel("Output power - kW")
@@ -209,7 +205,7 @@ def plotting_additive_all_powers(
     negResults, resultsPd = resultsPd.clip(upper=0) * (-1), resultsPd.clip(lower=0)
     negResults.columns = [str(col) + "Neg" for col in negResults.columns]
     resultsPd[["batPowersNeg", "evPowersNeg"]] = negResults[
-        ["batPowersNeg", "evPowersNeg"]  # , "errPvNeg", "errLoadsNeg"]
+        ["batPowersNeg", "evPowersNeg"]
     ]
     # selection list of series to be plotted as area-plot and in which order
     selOut = [
@@ -217,7 +213,7 @@ def plotting_additive_all_powers(
         "batPowersNeg",
         "evPowersNeg",
         "toGridPowers",
-    ]  # , "errPvNeg", "errLoadsNeg"]
+    ]
     selArea = [
         "PVPowers",
         "windPowers",
@@ -225,8 +221,6 @@ def plotting_additive_all_powers(
         "evPowers",
         "dieselGenerators",
         "fromGridPowers",
-        # "errPv",
-        # "errLoads",
     ]
     # Colorscheme with selection lists
     inColors = list(map(colorDico.get, selArea))
@@ -300,7 +294,7 @@ def plotting_additive_all_powers_sym(
         "batPowersNeg",
         "evPowersNeg",
         "toGridPowers",
-    ]  # , "errPvNeg", "errLoadsNeg"]
+    ]
     selIn = [
         "dieselGenerators",
         "PVPowers",
@@ -308,14 +302,11 @@ def plotting_additive_all_powers_sym(
         "batPowers",
         "evPowers",
         "fromGridPowers",
-        # "errPv",
-        # "errLoads",
     ]
-    # resultsPd["errLoads"] *= -1
     negResults, resultsPd = resultsPd.clip(upper=0), resultsPd.clip(lower=0)
     negResults.columns = [str(col) + "Neg" for col in negResults.columns]
     resultsPd[["batPowersNeg", "evPowersNeg"]] = negResults[
-        ["batPowersNeg", "evPowersNeg"]  # , "errPvNeg", "errLoadsNeg"]
+        ["batPowersNeg", "evPowersNeg"]
     ]
     # make loads and toGrid values negative
     resultsPd[["fixedLoads", "toGridPowers"]] *= -1
