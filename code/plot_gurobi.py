@@ -74,6 +74,7 @@ def plotting(varName, varVal, gridPrices, outputFolder, ini, plotList):
     resultsDf = pd.DataFrame.from_dict(dict(dico), orient="columns")
 
     plt.style.use("bmh")
+    plt.tight_layout()
     plotting_powers(dico, outputFolder, time, tick, plotList[0])
     plotting_energys(
         dicoEnergy,
@@ -339,6 +340,7 @@ def plotting_additive_all_powers_sym(
     ax.set_position([chartBox.x0, chartBox.y0, chartBox.width * 0.75, chartBox.height])
     ax.legend(handles, labelsList, bbox_to_anchor=(1.5, 0.8), loc="upper right")
     plt.savefig(outputFolder + "/power-balance-symmetric-" + kindPlot + ".png")
+    #plt.tight_layout()
     if showFlag:
         plt.show()
     plt.close()
@@ -351,14 +353,15 @@ def plotting_in_out_price(dico, outputFolder, gridPrices, time, tick, showFlag=F
     ax1.plot(
         range(len(gridPrices)),
         gridPrices,
+        drawstyle="steps-mid",
         label="Grid Price",
         color=colorDico["gridPrice"],
     )
     ax2.plot(
-        dico["fromGridPowers"], label="Grid Power In", color=colorDico["fromGridPowers"]
+        dico["fromGridPowers"], drawstyle = "steps-mid", label="Grid Power In", color=colorDico["fromGridPowers"]
     )
     ax2.plot(
-        dico["toGridPowers"], label="Grid Power Out", color=colorDico["toGridPowers"]
+        dico["toGridPowers"], drawstyle = "steps-mid", label="Grid Power Out", color=colorDico["toGridPowers"]
     )
     ax1.set_xticks(tick)
     ax1.set_xticklabels(time, rotation=20)
