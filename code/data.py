@@ -8,7 +8,6 @@ from forecast import (
     addMinutes,
     addMonthOfYear,
     add_day_of_week,
-    add_weekend,
     loadModel,
     get_split_indexes,
 )
@@ -419,7 +418,6 @@ def getPredictedLoadValue(loadsData, timestamps, timedelta):
     loadConfig = ForecastLoadConfig()
     input_data = addMinutes(loadsData)
     input_data = add_day_of_week(input_data)
-    input_data = add_weekend(input_data)
 
     config.TIMESTAMPS = constructTimeStamps(
         datetime.strptime(loadConfig.BEGIN, "20%y-%m-%d %H:%M:%S"),
