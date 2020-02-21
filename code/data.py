@@ -294,9 +294,12 @@ def getPecanstreetData(
         data = data.loc[timestamps[0] + offset : timestamps[-1] + offset + stepsize]
         data = resampleData(data, timestamps, offset)
         data = data.sum(axis=1)
+        min_data_value = min(data)
         for idx, value in enumerate(data):
-            if value < 0 and value >= -0.002:
+            if value < 0:
                 data[idx] = 0.0
+
+        print('(non-negativity of data) Values in range [{},0) were set to 0'.format(min_data_value))
         assert all(i >= 0.0 for i in data)
         return data
 
