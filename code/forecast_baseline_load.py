@@ -28,7 +28,7 @@ def main(argv):
 
     _, end_validation = get_split_indexes(config)
 
-    # print("Validation:")
+    print("Validation:")
     one_step_persistence_model(baseline_validation)
     meanBaseline(config, baseline_train, baseline_validation)
     predict_zero_one_day(config, baseline_validation)

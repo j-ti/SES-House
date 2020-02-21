@@ -8,7 +8,6 @@ from forecast import (
     addMinutes,
     addMonthOfYear,
     add_day_of_week,
-    add_weekend,
     loadModel,
     get_split_indexes,
 )
@@ -223,7 +222,7 @@ class RenewNinja:
         return metadata, data
 
 
-def resampleData(data, timestamps, offset=timedelta(days=0), positive=True):
+def resampleData(data, timestamps, offset=timedelta(days=0)):
     origStepsize = getStepsize(data.index)
     wantedStepsize = getStepsize(timestamps)
     if origStepsize > wantedStepsize:
@@ -235,17 +234,7 @@ def resampleData(data, timestamps, offset=timedelta(days=0), positive=True):
         )
         data = data.resample(wantedStepsize).first()
     data = data.loc[timestamps[0] + offset : timestamps[-1] + offset]
-    assert data.shape[1] <= 3
-    if data.shape[1] == 3:
-        dataOut = data.sum(axis=1)
-    else:
-        dataOut = data.iloc[:, 0]
-        if positive:
-            dataOut.loc[dataOut <= 0] = 0
-    for value in dataOut:
-        if positive:
-            assert value >= 0
-    return dataOut
+    return data
 
 
 def getLoadsData(filePath, timestamps):
@@ -258,7 +247,10 @@ def getLoadsData(filePath, timestamps):
             decimal=",",
         )
         data = data.loc[timestamps[0] : timestamps[-1] + getStepsize(timestamps)]
-        return resampleData(data, timestamps)
+        data = resampleData(data, timestamps)
+        data = data.iloc[:, 0]
+        data.loc[data <= 0] = 0
+        return data
 
 
 def dateparserWithoutUTC(x):
@@ -289,7 +281,10 @@ def getPecanstreetData(
         data = data.set_index(timeHeader)
         data = data.sort_index()
         if column == "grid":
+            ev = data.loc[:, ["car1"]]
+            ev *= -1
             data = data.loc[:, [column, "solar", "solar2"]]
+            data = pd.concat([data, ev], axis=1)
         else:
             data = data.loc[:, [column]]
         stepsize = getStepsize(timestamps)
@@ -297,7 +292,13 @@ def getPecanstreetData(
             stepsize = timedelta(hours=0)
 
         data = data.loc[timestamps[0] + offset : timestamps[-1] + offset + stepsize]
-        return resampleData(data, timestamps, offset)
+        data = resampleData(data, timestamps, offset)
+        data = data.sum(axis=1)
+        for idx, value in enumerate(data):
+            if value < 0 and value >= -0.002:
+                data[idx] = 0.0
+        assert all(i >= 0.0 for i in data)
+        return data
 
 
 def splitPecanstreetData(filePath, timeHeader):
@@ -417,7 +418,6 @@ def getPredictedLoadValue(loadsData, timestamps, timedelta):
     loadConfig = ForecastLoadConfig()
     input_data = addMinutes(loadsData)
     input_data = add_day_of_week(input_data)
-    input_data = add_weekend(input_data)
 
     config.TIMESTAMPS = constructTimeStamps(
         datetime.strptime(loadConfig.BEGIN, "20%y-%m-%d %H:%M:%S"),

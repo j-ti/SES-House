@@ -15,7 +15,6 @@ from forecast import (
     buildModel,
     get_split_indexes,
     add_day_of_week,
-    add_weekend,
     loadModel,
 )
 from forecast_conf import ForecastConfig
@@ -42,7 +41,6 @@ def getNormalizedParts(config, loadConfig, timestamps):
 
     input_data = addMinutes(loadsData)
     input_data = add_day_of_week(input_data)
-    input_data = add_weekend(input_data)
 
     for load in loadConfig.APPLIANCES:
         appliance_data = getPecanstreetData(
