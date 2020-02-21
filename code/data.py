@@ -275,7 +275,7 @@ def getPecanstreetData(
             date_parser=dateparserWithoutUTC,
             nrows=nb_rows,
         )
-        #
+
         data = data[data["dataid"] == int(dataid)]
         pd.to_datetime(data[timeHeader])
         data = data.set_index(timeHeader)
