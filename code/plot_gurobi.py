@@ -25,10 +25,10 @@ colorDico = {
 labelDico = {
     "PVPowers": "PV",
     "windPowers": "Wind",
-    "batPowers": "Battery", #Discharging",
-    "evPowers": "EV", #Discharging",
-    "batPowersNeg": "Battery", # Charging",
-    "evPowersNeg": "EV", # Charging",
+    "batPowers": "Battery",  # Discharging",
+    "evPowers": "EV",  # Discharging",
+    "batPowersNeg": "Battery",  # Charging",
+    "evPowersNeg": "EV",  # Charging",
     "fixedLoads": "Loads",
     "fromGridPowers": "Grid In",
     "toGridPowers": "Grid Out",
@@ -73,8 +73,8 @@ def plotting(varName, varVal, gridPrices, outputFolder, ini, plotList):
 
     resultsDf = pd.DataFrame.from_dict(dict(dico), orient="columns")
 
-    plt.rc('font', size=16)  # controls default text sizes
-    plt.rc('legend', fontsize=10)  # legend fontsize
+    plt.rc("font", size=16)  # controls default text sizes
+    plt.rc("legend", fontsize=10)  # legend fontsize
     plt.style.use("bmh")
     plotting_powers(dico, outputFolder, time, tick, plotList[0])
     plotting_energys(
@@ -275,7 +275,13 @@ def plotting_additive_all_powers(
 
 # Area plotting of all the powers from our system (in and out) inside one graph with consumption (loads) as baseline
 def plotting_additive_all_powers_sym(
-    resultsPd, outputFolder, time, tick, kindPlot="area", showFlag=False, showLegend=True
+    resultsPd,
+    outputFolder,
+    time,
+    tick,
+    kindPlot="area",
+    showFlag=False,
+    showLegend=True,
 ):
     if kindPlot == "bar":
         style = "steps-mid"
@@ -334,12 +340,14 @@ def plotting_additive_all_powers_sym(
     plt.xticks(tick, time, rotation=20)
     plt.xlabel("Time")
     plt.ylabel("Power (kW)")
-    if(showLegend):
+    if showLegend:
         handles, labels = ax.get_legend_handles_labels()
         labelsList = list(map(labelDico.get, labels))
         labelsList = ["pink" if l is None else l for l in labelsList]
         chartBox = ax.get_position()
-        ax.set_position([chartBox.x0, chartBox.y0, chartBox.width * 0.75, chartBox.height])
+        ax.set_position(
+            [chartBox.x0, chartBox.y0, chartBox.width * 0.75, chartBox.height]
+        )
         ax.legend(handles, labelsList, bbox_to_anchor=(1.5, 0.8), loc="upper right")
     else:
         ax.get_legend().remove()
@@ -363,10 +371,16 @@ def plotting_in_out_price(dico, outputFolder, gridPrices, time, tick, showFlag=F
         color=colorDico["gridPrice"],
     )
     ax2.plot(
-        dico["fromGridPowers"], drawstyle = "steps-mid", label="Grid Power In", color=colorDico["fromGridPowers"]
+        dico["fromGridPowers"],
+        drawstyle="steps-mid",
+        label="Grid Power In",
+        color=colorDico["fromGridPowers"],
     )
     ax2.plot(
-        dico["toGridPowers"], drawstyle = "steps-mid", label="Grid Power Out", color=colorDico["toGridPowers"]
+        dico["toGridPowers"],
+        drawstyle="steps-mid",
+        label="Grid Power Out",
+        color=colorDico["toGridPowers"],
     )
     ax1.set_xticks(tick)
     ax1.set_xticklabels(time, rotation=20)
