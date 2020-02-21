@@ -765,7 +765,7 @@ def setUpPV(model, ini):
         len(ini.timestamps), 1, lb=0.0, vtype=GRB.CONTINUOUS, name="PVPowers"
     )
     model.addConstrs(
-        (pvVars[i, 0] == pvPowerValues[i] for i in range(len(ini.timestamps))),
+        (pvVars[i, 0] == pvPowerValues.iloc[i] for i in range(len(ini.timestamps))),
         "1st pv panel generation",
     )
 
@@ -830,7 +830,7 @@ def setUpFixedLoads(model, ini):
         len(ini.timestamps), 1, lb=0.0, vtype=GRB.CONTINUOUS, name="fixedLoads"
     )
     model.addConstrs(
-        (fixedLoadVars[i, 0] == loadValues[i] for i in range(len(ini.timestamps))),
+        (fixedLoadVars[i, 0] == loadValues.iloc[i] for i in range(len(ini.timestamps))),
         "power of fixed loads",
     )
 
