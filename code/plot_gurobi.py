@@ -25,10 +25,10 @@ colorDico = {
 labelDico = {
     "PVPowers": "PV",
     "windPowers": "Wind",
-    "batPowers": "Bat. Discharging",
-    "evPowers": "EV Discharging",
-    "batPowersNeg": "Bat. Charging",
-    "evPowersNeg": "EV Charging",
+    "batPowers": "Battery", #Discharging",
+    "evPowers": "EV", #Discharging",
+    "batPowersNeg": "Battery", # Charging",
+    "evPowersNeg": "EV", # Charging",
     "fixedLoads": "Loads",
     "fromGridPowers": "Grid In",
     "toGridPowers": "Grid Out",
@@ -55,7 +55,7 @@ def plotting(varName, varVal, gridPrices, outputFolder, ini, plotList):
 
     dicoEnergy = {"batEnergys": [], "evEnergys": []}
 
-    step = int(len(ini.timestamps) / 5)
+    step = int(len(ini.timestamps) / 4)
     time = [ini.timestamps[i].strftime("%H:%M") for i in range(len(ini.timestamps))][
         ::step
     ]
@@ -94,7 +94,7 @@ def plotting(varName, varVal, gridPrices, outputFolder, ini, plotList):
         resultsDf, outputFolder, time, tick, "area", plotList[4]
     )
     plotting_additive_all_powers_sym(
-        resultsDf, outputFolder, time, tick, "bar", plotList[5]
+        resultsDf, outputFolder, time, tick, "bar", plotList[5], showLegend=False
     )
     plotting_additive_all_powers_sym(
         resultsDf, outputFolder, time, tick, "area", plotList[6]
@@ -274,7 +274,7 @@ def plotting_additive_all_powers(
 
 # Area plotting of all the powers from our system (in and out) inside one graph with consumption (loads) as baseline
 def plotting_additive_all_powers_sym(
-    resultsPd, outputFolder, time, tick, kindPlot="area", showFlag=False
+    resultsPd, outputFolder, time, tick, kindPlot="area", showFlag=False, showLegend=True
 ):
     if kindPlot == "bar":
         style = "steps-mid"
@@ -333,14 +333,18 @@ def plotting_additive_all_powers_sym(
     plt.xticks(tick, time, rotation=20)
     plt.xlabel("Time")
     plt.ylabel("Power (kW)")
-    handles, labels = ax.get_legend_handles_labels()
-    labelsList = list(map(labelDico.get, labels))
-    labelsList = ["pink" if l is None else l for l in labelsList]
-    chartBox = ax.get_position()
-    ax.set_position([chartBox.x0, chartBox.y0, chartBox.width * 0.75, chartBox.height])
-    ax.legend(handles, labelsList, bbox_to_anchor=(1.5, 0.8), loc="upper right")
+    if(showLegend):
+        handles, labels = ax.get_legend_handles_labels()
+        labelsList = list(map(labelDico.get, labels))
+        labelsList = ["pink" if l is None else l for l in labelsList]
+        chartBox = ax.get_position()
+        ax.set_position([chartBox.x0, chartBox.y0, chartBox.width * 0.75, chartBox.height])
+        ax.legend(handles, labelsList, bbox_to_anchor=(1.5, 0.8), loc="upper right")
+    else:
+        ax.get_legend().remove()
+        plt.tight_layout()
     plt.savefig(outputFolder + "/power-balance-symmetric-" + kindPlot + ".png")
-    #plt.tight_layout()
+
     if showFlag:
         plt.show()
     plt.close()
