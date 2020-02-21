@@ -107,9 +107,8 @@ def main(argv):
             len(validation_y_timestamps) == len(validation_y) + loadConfig.OUTPUT_SIZE
         )
         validation_prediction = model.predict(validation_x)
-        test_prediction = model.predict(test_x)
-        test_mse = mean_squared_error(test_y, test_prediction)
-        print("test mse: ", test_mse)
+        validation_mse = mean_squared_error(validation_y, validation_prediction)
+        print("validation mse: ", validation_mse)
         plotPredictionPart(
             loadConfig,
             validation_y[1, :],

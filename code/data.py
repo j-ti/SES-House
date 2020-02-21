@@ -299,7 +299,12 @@ def getPecanstreetData(
             if value < 0:
                 data[idx] = 0.0
 
-        print('(non-negativity of data) Values in range [{},0) were set to 0'.format(min_data_value))
+        if min_data_value < 0:
+            print(
+                "(non-negativity of data) Values in range [{},0) were set to 0".format(
+                    min_data_value
+                )
+            )
         assert all(i >= 0.0 for i in data)
         return data
 
