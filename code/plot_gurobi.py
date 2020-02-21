@@ -73,8 +73,9 @@ def plotting(varName, varVal, gridPrices, outputFolder, ini, plotList):
 
     resultsDf = pd.DataFrame.from_dict(dict(dico), orient="columns")
 
+    plt.rc('font', size=16)  # controls default text sizes
+    plt.rc('legend', fontsize=10)  # legend fontsize
     plt.style.use("bmh")
-    plt.tight_layout()
     plotting_powers(dico, outputFolder, time, tick, plotList[0])
     plotting_energys(
         dicoEnergy,
@@ -342,7 +343,7 @@ def plotting_additive_all_powers_sym(
         ax.legend(handles, labelsList, bbox_to_anchor=(1.5, 0.8), loc="upper right")
     else:
         ax.get_legend().remove()
-        plt.tight_layout()
+        fig.tight_layout()
     plt.savefig(outputFolder + "/power-balance-symmetric-" + kindPlot + ".png")
 
     if showFlag:
