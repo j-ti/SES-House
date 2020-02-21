@@ -1122,8 +1122,9 @@ def main(argv):
     goalsRange = [
         Goal(x) for x in ["MINIMIZE_COST", "GREEN_HOUSE", "GRID_INDEPENDENCE"]
     ]
-    batRangeEmax = [0, 10, 20]
-    loadRangeScale = [0, 1, 2]
+    batRangeEmax = [(0,0), (20,0), (0,20), (20,20)]
+    # batRangePmax = [3, 5, 7]
+    loadRangeScale = [0, 1, 4]
 
     idx = pd.DataFrame(
         list(
@@ -1136,7 +1137,8 @@ def main(argv):
         ),
         columns=["goals", "E_bat_mas", "loadsScale"],
     )
-    casesArr = np.array(idx).reshape(3, 3, 3, 3)
+    casesArr = np.array(idx).reshape(3, 4, 3, 3)
+    print(casesArr)
 
     if ini.loadResFlag:
         # try to load previous results
@@ -1161,8 +1163,9 @@ def main(argv):
 
     for ig, g in enumerate(goalsRange):
         ini.goal = g
-        for ibe, be in enumerate(batRangeEmax):
+        for ibe, (be, ee) in enumerate(batRangeEmax):
             ini.E_bat_max = be
+            ini.E_ev_max = ee
             for il, l in enumerate(loadRangeScale):
                 ini.loadsScale = l
                 if (
@@ -1174,7 +1177,7 @@ def main(argv):
                             baseOutputFolder, g, be, l
                         )
                     )
-                    outputFolder = "{}{}_BE{}_L{}/".format(baseOutputFolder, g, be, l)
+                    outputFolder = "{}{}_BE{}_EE{}_L{}/".format(baseOutputFolder, g, be, ee, l)
                     os.makedirs(outputFolder)
                     objectiveResults, gridPrices, [varN, varX] = runSimpleModel(ini)
                     resultsGoals[ig, ibe, il, 0:10] = np.array(objectiveResults)[:]
@@ -1187,7 +1190,7 @@ def main(argv):
 
     np.save(os.path.join(baseOutputFolder, "resultsGoal.npy"), resultsGoals)
     dfResults = pd.DataFrame(
-        resultsGoals.reshape(27, 13),
+        resultsGoals.reshape(36, 13),
         index=pd.MultiIndex.from_frame(idx),
         columns=[
             "COST",
@@ -1225,10 +1228,20 @@ def main(argv):
     # from plot_parameter_variation import plot_parameter_variation
     # plot_parameter_variation(resultsGoals, goalsRange, batRangeEmax, loadRangeScale, baseOutputFolder)
     print(dfResults.loc[casesArr[0, 1, 1]])
-    print(dfResults.loc[(Goal("MINIMIZE_COST"), 10, 1)])
+    print(dfResults.loc[(Goal("MINIMIZE_COST"), (20,20), 1)])
 
     # from plot_gurobi import plotInteractive
     # plotInteractive(dfResults,outputFolder,ini)
+    
+    sel = (Goal("MINIMIZE_COST"), (20, 0), 1)
+    plotting(
+        dfResults.loc[sel]["varN"],
+        dfResults.loc[sel]["varX"],
+        dfResults.loc[sel]["gridPrices"],
+        outputFolder,
+        ini,
+        plotList,
+    )
 
     plotting(
         dfResults["varN"].values[c],
