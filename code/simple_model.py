@@ -1138,7 +1138,6 @@ def main(argv):
         columns=["goals", "E_bat_mas", "loadsScale"],
     )
     casesArr = np.array(idx).reshape(3, 4, 3, 3)
-    print(casesArr)
 
     if ini.loadResFlag:
         # try to load previous results
@@ -1173,8 +1172,8 @@ def main(argv):
                     and (ini.overwrite or resultsGoals[ig, ibe, il, 0] is None)
                 ) or ini.calcAllFlag:
                     print(
-                        "------------------ {}{}_BE{}_L{} ------------------".format(
-                            baseOutputFolder, g, be, l
+                        "------------------ {}{}_BE{}_EE{}_L{} ------------------".format(
+                            baseOutputFolder, g, be, ee, l
                         )
                     )
                     outputFolder = "{}{}_BE{}_EE{}_L{}/".format(baseOutputFolder, g, be, ee, l)
@@ -1184,9 +1183,6 @@ def main(argv):
                     resultsGoals[ig, ibe, il, 10] = gridPrices
                     resultsGoals[ig, ibe, il, 11] = varN
                     resultsGoals[ig, ibe, il, 12] = varX
-
-                    # res = np.array(runSimpleModel(ini))
-                    # resultsGoals[ig, ibe, il, :] = res[:]
 
     np.save(os.path.join(baseOutputFolder, "resultsGoal.npy"), resultsGoals)
     dfResults = pd.DataFrame(
@@ -1232,7 +1228,7 @@ def main(argv):
 
     # from plot_gurobi import plotInteractive
     # plotInteractive(dfResults,outputFolder,ini)
-    
+
     sel = (Goal("MINIMIZE_COST"), (20, 0), 1)
     plotting(
         dfResults.loc[sel]["varN"],
