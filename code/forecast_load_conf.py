@@ -11,7 +11,6 @@ class ForecastLoadConfig:
         self.DATA_FILE = "./data/15minute_data_newyork_1222.csv"
         self.TIME_HEADER = "local_15min"
         self.DATAID = 1222
-        # self.OUTPUT_FOLDER = "./output/forecast/load/60min/out24/bs50/lb20/"
 
         self.LOAD_MODEL = False
         self.NB_PLOT = 4
