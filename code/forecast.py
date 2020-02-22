@@ -128,22 +128,29 @@ def saveModel(config, model):
     model.save_weights(config.MODEL_FILE_H5)
 
 
-def loadModel(config):
-    json_file = open(config.MODEL_FILE, "r")
+def load_model(
+    model_json_path, model_h5_path, loss="mean_squared_error", optimizer="adam"
+):
+    json_file = open(model_json_path, "r")
     loaded_model_json = json_file.read()
     json_file.close()
 
     loaded_model = model_from_json(loaded_model_json)
     # load weights into new model
-    loaded_model.load_weights(config.MODEL_FILE_H5)
+    loaded_model.load_weights(model_h5_path)
 
     # evaluate loaded model
-    loaded_model.compile(
-        loss=config.LOSS_FUNCTION,
-        optimizer=config.OPTIMIZE_FUNCTION,
-        metrics=["accuracy"],
-    )
+    loaded_model.compile(loss=loss, optimizer=optimizer, metrics=["accuracy"])
     return loaded_model
+
+
+def loadModel(config):
+    return load_model(
+        config.MODEL_FILE,
+        config.MODEL_FILE_H5,
+        config.LOSS_FUNCTION,
+        config.OPTIMIZE_FUNCTION,
+    )
 
 
 def train(config, model, trainX, trainY, validationX, validationY):
