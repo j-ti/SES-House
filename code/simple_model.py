@@ -1122,7 +1122,7 @@ def main(argv):
     goalsRange = [
         Goal(x) for x in ["MINIMIZE_COST", "GREEN_HOUSE", "GRID_INDEPENDENCE"]
     ]
-    batRangeEmax = [(0,0), (20,0), (0,20), (20,20)]
+    batRangeEmax = [(0, 0), (20, 0), (0, 20), (20, 20)]
     # batRangePmax = [3, 5, 7]
     loadRangeScale = [0, 1, 4]
 
@@ -1176,7 +1176,9 @@ def main(argv):
                             baseOutputFolder, g, be, ee, l
                         )
                     )
-                    outputFolder = "{}{}_BE{}_EE{}_L{}/".format(baseOutputFolder, g, be, ee, l)
+                    outputFolder = "{}{}_BE{}_EE{}_L{}/".format(
+                        baseOutputFolder, g, be, ee, l
+                    )
                     os.makedirs(outputFolder)
                     objectiveResults, gridPrices, [varN, varX] = runSimpleModel(ini)
                     resultsGoals[ig, ibe, il, 0:10] = np.array(objectiveResults)[:]
@@ -1224,7 +1226,7 @@ def main(argv):
     # from plot_parameter_variation import plot_parameter_variation
     # plot_parameter_variation(resultsGoals, goalsRange, batRangeEmax, loadRangeScale, baseOutputFolder)
     print(dfResults.loc[casesArr[0, 1, 1]])
-    print(dfResults.loc[(Goal("MINIMIZE_COST"), (20,20), 1)])
+    print(dfResults.loc[(Goal("MINIMIZE_COST"), (20, 20), 1)])
 
     # from plot_gurobi import plotInteractive
     # plotInteractive(dfResults,outputFolder,ini)
