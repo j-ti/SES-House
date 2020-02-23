@@ -1103,6 +1103,7 @@ def printRecourseAction(model, ini, gridPrices, objres):
 def copyConfigFile(filepath, outputFolder):
     copyfile(filepath, os.path.join(outputFolder, "conf.ini"))
 
+
 def getCaseID(g, be, ee, l):
     gs = g.value.split("_")[-1]
     caseID = "{}_BE{}_EE{}_L{}".format(gs, be, ee, l)
@@ -1184,9 +1185,7 @@ def main(argv):
                             baseOutputFolder, caseID
                         )
                     )
-                    outputFolder = "{}{}/".format(
-                        baseOutputFolder, caseID
-                    )
+                    outputFolder = "{}{}/".format(baseOutputFolder, caseID)
                     os.makedirs(outputFolder)
                     objectiveResults, gridPrices, [varN, varX] = runSimpleModel(ini)
                     resultsGoals[ig, ibe, il, 0:10] = np.array(objectiveResults)[:]

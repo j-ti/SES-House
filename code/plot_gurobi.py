@@ -78,7 +78,7 @@ def plotting(varName, varVal, gridPrices, outputFolder, ini, plotList, id):
     plt.rc("font", size=16)  # controls default text sizes
     plt.rc("legend", fontsize=10)  # legend fontsize
     plt.style.use("bmh")
-    plotting_powers(dico, outputFolder, time, tick, plotList[0],id)
+    plotting_powers(dico, outputFolder, time, tick, plotList[0], id)
     plotting_energys(
         dicoEnergy,
         ini.E_bat_max,
@@ -90,23 +90,23 @@ def plotting(varName, varVal, gridPrices, outputFolder, ini, plotList, id):
         plotList[1],
         id,
     )
-    plotting_all_powers(dico, outputFolder, time, tick, plotList[2],id)
+    plotting_all_powers(dico, outputFolder, time, tick, plotList[2], id)
     plotting_additive_all_powers(
-        resultsDf, outputFolder, time, tick, "bar", plotList[3],id
+        resultsDf, outputFolder, time, tick, "bar", plotList[3], id
     )
     plotting_additive_all_powers(
-        resultsDf, outputFolder, time, tick, "area", plotList[4],id
+        resultsDf, outputFolder, time, tick, "area", plotList[4], id
     )
     plotting_additive_all_powers_sym(
         resultsDf, outputFolder, time, tick, "bar", plotList[5], showLegend=False, id=id
     )
     plotting_additive_all_powers_sym(
-        resultsDf, outputFolder, time, tick, "area", plotList[6],id
+        resultsDf, outputFolder, time, tick, "area", plotList[6], id
     )
-    plotting_in_out_price(dico, outputFolder, gridPrices, time, tick, plotList[7],id)
-    plotting_pie_gen_pow(dico, outputFolder, plotList[8],id)
-    plotting_bar_in_out(dico, outputFolder, plotList[9],id)
-    plotting_bar_all_powers(dico, outputFolder, plotList[10],id)
+    plotting_in_out_price(dico, outputFolder, gridPrices, time, tick, plotList[7], id)
+    plotting_pie_gen_pow(dico, outputFolder, plotList[8], id)
+    plotting_bar_in_out(dico, outputFolder, plotList[9], id)
+    plotting_bar_all_powers(dico, outputFolder, plotList[10], id)
 
 
 # Plotting PV power, wind power and fixed loads power.
@@ -127,7 +127,15 @@ def plotting_powers(dico, outputFolder, time, tick, showFlag=False, id=""):
 
 # Plotting EV and batteries energies
 def plotting_energys(
-    dico, E_bat_max, SOC_bat_min, SOC_bat_max, outputFolder, time, tick, showFlag=False, id=""
+    dico,
+    E_bat_max,
+    SOC_bat_min,
+    SOC_bat_max,
+    outputFolder,
+    time,
+    tick,
+    showFlag=False,
+    id="",
 ):
 
     fig, ax1 = plt.subplots()
@@ -365,7 +373,9 @@ def plotting_additive_all_powers_sym(
 
 
 # Plotting the evolution of the power in and out on the grid and the evolution of prices
-def plotting_in_out_price(dico, outputFolder, gridPrices, time, tick, showFlag=False, id=""):
+def plotting_in_out_price(
+    dico, outputFolder, gridPrices, time, tick, showFlag=False, id=""
+):
     fig, ax1 = plt.subplots()
     ax2 = ax1.twinx()
     ax1.plot(
