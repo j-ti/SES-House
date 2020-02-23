@@ -41,7 +41,7 @@ labelDico = {
 }
 
 
-def plotting(varName, varVal, gridPrices, outputFolder, ini, plotList):
+def plotting(varName, varVal, gridPrices, outputFolder, ini, plotList, id):
     dico = {
         "PVPowers": [],
         "windPowers": [],
@@ -73,10 +73,12 @@ def plotting(varName, varVal, gridPrices, outputFolder, ini, plotList):
 
     resultsDf = pd.DataFrame.from_dict(dict(dico), orient="columns")
 
+    # print(resultsDf.sum())
+
     plt.rc("font", size=16)  # controls default text sizes
     plt.rc("legend", fontsize=10)  # legend fontsize
     plt.style.use("bmh")
-    plotting_powers(dico, outputFolder, time, tick, plotList[0])
+    plotting_powers(dico, outputFolder, time, tick, plotList[0],id)
     plotting_energys(
         dicoEnergy,
         ini.E_bat_max,
@@ -86,28 +88,29 @@ def plotting(varName, varVal, gridPrices, outputFolder, ini, plotList):
         time,
         tick,
         plotList[1],
+        id,
     )
-    plotting_all_powers(dico, outputFolder, time, tick, plotList[2])
+    plotting_all_powers(dico, outputFolder, time, tick, plotList[2],id)
     plotting_additive_all_powers(
-        resultsDf, outputFolder, time, tick, "bar", plotList[3]
+        resultsDf, outputFolder, time, tick, "bar", plotList[3],id
     )
     plotting_additive_all_powers(
-        resultsDf, outputFolder, time, tick, "area", plotList[4]
+        resultsDf, outputFolder, time, tick, "area", plotList[4],id
     )
     plotting_additive_all_powers_sym(
-        resultsDf, outputFolder, time, tick, "bar", plotList[5], showLegend=False
+        resultsDf, outputFolder, time, tick, "bar", plotList[5], showLegend=False, id=id
     )
     plotting_additive_all_powers_sym(
-        resultsDf, outputFolder, time, tick, "area", plotList[6]
+        resultsDf, outputFolder, time, tick, "area", plotList[6],id
     )
-    plotting_in_out_price(dico, outputFolder, gridPrices, time, tick, plotList[7])
-    plotting_pie_gen_pow(dico, outputFolder, plotList[8])
-    plotting_bar_in_out(dico, outputFolder, plotList[9])
-    plotting_bar_all_powers(dico, outputFolder, plotList[10])
+    plotting_in_out_price(dico, outputFolder, gridPrices, time, tick, plotList[7],id)
+    plotting_pie_gen_pow(dico, outputFolder, plotList[8],id)
+    plotting_bar_in_out(dico, outputFolder, plotList[9],id)
+    plotting_bar_all_powers(dico, outputFolder, plotList[10],id)
 
 
 # Plotting PV power, wind power and fixed loads power.
-def plotting_powers(dico, outputFolder, time, tick, showFlag=False):
+def plotting_powers(dico, outputFolder, time, tick, showFlag=False, id=""):
 
     plt.plot(dico["PVPowers"], label="pv", color=colorDico["PVPowers"])
     plt.plot(dico["windPowers"], label="wind", color=colorDico["windPowers"])
@@ -124,7 +127,7 @@ def plotting_powers(dico, outputFolder, time, tick, showFlag=False):
 
 # Plotting EV and batteries energies
 def plotting_energys(
-    dico, E_bat_max, SOC_bat_min, SOC_bat_max, outputFolder, time, tick, showFlag=False
+    dico, E_bat_max, SOC_bat_min, SOC_bat_max, outputFolder, time, tick, showFlag=False, id=""
 ):
 
     fig, ax1 = plt.subplots()
@@ -162,7 +165,7 @@ def plotting_energys(
 
 
 # Plotting all the powers from our system inside one graph
-def plotting_all_powers(dico, outputFolder, time, tick, showFlag=False):
+def plotting_all_powers(dico, outputFolder, time, tick, showFlag=False, id=""):
     plt.plot(dico["batPowers"], label="Battery Power", color=colorDico["batPowers"])
     plt.plot(dico["evPowers"], label="EV Power", color=colorDico["evPowers"])
     plt.plot(dico["windPowers"], label="Wind Power", color=colorDico["windPowers"])
@@ -192,7 +195,7 @@ def plotting_all_powers(dico, outputFolder, time, tick, showFlag=False):
 
 # Area plotting of all the powers from our system (in and out) inside one graph with consumption (loads) as baseline
 def plotting_additive_all_powers(
-    resultsPd, outputFolder, time, tick, kindPlot="area", showFlag=False
+    resultsPd, outputFolder, time, tick, kindPlot="area", showFlag=False, id=""
 ):
     if kindPlot == "bar":
         style = "steps-mid"
@@ -267,7 +270,7 @@ def plotting_additive_all_powers(
     chartBox = ax.get_position()
     ax.set_position([chartBox.x0, chartBox.y0, chartBox.width * 0.75, chartBox.height])
     ax.legend(handles, labelsList, bbox_to_anchor=(1.5, 0.8), loc="upper right")
-    plt.savefig(outputFolder + "/power-balance-" + kindPlot + ".png")
+    plt.savefig(outputFolder + "/p-bal-" + kindPlot + ".png")
     if showFlag:
         plt.show()
     plt.close()
@@ -282,6 +285,7 @@ def plotting_additive_all_powers_sym(
     kindPlot="area",
     showFlag=False,
     showLegend=True,
+    id="",
 ):
     if kindPlot == "bar":
         style = "steps-mid"
@@ -352,7 +356,8 @@ def plotting_additive_all_powers_sym(
     else:
         ax.get_legend().remove()
         fig.tight_layout()
-    plt.savefig(outputFolder + "/power-balance-symmetric-" + kindPlot + ".png")
+
+    plt.savefig(outputFolder + "/p-bal-sym-" + kindPlot + "-" + id + ".png")
 
     if showFlag:
         plt.show()
@@ -360,7 +365,7 @@ def plotting_additive_all_powers_sym(
 
 
 # Plotting the evolution of the power in and out on the grid and the evolution of prices
-def plotting_in_out_price(dico, outputFolder, gridPrices, time, tick, showFlag=False):
+def plotting_in_out_price(dico, outputFolder, gridPrices, time, tick, showFlag=False, id=""):
     fig, ax1 = plt.subplots()
     ax2 = ax1.twinx()
     ax1.plot(
@@ -396,7 +401,7 @@ def plotting_in_out_price(dico, outputFolder, gridPrices, time, tick, showFlag=F
 
 
 # Pie plot with the repartion of the power generated inside our system
-def plotting_pie_gen_pow(dico, outputFolder, showFlag=False):
+def plotting_pie_gen_pow(dico, outputFolder, showFlag=False, id=""):
     plot1 = [
         np.sum(dico["PVPowers"]),
         np.sum(dico["windPowers"]),
@@ -421,7 +426,7 @@ def plotting_pie_gen_pow(dico, outputFolder, showFlag=False):
 
 
 # Bar plot power in out by the grid
-def plotting_bar_in_out(dico, outputFolder, showFlag=False):
+def plotting_bar_in_out(dico, outputFolder, showFlag=False, id=""):
     plt.bar(0, np.sum(dico["fromGridPowers"]), color=colorDico["fromGridPowers"])
     plt.bar(1, np.sum(dico["toGridPowers"]), color=colorDico["toGridPowers"])
     plt.xticks([0, 1], ["From Grid", "To Grid"])
@@ -436,7 +441,7 @@ def plotting_bar_in_out(dico, outputFolder, showFlag=False):
 # Bar plot of all the power
 # small bar is "kind of generator" or "kind of load" (for battery / EV discharging // charging and selling
 # the diff is due to the EV leaving (energy drop so power discharge is high but not in the system)
-def plotting_bar_all_powers(dico, outputFolder, showFlag=False):
+def plotting_bar_all_powers(dico, outputFolder, showFlag=False, id=""):
     batPosPow = abs(np.sum([foo for foo in dico["batPowers"] if foo >= 0]))
     batNegPow = abs(np.sum([foo for foo in dico["batPowers"] if foo < 0]))
     evPosPow = abs(np.sum([foo for foo in dico["evPowers"] if foo >= 0]))

@@ -27,6 +27,7 @@ from plot_gurobi import plotting
 from util import constructTimeStamps, getStepsize, getTimeIndexRangeDaily, diffIndexList
 
 outputFolder = ""
+caseID = ""
 
 
 class Goal(Enum):
@@ -1063,7 +1064,7 @@ def plotResults(model, ini, gridPrices):
         varN.append(v.varName)
         varX.append(v.x)
 
-    plotting(varN, varX, gridPrices, outputFolder, ini, [False] * 11)
+    plotting(varN, varX, gridPrices, outputFolder, ini, [False] * 11, caseID)
 
 
 def extractResults(model):
@@ -1102,8 +1103,14 @@ def printRecourseAction(model, ini, gridPrices, objres):
 def copyConfigFile(filepath, outputFolder):
     copyfile(filepath, os.path.join(outputFolder, "conf.ini"))
 
+def getCaseID(g, be, ee, l):
+    gs = g.value.split("_")[-1]
+    caseID = "{}_BE{}_EE{}_L{}".format(gs, be, ee, l)
+    return caseID
+
 
 def main(argv):
+    global caseID
     global outputFolder
     outputFolder = (
         "output/"
@@ -1171,13 +1178,14 @@ def main(argv):
                     updateResults[ig, ibe, il]
                     and (ini.overwrite or resultsGoals[ig, ibe, il, 0] is None)
                 ) or ini.calcAllFlag:
+                    caseID = getCaseID(g, be, ee, l)
                     print(
-                        "------------------ {}{}_BE{}_EE{}_L{} ------------------".format(
-                            baseOutputFolder, g, be, ee, l
+                        "------------------ {}{} ------------------".format(
+                            baseOutputFolder, caseID
                         )
                     )
-                    outputFolder = "{}{}_BE{}_EE{}_L{}/".format(
-                        baseOutputFolder, g, be, ee, l
+                    outputFolder = "{}{}/".format(
+                        baseOutputFolder, caseID
                     )
                     os.makedirs(outputFolder)
                     objectiveResults, gridPrices, [varN, varX] = runSimpleModel(ini)
@@ -1231,24 +1239,27 @@ def main(argv):
     # from plot_gurobi import plotInteractive
     # plotInteractive(dfResults,outputFolder,ini)
 
-    sel = (Goal("MINIMIZE_COST"), (20, 0), 1)
-    plotting(
-        dfResults.loc[sel]["varN"],
-        dfResults.loc[sel]["varX"],
-        dfResults.loc[sel]["gridPrices"],
-        outputFolder,
-        ini,
-        plotList,
-    )
-
-    plotting(
-        dfResults["varN"].values[c],
-        dfResults["varX"].values[c],
-        dfResults["gridPrices"].values[c],
-        outputFolder,
-        ini,
-        plotList,
-    )
+    # sel = (Goal("MINIMIZE_COST"), (20, 0), 1)
+    # caseID = getCaseID(sel[0], sel[1], sel[2])
+    # plotting(
+    #     dfResults.loc[sel]["varN"],
+    #     dfResults.loc[sel]["varX"],
+    #     dfResults.loc[sel]["gridPrices"],
+    #     outputFolder,
+    #     ini,
+    #     plotList,
+    #     caseID,
+    # )
+    #
+    # plotting(
+    #     dfResults["varN"].values[c],
+    #     dfResults["varX"].values[c],
+    #     dfResults["gridPrices"].values[c],
+    #     outputFolder,
+    #     ini,
+    #     plotList,
+    #     caseID,
+    # )
     # plotting_additive_all_powers_sym(resultsDf, outputFolder, time, tick, "bar", plotList[5])
     # work in Progress: plot_parameter_variation()
 
