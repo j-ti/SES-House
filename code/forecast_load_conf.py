@@ -34,6 +34,7 @@ class ForecastLoadConfig:
         self.OUTPUT_FOLDER = "./output/forecast/load/" + self.MODEL_ID + "/"
         self.MODEL_FILE = self.OUTPUT_FOLDER + "model_" + self.MODEL_ID + ".json"
         self.MODEL_FILE_H5 = self.OUTPUT_FOLDER + "model_" + self.MODEL_ID + ".h5"
+        self.MODEL_FILE_SC = self.OUTPUT_FOLDER + "model_" + self.MODEL_ID + ".save"
 
         self.APPLIANCES = ["heater1", "waterheater1", "drye1"]
         self.EPOCHS = 100

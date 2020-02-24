@@ -2,6 +2,7 @@ import os
 import sys
 from datetime import datetime
 
+from sklearn.externals import joblib
 import numpy as np
 from data import getPecanstreetData
 from forecast import (
@@ -57,6 +58,8 @@ def getParts(df, config_main, config_pv):
     # datas are normalized
     scaler = MinMaxScaler()
     scaler.fit(df_train)
+    print(scaler.data_max_)
+    joblib.dump(scaler, config_pv.MODEL_FILE_SC)
     df_train = scaler.transform(df_train)
     df_validation = scaler.transform(df_validation)
     df_test = scaler.transform(df_test)

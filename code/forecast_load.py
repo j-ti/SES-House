@@ -3,6 +3,7 @@ import sys
 
 import pandas as pd
 from data import getPecanstreetData
+from sklearn.externals import joblib
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.metrics import mean_squared_error
 
@@ -60,6 +61,7 @@ def getNormalizedParts(config, loadConfig, timestamps):
 
     scaler = MinMaxScaler()
     scaler.fit(train_part)
+    joblib.dump(scaler, loadConfig.MODEL_FILE_SC)
     train_part = scaler.transform(train_part)
     validation_part = scaler.transform(validation_part)
     test_part = scaler.transform(test_part)
