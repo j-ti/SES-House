@@ -177,7 +177,7 @@ def plotLSTM_Base_Real(config, train, lstm_predict, base, real):
     ]
     plt.xticks(ticks, time)
     minutes = int(getStepsize(config.TIMESTAMPS).seconds / 60)
-    plt.xlabel("Time - {} min stepsize".format(minutes))
+    plt.xlabel("Time - {} min stepsize - 23/09/19".format(minutes))
     plt.ylabel("Normalized Output Power")
     plt.savefig(config.OUTPUT_FOLDER + "/plot_lstm_" + base + "_real.png")
     plt.show()

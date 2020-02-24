@@ -393,7 +393,7 @@ def getPredictedPVValue(pvValue, timestamps, delta):
     b = datetime.strptime(
         config_main.TIMESTAMPS[endValidation].strftime("%m-%d"), "%m-%d"
     )
-    assert (a - b).days > 0
+    assert (a - b).days >= 0
 
     df = addMinutes(pvValue)
     df = addMonthOfYear(df)  # , timestamps)
@@ -437,7 +437,7 @@ def getPredictedLoadValue(loadsData, timestamps, timedelta):
     # we drop the year
     a = datetime.strptime(timestamps[0].strftime("%m-%d"), "%m-%d")
     b = datetime.strptime(config.TIMESTAMPS[endValidation].strftime("%m-%d"), "%m-%d")
-    assert (a - b).days > 0
+    assert (a - b).days >= 0
 
     for load in loadConfig.APPLIANCES:
         appliance_data = getPecanstreetData(

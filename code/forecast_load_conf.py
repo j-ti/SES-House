@@ -12,7 +12,7 @@ class ForecastLoadConfig:
         self.TIME_HEADER = "local_15min"
         self.DATAID = 1222
 
-        self.LOAD_MODEL = False
+        self.LOAD_MODEL = True
         self.NB_PLOT = 4
 
         self.OUTPUT_SIZE = 48
