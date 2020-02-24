@@ -13,7 +13,7 @@ class ForecastLoadConfig:
         self.DATAID = 1222
         # self.OUTPUT_FOLDER = "./output/forecast/load/60min/out24/bs50/lb20/"
 
-        self.LOAD_MODEL = False
+        self.LOAD_MODEL = True
         self.NB_PLOT = 4
 
         self.OUTPUT_SIZE = 48

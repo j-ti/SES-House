@@ -310,6 +310,10 @@ def calcErrObjClassic(model, ini, objValue):
         )
         * ini.pvScale
     )
+    import matplotlib.pyplot as plt
+    plt.plot(np.array(pvPowerReal))
+    plt.plot(np.array(dico["PVPowers"]))
+    plt.show()
     pvPowerErr = np.array(dico["PVPowers"]) - np.array(pvPowerReal)
 
     fixedLoadPowerReal = (
@@ -726,7 +730,7 @@ def setUpPV(model, ini):
         data = pd.DataFrame(
             pvPowerValuesConcat, index=ini.timestampsPredPV[-len(pvPowerValuesConcat) :]
         )
-        pvPowerValues = resampleData(data, ini.timestamps)
+        pvPowerValues = np.array(resampleData(data, ini.timestamps))
         dataReal = pd.DataFrame(pvPowerValuesReal, index=ini.timestampsPredPV)
         dataReal = dataReal.loc[ini.timestampsPredPV[-out:]]
         pvPowerValuesReal = resampleData(dataReal, ini.timestamps)
@@ -805,7 +809,7 @@ def setUpFixedLoads(model, ini):
         data = pd.DataFrame(
             loadValuesConcat, index=ini.timestampsPredLoad[-len(loadValuesConcat) :]
         )
-        loadValues = resampleData(data, ini.timestamps)
+        loadValues = np.array(resampleData(data, ini.timestamps))
     else:
         if ini.dataPSLoads:
             loadValues = (

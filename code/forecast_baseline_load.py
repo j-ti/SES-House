@@ -49,7 +49,7 @@ def main(argv):
     model = loadModel(loadConfig)
     test_predict = model.predict(test_x)
 
-    if loadConfig.OUTPUT_SIZE == get_timestamps_per_day(config):
+    if True :
         plotLSTM_Base_Real(
             loadConfig, baseline_train, test_predict[0], "mean", test_y[0]
         )

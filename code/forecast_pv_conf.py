@@ -6,10 +6,10 @@ class ForecastPvConfig:
         self.OUTPUT_FOLDER = "./output/forecast/pv/ts30_out48_lb24_bs15"
         self.BEGIN = conf.BEGIN
         self.END = conf.END
-        self.STEP_SIZE = "01:00:00"
-        self.TIME_PER_DAY = 24
+        self.STEP_SIZE = "00:30:00"
+        self.TIME_PER_DAY = 48
 
-        self.LOAD_MODEL = True
+        self.LOAD_MODEL = False
         self.MODEL_ID_SAMPLES = [
             "ts60_out24_lb24_bs15",
             "ts30_out48_lb24_bs15",
@@ -28,7 +28,7 @@ class ForecastPvConfig:
         self.NEURONS = [150]
         self.PATIENCE = 5
         self.MIN_DELTA = 0.0001
-        self.OUTPUT_SIZE = 24
+        self.OUTPUT_SIZE = 48
         self.ACTIVATION_FUNCTION = "relu"
         self.LOSS_FUNCTION = "mean_squared_error"
         self.OPTIMIZE_FUNCTION = "adam"

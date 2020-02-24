@@ -43,7 +43,7 @@ def main(argv):
     df = addMonthOfYear(df)
 
     df_train, df_validation, df_test = splitData(config, df)
-
+    print(timestamps[len(df_validation) + len(df_train)])
     valMin = df_train.iloc[0, -1]
     df_train.iloc[0, -1] = 0
     valMax = df_train.iloc[1, -1]
