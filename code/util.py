@@ -109,4 +109,5 @@ def getMeanSdDay(config, data):
 def invertScaler(data, scaler):
     Xmax = scaler.data_max_[0]
     Xmin = scaler.data_min_[0]
+
     return data * (Xmax - Xmin) + Xmin

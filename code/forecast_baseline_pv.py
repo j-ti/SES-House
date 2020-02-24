@@ -10,7 +10,7 @@ from forecast_baseline import (
     predict_zero_one_day,
     predict_zero_one_step,
     plotLSTM_Base_Real,
-)
+    mean_baseline_one_day)
 from forecast_conf import ForecastConfig
 from forecast_pv_conf import ForecastPvConfig
 from sklearn.preprocessing import MinMaxScaler
@@ -44,16 +44,9 @@ def main(argv):
 
     df_train, df_validation, df_test = splitData(config, df)
     print(timestamps[len(df_validation) + len(df_train)])
-    valMin = df_train.iloc[0, -1]
-    df_train.iloc[0, -1] = 0
-    valMax = df_train.iloc[1, -1]
-    df_train.iloc[1, -1] = 11
     # datas are normalized
     scaler = MinMaxScaler()
     scaler.fit(df_train)
-    df_train.iloc[0, -1] = valMin
-    df_train.iloc[1, -1] = valMax
-
     df_train = scaler.transform(df_train)
     df_validation = scaler.transform(df_validation)
     df_test = scaler.transform(df_test)
@@ -84,11 +77,11 @@ def main(argv):
     one_step_persistence_model(df_test)
 
     print("Validation:")
-    meanBaseline(config, df_train, df_validation)
+    mean_baseline_one_day(config, df_train, df_validation)
     print("Test:")
-    meanBaseline(config, df_train, df_test)
+    mean_baseline_one_day(config, df_train, df_test)
     print("Train on test and predict for Test:")
-    meanBaseline(config, df_test, df_test)
+    mean_baseline_one_day(config, df_test, df_test)
 
     print("Validation:")
     predict_zero_one_day(config, df_validation)
