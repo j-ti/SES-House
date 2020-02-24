@@ -311,10 +311,6 @@ def calcErrObjClassic(model, ini, objValue):
         )
         * ini.pvScale
     )
-    import matplotlib.pyplot as plt
-    plt.plot(np.array(pvPowerReal))
-    plt.plot(np.array(dico["PVPowers"]))
-    plt.show()
     pvPowerErr = np.array(dico["PVPowers"]) - np.array(pvPowerReal)
 
     fixedLoadPowerReal = (

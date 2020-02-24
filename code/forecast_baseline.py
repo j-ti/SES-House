@@ -110,7 +110,7 @@ def predictMean(config, train, test):
 
 
 def meanBaseline(config, train, test):
-    predictions = predictMean(config, train, test)
+    predictions = mean_baseline_one_day(config, train, test)
     assert len(test) == len(predictions)
     mse = mean_squared_error(predictions, test)
     print("mean baseline mse: ", mse)
@@ -164,7 +164,8 @@ def plotLSTM_Base_Real(config, train, lstm_predict, base, real):
     plt.plot(lstm_predict, label="LSTM prediction")
     plt.plot(real, label="real")
     if base == "mean":
-        plt.plot(predictMean(config, train, real), label="mean prediction")
+        pass
+        # plt.plot(predictMean(config, train, real), label="mean prediction")
     else:
         x = np.array(list(range(len(real)))) + 1
         plt.plot(x, real, label="next value persistence model")
@@ -177,7 +178,7 @@ def plotLSTM_Base_Real(config, train, lstm_predict, base, real):
     ]
     plt.xticks(ticks, time)
     minutes = int(getStepsize(config.TIMESTAMPS).seconds / 60)
-    plt.xlabel("Time - {} min stepsize - 23/09/19".format(minutes))
+    plt.xlabel("Time - {} min stepsize - 24/09/19".format(minutes))
     plt.ylabel("Normalized Output Power")
     plt.savefig(config.OUTPUT_FOLDER + "/plot_lstm_" + base + "_real.png")
     plt.show()

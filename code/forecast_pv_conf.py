@@ -15,7 +15,7 @@ class ForecastPvConfig:
             "ts30_out48_lb24_bs15",
             "ts15_out96_lb24_bs15",
         ]
-        self.MODEL_ID = self.MODEL_ID_SAMPLES[0]
+        self.MODEL_ID = self.MODEL_ID_SAMPLES[1]
         self.OUTPUT_FOLDER = "./output/forecast/pv/" + self.MODEL_ID + "/"
         self.MODEL_FILE = self.OUTPUT_FOLDER + "model_" + self.MODEL_ID + ".json"
         self.MODEL_FILE_H5 = self.OUTPUT_FOLDER + "model_" + self.MODEL_ID + ".h5"

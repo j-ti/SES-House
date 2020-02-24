@@ -397,16 +397,9 @@ def getPredictedPVValue(pvValue, timestamps, delta):
 
     df = addMinutes(pvValue)
     df = addMonthOfYear(df)  # , timestamps)
-
-    valMin = df.iloc[0, -1]
-    df.iloc[0, -1] = 0
-    valMax = df.iloc[1, -1]
-    df.iloc[1, -1] = 11
     # datas are normalized
     scaler = MinMaxScaler()
     scaler.fit(df)
-    df.iloc[0, -1] = valMin
-    df.iloc[1, -1] = valMax
     df = scaler.transform(df)
 
     x = np.empty((len(df) - config_pv.LOOK_BACK, config_pv.LOOK_BACK, df.shape[1]))
