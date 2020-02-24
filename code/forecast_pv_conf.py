@@ -9,7 +9,7 @@ class ForecastPvConfig:
         self.STEP_SIZE = "00:30:00"
         self.TIME_PER_DAY = 48
 
-        self.LOAD_MODEL = False
+        self.LOAD_MODEL = True
         self.MODEL_ID_SAMPLES = [
             "ts60_out24_lb24_bs15",
             "ts30_out48_lb24_bs15",
@@ -19,6 +19,7 @@ class ForecastPvConfig:
         self.OUTPUT_FOLDER = "./output/forecast/pv/" + self.MODEL_ID + "/"
         self.MODEL_FILE = self.OUTPUT_FOLDER + "model_" + self.MODEL_ID + ".json"
         self.MODEL_FILE_H5 = self.OUTPUT_FOLDER + "model_" + self.MODEL_ID + ".h5"
+        self.MODEL_FILE_SC = self.OUTPUT_FOLDER + "model_" + self.MODEL_ID + ".save"
 
         self.EPOCHS = 30
         self.LOOK_BACK = 24

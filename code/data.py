@@ -14,6 +14,7 @@ from forecast import (
 from forecast_conf import ForecastConfig
 from forecast_load_conf import ForecastLoadConfig
 from forecast_pv_conf import ForecastPvConfig
+from sklearn.externals import joblib
 from sklearn.preprocessing import MinMaxScaler
 from util import getStepsize, invertScaler, constructTimeStamps
 
@@ -390,8 +391,8 @@ def getPredictedPVValue(pvValue, timestamps, delta):
     df = addMinutes(pvValue)
     df = addMonthOfYear(df)  # , timestamps)
     # datas are normalized
-    scaler = MinMaxScaler()
-    scaler.fit(df)
+    scaler = joblib.load(config_pv.MODEL_FILE_SC)
+    print(scaler.data_max_)
     df = scaler.transform(df)
 
     x = np.empty((len(df) - config_pv.LOOK_BACK, config_pv.LOOK_BACK, df.shape[1]))
@@ -435,8 +436,7 @@ def getPredictedLoadValue(loadsData, timestamps, timedelta):
         )
         input_data = pd.concat([input_data, appliance_data], axis=1)
 
-    scaler = MinMaxScaler()
-    scaler.fit(input_data)
+    scaler = joblib.load(loadConfig.MODEL_FILE_SC)
     input_data = scaler.transform(input_data)
 
     x = np.empty(
