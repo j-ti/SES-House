@@ -59,7 +59,8 @@ def getNormalizedParts(config, loadConfig, timestamps):
 
     scaler = MinMaxScaler()
     scaler.fit(train_part)
-    joblib.dump(scaler, loadConfig.MODEL_FILE_SC)
+    if os.path.isdir(loadConfig.OUTPUT_FOLDER):
+        joblib.dump(scaler, loadConfig.MODEL_FILE_SC)
     train_part = scaler.transform(train_part)
     validation_part = scaler.transform(validation_part)
     test_part = scaler.transform(test_part)
@@ -70,6 +71,10 @@ def getNormalizedParts(config, loadConfig, timestamps):
 def main(argv):
     config = ForecastConfig()
     loadConfig = ForecastLoadConfig()
+
+    if not loadConfig.LOAD_MODEL:
+        assert not os.path.isdir(loadConfig.OUTPUT_FOLDER)
+        os.makedirs(loadConfig.OUTPUT_FOLDER)
 
     train_part, validation_part, test_part, scaler = getNormalizedParts(
         config, loadConfig, config.TIMESTAMPS
@@ -86,9 +91,6 @@ def main(argv):
     end_train, end_validation = get_split_indexes(config)
 
     if not loadConfig.LOAD_MODEL:
-        assert not os.path.isdir(loadConfig.OUTPUT_FOLDER)
-        os.makedirs(loadConfig.OUTPUT_FOLDER)
-
         copyfile(
             "./code/forecast_conf.py", loadConfig.OUTPUT_FOLDER + "forecast_conf.py"
         )
