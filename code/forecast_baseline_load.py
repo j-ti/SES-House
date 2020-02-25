@@ -3,7 +3,7 @@ import sys
 from forecast import get_split_indexes, buildSet, loadModel
 from forecast_baseline import (
     one_step_persistence_model,
-    meanBaseline,
+    mean_baseline_one_step,
     mean_baseline_one_day,
     predict_zero_one_day,
     predict_zero_one_step,
@@ -28,22 +28,22 @@ def main(argv):
 
     _, end_validation = get_split_indexes(config)
 
-    # print("Validation:")
-    # one_step_persistence_model(baseline_validation)
-    # meanBaseline(config, baseline_train, baseline_validation)
-    # predict_zero_one_day(config, baseline_validation)
-    # predict_zero_one_step(baseline_validation)
+    print("Validation:")
+    one_step_persistence_model(baseline_validation)
+    mean_baseline_one_step(config, baseline_train, baseline_validation)
+    predict_zero_one_day(config, baseline_validation)
+    predict_zero_one_step(baseline_validation)
 
-    # print("Test:")
-    # one_step_persistence_model(baseline_test)
-    # meanBaseline(config, baseline_train, baseline_test)
-    # mean_baseline_one_day(config, baseline_train, baseline_test)
-    #
-    # print("Train on test and predict for Test:")
-    # meanBaseline(config, baseline_test, baseline_test)
-    # mean_baseline_one_day(config, baseline_train, baseline_test)
-    # predict_zero_one_day(config, baseline_test)
-    # predict_zero_one_step(baseline_test)
+    print("Test:")
+    one_step_persistence_model(baseline_test)
+    mean_baseline_one_step(config, baseline_train, baseline_test)
+    mean_baseline_one_day(config, baseline_train, baseline_test)
+
+    print("Train on test and predict for Test:")
+    mean_baseline_one_step(config, baseline_test, baseline_test)
+    mean_baseline_one_day(config, baseline_train, baseline_test)
+    predict_zero_one_day(config, baseline_test)
+    predict_zero_one_step(baseline_test)
 
     test_x, test_y = buildSet(test, loadConfig.LOOK_BACK, loadConfig.OUTPUT_SIZE)
     model = loadModel(loadConfig)
