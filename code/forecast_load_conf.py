@@ -40,7 +40,7 @@ class ForecastLoadConfig:
 
         self.EPOCHS = 100
         self.PATIENCE = 10
-        self.MIN_DELTA = 0.00001
+        self.MIN_DELTA = 0.0001
         self.ACTIVATION_FUNCTION = "relu"
         self.LOSS_FUNCTION = "mean_squared_error"
         self.OPTIMIZE_FUNCTION = "adam"
