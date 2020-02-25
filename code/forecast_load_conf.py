@@ -15,7 +15,7 @@ class ForecastLoadConfig:
         self.LOAD_MODEL = True
         self.NB_PLOT = 4
 
-        self.OUTPUT_SIZE = 48
+        self.OUTPUT_SIZE = 24
         self.LOOK_BACK = 24
         self.BATCH_SIZE = 10
         self.DROPOUT = [0.3, 0.2, 0.1]
