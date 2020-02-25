@@ -164,8 +164,7 @@ def plotLSTM_Base_Real(config, train, lstm_predict, base, real):
     plt.plot(lstm_predict, label="LSTM prediction")
     plt.plot(real, label="real")
     if base == "mean":
-        pass
-        # plt.plot(predictMean(config, train, real), label="mean prediction")
+        plt.plot(predictMean(config, train, real), label="mean prediction")
     else:
         x = np.array(list(range(len(real)))) + 1
         plt.plot(x, real, label="next value persistence model")

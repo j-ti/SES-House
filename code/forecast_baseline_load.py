@@ -28,22 +28,22 @@ def main(argv):
 
     _, end_validation = get_split_indexes(config)
 
-    print("Validation:")
-    one_step_persistence_model(baseline_validation)
-    meanBaseline(config, baseline_train, baseline_validation)
-    predict_zero_one_day(config, baseline_validation)
-    predict_zero_one_step(baseline_validation)
+    # print("Validation:")
+    # one_step_persistence_model(baseline_validation)
+    # meanBaseline(config, baseline_train, baseline_validation)
+    # predict_zero_one_day(config, baseline_validation)
+    # predict_zero_one_step(baseline_validation)
 
-    print("Test:")
-    one_step_persistence_model(baseline_test)
-    meanBaseline(config, baseline_train, baseline_test)
-    mean_baseline_one_day(config, baseline_train, baseline_test)
-
-    print("Train on test and predict for Test:")
-    meanBaseline(config, baseline_test, baseline_test)
-    mean_baseline_one_day(config, baseline_train, baseline_test)
-    predict_zero_one_day(config, baseline_test)
-    predict_zero_one_step(baseline_test)
+    # print("Test:")
+    # one_step_persistence_model(baseline_test)
+    # meanBaseline(config, baseline_train, baseline_test)
+    # mean_baseline_one_day(config, baseline_train, baseline_test)
+    #
+    # print("Train on test and predict for Test:")
+    # meanBaseline(config, baseline_test, baseline_test)
+    # mean_baseline_one_day(config, baseline_train, baseline_test)
+    # predict_zero_one_day(config, baseline_test)
+    # predict_zero_one_step(baseline_test)
 
     test_x, test_y = buildSet(test, loadConfig.LOOK_BACK, loadConfig.OUTPUT_SIZE)
     model = loadModel(loadConfig)
@@ -51,7 +51,7 @@ def main(argv):
 
     if True :
         plotLSTM_Base_Real(
-            loadConfig, baseline_train, test_predict[0], "mean", test_y[0]
+            loadConfig, baseline_train, test_predict[24], "mean", test_y[24]
         )
     elif loadConfig.OUTPUT_SIZE == 1:
         plotLSTM_Base_Real(
