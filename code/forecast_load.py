@@ -1,12 +1,9 @@
 import os
 import sys
+from shutil import copyfile
 
 import pandas as pd
 from data import getPecanstreetData
-from sklearn.externals import joblib
-from sklearn.preprocessing import MinMaxScaler
-from sklearn.metrics import mean_squared_error
-
 from forecast import (
     splitData,
     addMinutes,
@@ -26,8 +23,9 @@ from plot_forecast import (
     plotPrediction,
     plot_multiple_days,
 )
-
-from shutil import copyfile
+from sklearn.externals import joblib
+from sklearn.metrics import mean_squared_error
+from sklearn.preprocessing import MinMaxScaler
 
 
 def getNormalizedParts(config, loadConfig, timestamps):
@@ -104,7 +102,7 @@ def main(argv):
         plotHistory(loadConfig, history)
 
         validation_timestamps = config.TIMESTAMPS[end_train:end_validation]
-        validation_y_timestamps = validation_timestamps[loadConfig.LOOK_BACK :]
+        validation_y_timestamps = validation_timestamps[loadConfig.LOOK_BACK:]
         assert (
             len(validation_y_timestamps) == len(validation_y) + loadConfig.OUTPUT_SIZE
         )
@@ -126,9 +124,9 @@ def main(argv):
         print("test mse: ", test_mse)
 
         test_timestamps = config.TIMESTAMPS[
-            end_validation : end_validation + len(test_part)
+            end_validation: end_validation + len(test_part)
         ]
-        test_y_timestamps = test_timestamps[loadConfig.LOOK_BACK :]
+        test_y_timestamps = test_timestamps[loadConfig.LOOK_BACK:]
         assert len(test_y_timestamps) == len(test_y) + loadConfig.OUTPUT_SIZE
 
         plot_multiple_days(

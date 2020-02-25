@@ -1,7 +1,6 @@
 import sys
 
-from forecast_load import getNormalizedParts
-from forecast import get_split_indexes, buildSet, loadModel, get_timestamps_per_day
+from forecast import get_split_indexes, buildSet, loadModel
 from forecast_baseline import (
     one_step_persistence_model,
     meanBaseline,
@@ -11,6 +10,7 @@ from forecast_baseline import (
     plotLSTM_Base_Real,
 )
 from forecast_conf import ForecastConfig
+from forecast_load import getNormalizedParts
 from forecast_load_conf import ForecastLoadConfig
 
 
@@ -49,7 +49,7 @@ def main(argv):
     model = loadModel(loadConfig)
     test_predict = model.predict(test_x)
 
-    if True :
+    if True:
         plotLSTM_Base_Real(
             loadConfig, baseline_train, test_predict[24], "mean", test_y[24]
         )

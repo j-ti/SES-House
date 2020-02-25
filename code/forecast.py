@@ -8,7 +8,6 @@ from keras.engine.saving import model_from_json
 from keras.layers import LSTM, Dropout, Activation
 from keras.layers.core import Dense
 from keras.models import Sequential
-
 from util import getStepsize
 
 
@@ -71,8 +70,8 @@ def buildSet(data, look_back, nbOutput):
     x = np.empty((len(data) - look_back - nbOutput, look_back, data.shape[1]))
     y = np.empty((len(data) - look_back - nbOutput, nbOutput))
     for i in range(len(data) - look_back - nbOutput):
-        x[i] = data[i : i + look_back, :]
-        y[i] = data[i + look_back : i + look_back + nbOutput, 0]
+        x[i] = data[i: i + look_back, :]
+        y[i] = data[i + look_back: i + look_back + nbOutput, 0]
     return x, y
 
 

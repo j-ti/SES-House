@@ -1,15 +1,13 @@
 import sys
+import time
 from datetime import datetime
 
 import matplotlib.pyplot as plt
 import numpy as np
 from data import getPecanstreetData
+from forecast_load_conf import ForecastLoadConfig
 from util import constructTimeStamps
 from util import makeTick
-
-from forecast_load_conf import ForecastLoadConfig
-
-import time
 
 
 def getData(config, timestamps):
@@ -37,7 +35,7 @@ def create_dataset(dataset, look_back):
         np.empty((len(dataset) - look_back, 1)),
     )
     for i in range(len(dataset) - look_back - 1):
-        a = dataset[i : (i + look_back)]
+        a = dataset[i: (i + look_back)]
         # minutes = np.array([(i.hour * 60 + i.minute) / 1440 for i in a.index])
         # minutes = np.expand_dims(minutes, axis=1)
         a = a.values
@@ -114,8 +112,8 @@ def main(argv):
     plotDay(timestamps, loadsData)
 
     plotPart(timestamps[:96], loadsData[:96])
-    plotPart(timestamps[96 * 10 : 96 * 11], loadsData[96 * 10 : 96 * 11])
-    plotPart(timestamps[96 * 100 : 96 * 101], loadsData[96 * 100 : 96 * 101])
+    plotPart(timestamps[96 * 10: 96 * 11], loadsData[96 * 10: 96 * 11])
+    plotPart(timestamps[96 * 100: 96 * 101], loadsData[96 * 100: 96 * 101])
 
 
 if __name__ == "__main__":

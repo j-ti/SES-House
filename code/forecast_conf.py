@@ -1,5 +1,6 @@
-from util import constructTimeStamps
 from datetime import datetime
+
+from util import constructTimeStamps
 
 
 class ForecastConfig:

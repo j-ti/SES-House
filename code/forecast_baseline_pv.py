@@ -6,7 +6,6 @@ from data import getPecanstreetData
 from forecast import splitData, loadModel, buildSet, addMinutes, addMonthOfYear
 from forecast_baseline import (
     one_step_persistence_model,
-    meanBaseline,
     predict_zero_one_day,
     predict_zero_one_step,
     plotLSTM_Base_Real,

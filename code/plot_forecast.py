@@ -7,20 +7,20 @@ outputFolder = ""
 
 
 def plotPrediction(
-    train_y,
-    train_predict_y,
-    val_y,
-    val_predict_y,
-    test_y,
-    test_predict_y,
-    timestamps,
-    config,
+        train_y,
+        train_predict_y,
+        val_y,
+        val_predict_y,
+        test_y,
+        test_predict_y,
+        timestamps,
+        config,
 ):
     y1, y1b = [], []
     time = []
 
     for i in range(
-        min((len(train_predict_y) // config.OUTPUT_SIZE) - 1, config.NB_PLOT)
+            min((len(train_predict_y) // config.OUTPUT_SIZE) - 1, config.NB_PLOT)
     ):
         y1.extend(train_y[i * config.OUTPUT_SIZE])
         y1b.extend(train_predict_y[i * config.OUTPUT_SIZE])
@@ -34,7 +34,7 @@ def plotPrediction(
 
     y3, y3b = [], []
     for i in range(
-        min((len(test_predict_y) // config.OUTPUT_SIZE) - 1, config.NB_PLOT)
+            min((len(test_predict_y) // config.OUTPUT_SIZE) - 1, config.NB_PLOT)
     ):
         y3.extend(test_y[i * config.OUTPUT_SIZE])
         y3b.extend(test_predict_y[i * config.OUTPUT_SIZE])
@@ -190,20 +190,20 @@ def plotHistory(config, history):
 
 
 def plotEcart(
-    train_y,
-    train_predict_y,
-    val_y,
-    val_predict_y,
-    test_y,
-    test_predict_y,
-    timestamps,
-    config,
+        train_y,
+        train_predict_y,
+        val_y,
+        val_predict_y,
+        test_y,
+        test_predict_y,
+        timestamps,
+        config,
 ):
     time, tick = makeTick(timestamps)
 
     y1, y1b = [], []
     for i in range(
-        min((len(train_predict_y) // config.OUTPUT_SIZE) - 1, config.NB_PLOT)
+            min((len(train_predict_y) // config.OUTPUT_SIZE) - 1, config.NB_PLOT)
     ):
         y1.extend(train_y[i * config.OUTPUT_SIZE])
         y1b.extend(train_predict_y[i * config.OUTPUT_SIZE])
@@ -215,7 +215,7 @@ def plotEcart(
 
     y3, y3b = [], []
     for i in range(
-        min((len(test_predict_y) // config.OUTPUT_SIZE) - 1, config.NB_PLOT)
+            min((len(test_predict_y) // config.OUTPUT_SIZE) - 1, config.NB_PLOT)
     ):
         y3.extend(test_y[i * config.OUTPUT_SIZE])
         y3b.extend(test_predict_y[i * config.OUTPUT_SIZE])
