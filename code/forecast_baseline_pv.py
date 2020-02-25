@@ -9,7 +9,8 @@ from forecast_baseline import (
     predict_zero_one_day,
     predict_zero_one_step,
     plotLSTM_Base_Real,
-    mean_baseline_one_day)
+    mean_baseline_one_day,
+)
 from forecast_conf import ForecastConfig
 from forecast_pv_conf import ForecastPvConfig
 from sklearn.preprocessing import MinMaxScaler

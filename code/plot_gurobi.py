@@ -56,7 +56,9 @@ def plotting(varName, varVal, gridPrices, outputFolder, ini, plotList, id):
     dicoEnergy = {"batEnergys": [], "evEnergys": []}
 
     step = int(len(ini.timestamps) / 4)
-    time = [ini.timestamps[i].strftime("%H:%M") for i in range(len(ini.timestamps))][::step]
+    time = [ini.timestamps[i].strftime("%H:%M") for i in range(len(ini.timestamps))][
+        ::step
+    ]
     tick = [i for i in range(len(ini.timestamps))][::step]
 
     for i in range(len(varName)):
@@ -124,15 +126,15 @@ def plotting_powers(dico, outputFolder, time, tick, showFlag=False, id=""):
 
 # Plotting EV and batteries energies
 def plotting_energys(
-        dico,
-        E_bat_max,
-        SOC_bat_min,
-        SOC_bat_max,
-        outputFolder,
-        time,
-        tick,
-        showFlag=False,
-        id="",
+    dico,
+    E_bat_max,
+    SOC_bat_min,
+    SOC_bat_max,
+    outputFolder,
+    time,
+    tick,
+    showFlag=False,
+    id="",
 ):
     fig, ax1 = plt.subplots()
     ax2 = ax1.twinx()
@@ -199,7 +201,7 @@ def plotting_all_powers(dico, outputFolder, time, tick, showFlag=False, id=""):
 
 # Area plotting of all the powers from our system (in and out) inside one graph with consumption (loads) as baseline
 def plotting_additive_all_powers(
-        resultsPd, outputFolder, time, tick, kindPlot="area", showFlag=False, id=""
+    resultsPd, outputFolder, time, tick, kindPlot="area", showFlag=False, id=""
 ):
     if kindPlot == "bar":
         style = "steps-mid"
@@ -282,14 +284,14 @@ def plotting_additive_all_powers(
 
 # Area plotting of all the powers from our system (in and out) inside one graph with consumption (loads) as baseline
 def plotting_additive_all_powers_sym(
-        resultsPd,
-        outputFolder,
-        time,
-        tick,
-        kindPlot="area",
-        showFlag=False,
-        showLegend=True,
-        id="",
+    resultsPd,
+    outputFolder,
+    time,
+    tick,
+    kindPlot="area",
+    showFlag=False,
+    showLegend=True,
+    id="",
 ):
     if kindPlot == "bar":
         style = "steps-mid"
@@ -370,7 +372,7 @@ def plotting_additive_all_powers_sym(
 
 # Plotting the evolution of the power in and out on the grid and the evolution of prices
 def plotting_in_out_price(
-        dico, outputFolder, gridPrices, time, tick, showFlag=False, id=""
+    dico, outputFolder, gridPrices, time, tick, showFlag=False, id=""
 ):
     fig, ax1 = plt.subplots()
     ax2 = ax1.twinx()

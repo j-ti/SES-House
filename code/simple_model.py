@@ -312,6 +312,7 @@ def calcErrObjClassic(model, ini, objValue):
         * ini.pvScale
     )
     import matplotlib.pyplot as plt
+
     plt.plot(np.array(dico["PVPowers"]))
     plt.plot(np.array(pvPowerReal))
     plt.show()
@@ -729,7 +730,7 @@ def setUpPV(model, ini):
         for i in range(0, ini.nbDay):
             pvPowerValuesConcat.extend(pvPowerValues[(lookback % out) + (i * out)])
         data = pd.DataFrame(
-            pvPowerValuesConcat, index=ini.timestampsPredPV[-len(pvPowerValuesConcat):]
+            pvPowerValuesConcat, index=ini.timestampsPredPV[-len(pvPowerValuesConcat) :]
         )
         pvPowerValues = np.array(resampleData(data, ini.timestamps))
         dataReal = pd.DataFrame(pvPowerValuesReal, index=ini.timestampsPredPV)
@@ -808,7 +809,7 @@ def setUpFixedLoads(model, ini):
         for i in range(0, ini.nbDay):
             loadValuesConcat.extend(loadValues[(lookback % out) + (i * out)])
         data = pd.DataFrame(
-            loadValuesConcat, index=ini.timestampsPredLoad[-len(loadValuesConcat):]
+            loadValuesConcat, index=ini.timestampsPredLoad[-len(loadValuesConcat) :]
         )
         loadValues = np.array(resampleData(data, ini.timestamps))
 
@@ -841,7 +842,7 @@ def setUpFixedLoads(model, ini):
     )
 
     errLoadValues = [
-        r - p for r, p in zip(loadValuesReal[-len(loadValues):], loadValues)
+        r - p for r, p in zip(loadValuesReal[-len(loadValues) :], loadValues)
     ]
     # errLoadVars = model.addVars(
     #     len(ini.timestamps), 1, lb=-GRB.INFINITY, vtype=GRB.CONTINUOUS, name="errLoads"
@@ -1140,10 +1141,14 @@ def main(argv):
     loadRangeScale = [0, 1, 4]
 
     idx = pd.DataFrame(
-        list([
-            [x[0][0], x[0][1], x[1]]
-            for x in list(product(product(goalsRange, batRangeEmax), loadRangeScale))
-        ]),
+        list(
+            [
+                [x[0][0], x[0][1], x[1]]
+                for x in list(
+                    product(product(goalsRange, batRangeEmax), loadRangeScale)
+                )
+            ]
+        ),
         columns=["goals", "E_bat_mas", "loadsScale"],
     )
     casesArr = np.array(idx).reshape(3, 4, 3, 3)
@@ -1215,11 +1220,24 @@ def main(argv):
         ],
     ).round(3)
     with pd.option_context("display.max_rows", 99, "display.max_columns", 12):
-        dfResults = pd.DataFrame(resultsGoals.reshape(27, 10), index=pd.MultiIndex.from_frame(idx),
-                                 columns=["COST", "GGE", "GGEsq", "GRID_INDEPENDENCE", "ERROR_COST", "FINAL_COST",
-                                          "ERROR_CO2", "FINAL_C02", "ERROR_IND", "FINAL_IND"])
+        dfResults = pd.DataFrame(
+            resultsGoals.reshape(27, 10),
+            index=pd.MultiIndex.from_frame(idx),
+            columns=[
+                "COST",
+                "GGE",
+                "GGEsq",
+                "GRID_INDEPENDENCE",
+                "ERROR_COST",
+                "FINAL_COST",
+                "ERROR_CO2",
+                "FINAL_C02",
+                "ERROR_IND",
+                "FINAL_IND",
+            ],
+        )
     dfResults = dfResults.round(3)
-    with pd.option_context('display.max_rows', 99, 'display.max_columns', 12):
+    with pd.option_context("display.max_rows", 99, "display.max_columns", 12):
         print(dfResults)
 
     dfResults.to_csv(baseOutputFolder + "resultDataframe.csv")

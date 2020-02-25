@@ -119,7 +119,7 @@ def forecasting(config_main, config_pv):
         trainY[24],
         trainPrediction[24],
         "1st day of train set",
-        timestamps[24: config_pv.TIME_PER_DAY + 24],
+        timestamps[24 : config_pv.TIME_PER_DAY + 24],
         "train",
     )
     plotPredictionPart(
@@ -127,7 +127,7 @@ def forecasting(config_main, config_pv):
         validationY[24],
         valPrediction[24],
         "3rd day of validation set",
-        timestamps[len(trainX) + 24: len(trainX) + 24 + config_pv.TIME_PER_DAY],
+        timestamps[len(trainX) + 24 : len(trainX) + 24 + config_pv.TIME_PER_DAY],
         "validation",
     )
     plotPredictionPart(
@@ -136,8 +136,12 @@ def forecasting(config_main, config_pv):
         testPrediction[24],
         "1st day of test set",
         timestamps[
-            len(trainX) + len(validationX) + 24:
-            len(trainX) + 24 + len(validationX) + config_pv.TIME_PER_DAY
+            len(trainX)
+            + len(validationX)
+            + 24 : len(trainX)
+            + 24
+            + len(validationX)
+            + config_pv.TIME_PER_DAY
         ],
         "test",
     )

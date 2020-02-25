@@ -25,7 +25,7 @@ def plot_days(config, test):
         label = "day ", i
         plt.plot(
             x,
-            test[i * timestamps_per_day: i * timestamps_per_day + timestamps_per_day],
+            test[i * timestamps_per_day : i * timestamps_per_day + timestamps_per_day],
             label=label,
         )
     plt.plot(x, means[:timestamps_per_day], label="mean prediction", color="orange")
@@ -77,7 +77,7 @@ def get_following_days(config, matrix_values):
 
     for i in range(int(len(matrix_values) / times_per_day)):
         follow_predicts[
-            i * times_per_day: i * times_per_day + times_per_day
+            i * times_per_day : i * times_per_day + times_per_day
         ] = matrix_values[i * times_per_day]
     return follow_predicts
 
@@ -126,7 +126,7 @@ def mean_baseline_one_day(config, train, test):
     for i in range(len(real)):
         predictions[i] = means
         means = np.roll(means, -1)
-        real[i] = test[i + times_per_day: i + 2 * times_per_day]
+        real[i] = test[i + times_per_day : i + 2 * times_per_day]
     mse = mean_squared_error(real, predictions)
     print("mean baseline 1 day mse: ", mse)
     return mse
@@ -146,7 +146,7 @@ def predict_zero_one_day(config, part):
     real = np.full((len(part) - 2 * times_per_day + 1, times_per_day), np.nan)
     predictions = np.zeros(real.shape)
     for i in range(len(real)):
-        real[i] = part[i + times_per_day: i + 2 * times_per_day]
+        real[i] = part[i + times_per_day : i + 2 * times_per_day]
     mse = mean_squared_error(real, predictions)
     print("predict 0 for day output MSE: ", mse)
 
