@@ -33,6 +33,10 @@ for model_path in model_paths:
     loadConfig = ForecastLoadConfig()
 
     loadConfig.LOOK_BACK = model.layers[0].input_shape[1]
+    if model.layers[0].input_shape[2] >= 6 and len(loadConfig.APPLIANCES) == 0:
+        loadConfig.APPLIANCES = ["heater1", "waterheater1", "drye1"]
+    if model.layers[0].input_shape[2] <= 5 and len(loadConfig.APPLIANCES) == 3:
+        loadConfig.APPLIANCES = []
 
     _, validation_part, test_part, scaler = getNormalizedParts(
         config, loadConfig, config.TIMESTAMPS
