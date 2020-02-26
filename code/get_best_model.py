@@ -49,6 +49,7 @@ for model_path in model_paths:
     validation_prediction = model.predict(validation_x)
     validation_mse = mean_squared_error(validation_y, validation_prediction)
     test_mse = mean_squared_error(test_y, model.predict(test_x))
+    print(model_path)
     print("test mse: ", test_mse)
     if validation_mse < best_value:
         best_value = validation_mse
