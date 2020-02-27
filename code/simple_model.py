@@ -28,6 +28,7 @@ from util import constructTimeStamps, getStepsize, getTimeIndexRangeDaily, diffI
 
 outputFolder = ""
 caseID = ""
+debugPlots = False
 
 
 class Goal(Enum):
@@ -311,11 +312,6 @@ def calcErrObjClassic(model, ini, objValue):
         )
         * ini.pvScale
     )
-    import matplotlib.pyplot as plt
-
-    plt.plot(np.array(dico["PVPowers"]))
-    plt.plot(np.array(pvPowerReal))
-    plt.show()
 
     pvPowerErr = np.array(dico["PVPowers"]) - np.array(pvPowerReal)
 
@@ -331,6 +327,16 @@ def calcErrObjClassic(model, ini, objValue):
         * ini.loadsScale
     )
     fixedLoadPowerErr = np.array(fixedLoadPowerReal) - np.array(dico["fixedLoads"])
+
+    if(debugPlots):
+        import matplotlib.pyplot as plt
+        print(pvPowerReal)
+        plt.figure()
+        plt.plot(np.array(pvPowerReal), label="PV real", ls="--", color="orange")
+        plt.plot(np.array(dico["PVPowers"]), label="PV", color="orange")
+        plt.plot(np.array(fixedLoadPowerReal), label="Loads real", ls="--", color="red")
+        plt.plot(np.array(dico["fixedLoads"]), label="Loads", color="red")
+        plt.show()
 
     return np.sum(
         [
@@ -1137,6 +1143,7 @@ def main(argv):
         Goal(x) for x in ["MINIMIZE_COST", "GREEN_HOUSE", "GRID_INDEPENDENCE"]
     ]
     batRangeEmax = [(0, 0), (20, 0), (0, 20), (20, 20)]
+    #batRangeEmax = [(0, 20), (10, 20), (20, 20), (30, 20)] # vary stat. bat.
     # batRangePmax = [3, 5, 7]
     loadRangeScale = [0, 1, 4]
 
@@ -1172,7 +1179,10 @@ def main(argv):
     updateResults = np.full(
         (len(goalsRange), len(batRangeEmax), len(loadRangeScale)), False
     )
-    updateResults[0, 1, 1] = True
+    # baseline
+    updateResults[0, 0, 1] = True
+    # sensibility analysis
+    updateResults[:, :, 1] = True
 
     for ig, g in enumerate(goalsRange):
         ini.goal = g
@@ -1219,23 +1229,23 @@ def main(argv):
             "varX",
         ],
     ).round(3)
-    with pd.option_context("display.max_rows", 99, "display.max_columns", 12):
-        dfResults = pd.DataFrame(
-            resultsGoals.reshape(27, 10),
-            index=pd.MultiIndex.from_frame(idx),
-            columns=[
-                "COST",
-                "GGE",
-                "GGEsq",
-                "GRID_INDEPENDENCE",
-                "ERROR_COST",
-                "FINAL_COST",
-                "ERROR_CO2",
-                "FINAL_C02",
-                "ERROR_IND",
-                "FINAL_IND",
-            ],
-        )
+    # with pd.option_context("display.max_rows", 99, "display.max_columns", 12):
+    #     dfResults = pd.DataFrame(
+    #         resultsGoals.reshape(27, 10),
+    #         index=pd.MultiIndex.from_frame(idx),
+    #         columns=[
+    #             "COST",
+    #             "GGE",
+    #             "GGEsq",
+    #             "GRID_INDEPENDENCE",
+    #             "ERROR_COST",
+    #             "FINAL_COST",
+    #             "ERROR_CO2",
+    #             "FINAL_C02",
+    #             "ERROR_IND",
+    #             "FINAL_IND",
+    #         ],
+    #     )
     dfResults = dfResults.round(3)
     with pd.option_context("display.max_rows", 99, "display.max_columns", 12):
         print(dfResults)
