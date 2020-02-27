@@ -109,8 +109,8 @@ def predictMean(config, train, test):
     return predictions
 
 
-def meanBaseline(config, train, test):
-    predictions = mean_baseline_one_day(config, train, test)
+def mean_baseline_one_step(config, train, test):
+    predictions = predictMean(config, train, test)
     assert len(test) == len(predictions)
     mse = mean_squared_error(predictions, test)
     print("mean baseline mse: ", mse)
