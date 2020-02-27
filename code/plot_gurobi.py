@@ -342,8 +342,12 @@ def plotting_additive_all_powers_sym(
         color=outColors,
         **kwargs
     )
+    # ax.set_ylim(
+    #     [resultsPd[selOut].sum(axis=1).min(), resultsPd[selIn].sum(axis=1).max()]
+    # )
+    # for the paper
     ax.set_ylim(
-        [resultsPd[selOut].sum(axis=1).min(), resultsPd[selIn].sum(axis=1).max()]
+        [-7, 7]
     )
 
     # Settings
