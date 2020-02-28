@@ -744,7 +744,7 @@ def setUpPV(model, ini):
         # pvPowerValues = resampleData(data, ini.timestamps)
         pvPowerValuesConcat = []
         for i in range(0, ini.nbDay):
-            pvPowerValuesConcat.extend(pvPowerValues[(out-lookback ) + (i * out)])
+            pvPowerValuesConcat.extend(pvPowerValues[(out - lookback) + (i * out)])
         data = pd.DataFrame(
             pvPowerValuesConcat, index=ini.timestampsPredPV[-len(pvPowerValuesConcat) :]
         )
