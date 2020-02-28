@@ -161,6 +161,8 @@ def one_step_persistence_model(part):
 
 def plotLSTM_Base_Real(config, train, lstm_predict, base, real):
     times_per_day = get_timestamps_per_day(config)
+    plt.rc("font", size=17)  # controls default text sizes
+    plt.rc("legend", fontsize=12.2)  # legend fontsize
     plt.plot(lstm_predict, label="LSTM prediction")
     plt.plot(real, label="real")
     if base == "mean":
@@ -177,8 +179,9 @@ def plotLSTM_Base_Real(config, train, lstm_predict, base, real):
     ]
     plt.xticks(ticks, time)
     minutes = int(getStepsize(config.TIMESTAMPS).seconds / 60)
-    plt.xlabel("Time - {} min stepsize - 24/09/19".format(minutes))
+    plt.xlabel("Time")
     plt.ylabel("Normalized Output Power")
+    plt.tight_layout()
     plt.savefig(config.OUTPUT_FOLDER + "/plot_lstm_" + base + "_real.png")
     plt.show()
 

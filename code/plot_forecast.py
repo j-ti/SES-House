@@ -163,6 +163,8 @@ def plotSets(timestamps, train, validation, test):
 
 
 def plotHistory(config, history):
+    plt.rc("font", size=17)  # controls default text sizes
+    plt.rc("legend", fontsize=12.2)  # legend fontsize
     plt.plot(history.history["mean_absolute_error"], label="train")
     plt.plot(history.history["val_mean_absolute_error"], label="validation")
     plt.xlabel("Epoch")
@@ -171,6 +173,8 @@ def plotHistory(config, history):
     plt.tight_layout()
     plt.savefig(config.OUTPUT_FOLDER + "/MAE.png")
     plt.show()
+    plt.rc("font", size=17)  # controls default text sizes
+    plt.rc("legend", fontsize=12.2)  # legend fontsize
     plt.plot(history.history["mean_absolute_percentage_error"], label="train")
     plt.plot(history.history["val_mean_absolute_percentage_error"], label="validation")
     plt.xlabel("Epoch")
@@ -179,6 +183,8 @@ def plotHistory(config, history):
     plt.tight_layout()
     plt.savefig(config.OUTPUT_FOLDER + "/MAPE.png")
     plt.show()
+    plt.rc("font", size=17)  # controls default text sizes
+    plt.rc("legend", fontsize=12.2)  # legend fontsize
     plt.plot(history.history["mean_squared_error"], label="train")
     plt.plot(history.history["val_mean_squared_error"], label="validation")
     plt.xlabel("Epoch")
