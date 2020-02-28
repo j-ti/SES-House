@@ -701,15 +701,15 @@ def setUpDiesel(model, ini):
     )
 
     model.addConstr(
-        (dieselStatusVars[0, 2] == 0),
+        (dieselStatusVars[0, 3] == 0),
         "diesel generator is not in status committed at start",
     )
     model.addConstr(
-        (dieselStatusVars[0, 3] == 0), "diesel generator is not in shutdown at start"
+        (dieselStatusVars[0, 2] == 0), "diesel generator is not in shutdown at start"
     )
     model.addConstr(
-        ((dieselStatusVars[0, 1] == 1) >> (dieselGeneratorsVars[0, 0] == 0)),
-        "Also when starting in startup mode the generation has to be 0",
+        (dieselGeneratorsVars[0, 0] == 0),
+        "In any case at start the generation has to be 0",
     )
 
     model.addConstr(
