@@ -276,7 +276,9 @@ def get_following_days(config, matrix_values):
 
     follow_predicts = []
 
+    print(len(matrix_values))
     for i in range(0, len(matrix_values), times_per_day):
+        print(i)
         follow_predicts.extend(matrix_values[i])
 
     return np.array(follow_predicts)
