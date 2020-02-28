@@ -272,7 +272,7 @@ def calcDieselCost(ini, dieselGeneratorsVars, dieselStatusVars):
             * ini.stepsizeHour
         )
         dieselObjExp.add(
-            ini.startUpCost * dieselStatusVars[index, 2] / ini.startUpTimestepNumber
+            ini.startUpCost * dieselStatusVars[index, 1] / ini.startUpTimestepNumber
         )
     return dieselObjExp
 
