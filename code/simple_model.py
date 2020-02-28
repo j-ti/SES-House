@@ -328,8 +328,9 @@ def calcErrObjClassic(model, ini, objValue):
     )
     fixedLoadPowerErr = np.array(fixedLoadPowerReal) - np.array(dico["fixedLoads"])
 
-    if(debugPlots):
+    if debugPlots:
         import matplotlib.pyplot as plt
+
         print(pvPowerReal)
         plt.figure()
         plt.plot(np.array(pvPowerReal), label="PV real", ls="--", color="orange")
@@ -1152,7 +1153,7 @@ def main(argv):
         Goal(x) for x in ["MINIMIZE_COST", "GREEN_HOUSE", "GRID_INDEPENDENCE"]
     ]
     batRangeEmax = [(0, 0), (20, 0), (0, 20), (20, 20)]
-    #batRangeEmax = [(0, 20), (10, 20), (20, 20), (30, 20)] # vary stat. bat.
+    # batRangeEmax = [(0, 20), (10, 20), (20, 20), (30, 20)] # vary stat. bat.
     # batRangePmax = [3, 5, 7]
     loadRangeScale = [0, 1, 4]
 

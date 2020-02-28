@@ -346,9 +346,7 @@ def plotting_additive_all_powers_sym(
     #     [resultsPd[selOut].sum(axis=1).min(), resultsPd[selIn].sum(axis=1).max()]
     # )
     # for the paper
-    ax.set_ylim(
-        [-7, 7]
-    )
+    ax.set_ylim([-7, 7])
 
     # Settings
     plt.xticks(tick, time, rotation=20)
