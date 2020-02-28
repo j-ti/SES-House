@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from forecast import get_timestamps_per_day
 from sklearn.metrics import mean_squared_error
-from util import makeTick, getStepsize
+from util import makeTick
 
 
 def getMeanSdDayBaseline(config, data):
@@ -178,7 +178,6 @@ def plotLSTM_Base_Real(config, train, lstm_predict, base, real):
         for j in [datetime.strptime(str(i), "%H") for i in time]
     ]
     plt.xticks(ticks, time)
-    minutes = int(getStepsize(config.TIMESTAMPS).seconds / 60)
     plt.xlabel("Time")
     plt.ylabel("Normalized Output Power")
     plt.tight_layout()
