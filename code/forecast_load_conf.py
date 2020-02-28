@@ -12,13 +12,13 @@ class ForecastLoadConfig:
         self.TIME_HEADER = "local_15min"
         self.DATAID = 1222
 
-        self.LOAD_MODEL = True
+        self.LOAD_MODEL = False
         self.NB_PLOT = 4
 
         self.OUTPUT_SIZE = 48
         self.LOOK_BACK = 48
         self.BATCH_SIZE = 100
-        self.DROPOUT = [0.3, 0.2, 0.1]
+        self.DROPOUT = [0.1, 0.1, 0.1]
         self.NEURONS = [256, 256, 256]
         self.LEARNING_RATE = 0.0003
 
@@ -27,7 +27,7 @@ class ForecastLoadConfig:
             self.LOOK_BACK,
             self.BATCH_SIZE,
             len(self.NEURONS),
-            self.DROPOUT[2],
+            self.DROPOUT[0],
             self.NEURONS[0],
             self.LEARNING_RATE,
         )
